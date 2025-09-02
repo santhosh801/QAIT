@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QMIT — Employee Portal</title>
+  <link rel="stylesheet" type="text/css" href="css/em_lo-vf.css">
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="main">  	
+    <input type="checkbox" id="chk" aria-hidden="true">
+
+    <!-- Employee → Operator Mail Form -->
+    <div class="signup">
+      <form method="post" action="employee.php">
+        <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
+
+        <input type="text" name="employee_name" placeholder="Employee Name" required>
+        <input type="email" name="employee_email" placeholder="Employee Email" required>
+        <input type="email" name="operator_email" placeholder="Operator Email" required>
+        <input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required>
+        <input type="text" name="unique_id" placeholder="Unique ID" required>
+        <input type="text" name="mobile_number" placeholder="Mobile Number" required>
+
+<button class="btn-effect3" type="submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- Employee Login -->
+    <div class="login">
+      <form method="post" action="employee_login.php">
+        <label for="chk" aria-hidden="true">Employee Login</label>
+        <input type="email" name="employee_email" placeholder="Email" required>
+        <input type="password" name="employee_password" placeholder="Password" required>
+        <button class="btn-effect3" type="submit">Login</button>
+      </form>
+    </div>
+
+  </div>
+</body>
+</html>

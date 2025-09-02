@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee KYC Portal</title>
+  <link rel="stylesheet" href="css/em_verfi.css"> <!-- Your Tailwind + base styles -->
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+
+<div class="flex h-screen text-gray-900">
+  <!-- Sidebar --> 
+  <ul class="w-100 sidebar-nav">
+  <aside class="hidden lg:block w-80 flex-shrink-0">
+    <header class="mt-16 flex justify-center">
+      <div class="flex justify-between items-center w-56">
+        <span class="text-3xl font-bold pb-1">KYC Portal</span>
+        <span class="bg"></span>
+        <button class="bg-purple-10 text-blue-800 w-14 h-5 ml-8 rounded-full flex items-center justify-center">
+          <i data-feather="database"></i>
+        </button>
+      </div>
+    </header>
+
+    <nav class="mt-20 flex justify-center">
+      <div class="flex justify-between items-center w-56">
+        <ul class="w-full">
+          <li class="active">
+            <a href="#" data-section="dashboard" class="flex rounded-xl p-1 items-center">
+              <span class="icon-container text-purple-700 p-4 rounded-xl">
+                <i data-feather="layout" width="24" height="24"></i>
+              </span>
+              <span class="bg"></span>
+              <span class="ml-6 font-medium">Em" Dashboard</span>
+            </a>
+          </li>
+          <li class="mt-3">
+            <a href="#" data-section="operatorStatus" class="flex rounded-xl p-1 items-center">
+              <span class="icon-container text-purple-500 p-4 rounded-xl">
+                <i data-feather="user" width="24" height="24"></i>
+              </span>
+              <span class="bg"></span>
+              <span class="ml-6 font-medium text-gray-600">Op" Status</span>
+            </a>
+          </li>
+
+          <li class="mt-3">
+            <a href="#" class="flex rounded-xl p-1 items-center">
+              <span class="icon-container text-purple-500 p-4 rounded-xl">
+                <i data-feather="edit-3" width="24" height="24"></i>
+              </span>
+              <span class="bg"></span>
+              <span class="ml-6 font-medium text-gray-600">Op" Details Editing </span>
+            </a>
+          </li>
+          <li class="mt-3">
+            <a href="#" data-section="operatorProfile" class="flex rounded-xl p-1 items-center">
+              <span class="icon-container text-purple-500 p-4 rounded-xl">
+                <i data-feather="users" width="24" height="24"></i>
+              </span>
+              <span class="bg"></span>
+              <span class="ml-6 font-medium text-gray-600">Em" logins</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+</ul>
+
+<div id="particle-container">
+  <!-- particles -->
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+
+<!-- Main Content -->
+<section class="bg-gray-200 flex-grow rounded-3xl p-8">
+  <header class="flex justify-between items-center">
+    <h1 class="text-4xl font-bold animated rubberBand">Employee KYC Dashboard</h1>
+    <div>
+      <button class="bg-purple-700 text-white px-6 py-2 rounded-xl mr-2 animated rubberBand">Download</button>
+      <button class="bg-green-600 text-white px-6 py-2 rounded-xl animated rubberBand">Save Changes</button>
+    </div>
+  </header>
+
+  <!-- Operator Status Section -->
+  <div id="operatorStatusSection" class="hidden mt-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="bg-purple-100 rounded-xl shadow-lg p-6 text-center">
+        <h3 class="text-3xl font-bold text-purple-700 timer" data-to="154" data-speed="2000">0</h3>
+        <p class="mt-2 font-medium text-gray-700">Employee Send Mail</p>
+      </div>
+      <div class="bg-yellow-100 rounded-xl shadow-lg p-6 text-center">
+        <h3 class="text-3xl font-bold text-yellow-600 timer" data-to="87" data-speed="2000">0</h3>
+        <p class="mt-2 font-medium text-gray-700">Operator Pending</p>
+      </div>
+      <div class="bg-green-100 rounded-xl shadow-lg p-6 text-center">
+        <h3 class="text-3xl font-bold text-green-600 timer" data-to="235" data-speed="2000">0</h3>
+        <p class="mt-2 font-medium text-gray-700">Operator Filled</p>
+      </div>
+      <div class="bg-blue-100 rounded-xl shadow-lg p-6 text-center">
+        <h3 class="text-3xl font-bold text-blue-600 timer" data-to="15" data-speed="2000">0</h3>
+        <p class="mt-2 font-medium text-gray-700">Years Experience</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+<main class="mt-10" id="employeeTable">
+  <div class="overflow-x-auto bg-white rounded-2xl shadow-lg p-6"><div class="scrollable">
+  <div class="mask">
+    <table class="min-w-full text-left text-gray-700 border-collapse">
+      <thead>
+        <tr>
+          <th class="px-6 py-3 border-b">id</th>
+          <th class="px-6 py-3 border-b">operator_id</th>
+          <th class="px-6 py-3 border-b">operator_full_name</th>
+          <th class="px-6 py-3 border-b">email</th>
+          <th class="px-6 py-3 border-b">branch_name</th>
+          <th class="px-6 py-3 border-b">joining_date</th>
+          <th class="px-6 py-3 border-b">operator_contact_no</th>
+          <th class="px-6 py-3 border-b">father_name</th>
+          <th class="px-6 py-3 border-b">dob</th>
+          <th class="px-6 py-3 border-b">gender</th>
+          <th class="px-6 py-3 border-b">aadhar_number</th>
+          <th class="px-6 py-3 border-b">pan_number</th>
+          <th class="px-6 py-3 border-b">voter_id_no</th>
+          <th class="px-6 py-3 border-b">ration_card</th>
+          <th class="px-6 py-3 border-b">nseit_number</th>
+          <th class="px-6 py-3 border-b">aadhar_file</th>
+          <th class="px-6 py-3 border-b">pan_file</th>
+          <th class="px-6 py-3 border-b">voter_file</th>
+          <th class="px-6 py-3 border-b">ration_file</th>
+          <th class="px-6 py-3 border-b">consent_file</th>
+          <th class="px-6 py-3 border-b">gps_selfie_file</th>
+          <th class="px-6 py-3 border-b">permanent_address_proof_file</th>
+          <th class="px-6 py-3 border-b">nseit_cert_file</th>
+          <th class="px-6 py-3 border-b">self_declaration_file</th>
+          <th class="px-6 py-3 border-b">non_disclosure_file</th>
+          <th class="px-6 py-3 border-b">police_verification_file</th>
+          <th class="px-6 py-3 border-b">parent_aadhar_file</th>
+          <th class="px-6 py-3 border-b">edu_10th_file</th>
+          <th class="px-6 py-3 border-b">edu_12th_file</th>
+          <th class="px-6 py-3 border-b">edu_college_file</th>
+          <th class="px-6 py-3 border-b">created_at</th>
+          <th class="px-6 py-3 border-b">nseit_date</th>
+          <th class="px-6 py-3 border-b">current_hno_street</th>
+          <th class="px-6 py-3 border-b">current_village_town</th>
+          <th class="px-6 py-3 border-b">current_pincode</th>
+          <th class="px-6 py-3 border-b">current_postoffice</th>
+          <th class="px-6 py-3 border-b">current_district</th>
+          <th class="px-6 py-3 border-b">current_state</th>
+          <th class="px-6 py-3 border-b">permanent_hno_street</th>
+          <th class="px-6 py-3 border-b">permanent_village_town</th>
+          <th class="px-6 py-3 border-b">permanent_pincode</th>
+          <th class="px-6 py-3 border-b">permanent_postoffice</th>
+          <th class="px-6 py-3 border-b">permanent_district</th>
+          <th class="px-6 py-3 border-b">permanent_state</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="px-6 py-4 border-b">1</td>
+          <td class="px-6 py-4 border-b">OPR123</td>
+          <td class="px-6 py-4 border-b">John Doe</td>
+          <td class="px-6 py-4 border-b">john@example.com</td>
+          <td class="px-6 py-4 border-b">Chennai Branch</td>
+          <td class="px-6 py-4 border-b">2023-06-15</td>
+          <td class="px-6 py-4 border-b">9876543210</td>
+          <td class="px-6 py-4 border-b">Mr. Richard Doe</td>
+          <td class="px-6 py-4 border-b">1995-01-20</td>
+          <td class="px-6 py-4 border-b">Male</td>
+          <td class="px-6 py-4 border-b">1234-5678-9012</td>
+          <td class="px-6 py-4 border-b">ABCDE1234F</td>
+          <td class="px-6 py-4 border-b">VOT1234567</td>
+          <td class="px-6 py-4 border-b">RC12345</td>
+          <td class="px-6 py-4 border-b">NSEIT67890</td>
+          <td class="px-6 py-4 border-b">aadhar.pdf</td>
+          <td class="px-6 py-4 border-b">pan.pdf</td>
+          <td class="px-6 py-4 border-b">voter.pdf</td>
+          <td class="px-6 py-4 border-b">ration.pdf</td>
+          <td class="px-6 py-4 border-b">consent.pdf</td>
+          <td class="px-6 py-4 border-b">selfie.jpg</td>
+          <td class="px-6 py-4 border-b">address_proof.pdf</td>
+          <td class="px-6 py-4 border-b">nseit_cert.pdf</td>
+          <td class="px-6 py-4 border-b">declaration.pdf</td>
+          <td class="px-6 py-4 border-b">nda.pdf</td>
+          <td class="px-6 py-4 border-b">police.pdf</td>
+          <td class="px-6 py-4 border-b">parent_aadhar.pdf</td>
+          <td class="px-6 py-4 border-b">10th.pdf</td>
+          <td class="px-6 py-4 border-b">12th.pdf</td>
+          <td class="px-6 py-4 border-b">college.pdf</td>
+          <td class="px-6 py-4 border-b">2023-06-01</td>
+          <td class="px-6 py-4 border-b">2023-06-20</td>
+          <td class="px-6 py-4 border-b">123 Main St</td>
+          <td class="px-6 py-4 border-b">Salem</td>
+          <td class="px-6 py-4 border-b">636007</td>
+          <td class="px-6 py-4 border-b">Salem HO</td>
+          <td class="px-6 py-4 border-b">Salem District</td>
+          <td class="px-6 py-4 border-b">Tamil Nadu</td>
+          <td class="px-6 py-4 border-b">456 Market St</td>
+          <td class="px-6 py-4 border-b">Namakkal</td>
+          <td class="px-6 py-4 border-b">637001</td>
+          <td class="px-6 py-4 border-b">Namakkal HO</td>
+          <td class="px-6 py-4 border-b">Namakkal District</td>
+          <td class="px-6 py-4 border-b">Tamil Nadu</td>
+        </tr>
+      </tbody>
+    </table>
+      </div>
+</div>
+  </div>
+</main>
+
+
+  <!-- Placeholder for Operator Profile -->
+  <div id="operatorProfileSection" class="hidden mt-6">
+    <h2 class="text-2xl font-bold">Operator Profile</h2>
+    <p class="mt-2 text-gray-700">Profile details will go here.</p>
+  </div>
+</section>
+</div>
+
+<script>
+function showSection(sectionId) {
+  document.getElementById("employeeTable").classList.add("hidden");
+  document.getElementById("operatorStatusSection").classList.add("hidden");
+  document.getElementById("operatorProfileSection").classList.add("hidden");
+
+  document.getElementById(sectionId).classList.remove("hidden");
+
+  if (sectionId === "operatorStatusSection") {
+    const counters = document.querySelectorAll(".timer");
+    counters.forEach(counter => {
+      let target = +counter.getAttribute("data-to");
+      let speed = +counter.getAttribute("data-speed");
+      let count = 0;
+      let step = target / (speed / 50);
+
+      let interval = setInterval(() => {
+        count += step;
+        if (count >= target) {
+          counter.textContent = target;
+          clearInterval(interval);
+        } else {
+          counter.textContent = Math.floor(count);
+        }
+      }, 50);
+    });
+  }
+}
+
+// Event listeners
+document.querySelector("a[data-section='dashboard']").addEventListener("click", e => {
+  e.preventDefault();
+  showSection("employeeTable");
+});
+
+document.querySelector("a[data-section='operatorStatus']").addEventListener("click", e => {
+  e.preventDefault();
+  showSection("operatorStatusSection");
+});
+
+document.querySelector("a[data-section='operatorProfile']").addEventListener("click", e => {
+  e.preventDefault();
+  showSection("operatorProfileSection");
+});
+
+// Init feather icons
+feather.replace();
+</script>
+</body>
+</html>
