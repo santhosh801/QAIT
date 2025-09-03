@@ -1,14 +1,11 @@
 <!doctype html>
-
-
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QMIT — Operator Registration</title>
 <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
-<link rel="stylesheet" href="/css/operator_view.css">
+<link rel="stylesheet" href="operator_view.css">
 </head>
 <body>
 <div class="container">
@@ -20,7 +17,7 @@
         <li>Documents & Submit</li>
     </ul>
 
-    <form id="msform" method="post" action="/php/operator_view.php" enctype="multipart/form-data">
+    <form id="msform" method="post" action="operator_view.php" enctype="multipart/form-data">
         <!-- Personal Info -->
         <fieldset>
             <input type="text" name="operator_full_name" placeholder="Full Name" required>
@@ -42,8 +39,8 @@
             
             <label for="aadhar_number">Aadhaar Number</label>
             <input type="text" id="aadhar_number" name="aadhar_number" 
-                pattern="\d{16}" maxlength="16" minlength="16" 
-                title="Aadhaar must be exactly 16 digits" required>
+                pattern="\d{12}" maxlength="12" minlength="12" 
+                title="Aadhaar must be exactly 12 digits" required>
             <input type="file" name="aadhar_file" accept=".jpg,.jpeg,.png,.pdf" required>
 
             <input type="text" name="operator_id" placeholder="Unique ID" required>
@@ -114,7 +111,9 @@
 
             <label>Permanent Address Proof</label>
             <input type="file" name="permanent_address_proof_file" accept=".jpg,.jpeg,.png,.pdf" required>
-
+<label>Ration Card Number</label>
+<input type="text" name="ration_card">
+<input type="file" name="ration_file" accept=".jpg,.jpeg,.png,.pdf">
             <label>NSEIT Certificate</label>
             <input type="file" name="nseit_cert_file" accept=".jpg,.jpeg,.png,.pdf" required>
 

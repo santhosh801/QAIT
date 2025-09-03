@@ -62,5 +62,5 @@ try {
     error_log($mail->ErrorInfo); 
 }
 
-echo '<script>alert("Details sent to operator successfully!");window.location="employee.html";</script>';
+echo '<script>alert("Details sent to operator successfully!");window.location="em_verfi.php";</script>';
 ?>
