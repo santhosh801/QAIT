@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KYC & Document Collection Portal - Qamar Infotech</title>
-  <link rel="stylesheet" href="/css/landing.css">
-    <link rel="stylesheet" href="index.js">
+  <link rel="stylesheet" href="landing.css">
 </head>
 <body>
   <!-- HEADER -->
@@ -46,17 +45,18 @@
     <div class="hero-text">
 <h1 class="typing">KYC Portal</h1>
       <p>A secure platform for Operators, Employees, and Admins to collect, verify, and manage KYC documents with role-based access, dashboards, and automated notifications.</p>
-      <a href="operator-login.html" class="btn">Start Operator Registration</a>
-    </div>
+<a href="operator_view.html" class="btn" role="button">Start Operator Registration</a>    </div>
     <div class="hero-img">
-      <img src="e3.jpeg" alt="KYC Portal Illustration">
+      <img src="lan.jpeg" alt="KYC Portal Illustration">
     </div>
   </section>
 
-  <!-- <!-- STEPS -->
+  <!-- STEPS -->
 <section class="container">
-  <h2 class="center shiny-text">How it Works</h2>
-  <div class="steps">
+<div class="wrap">
+  <!-- Put the plain text you want into the heading; JS below will wrap characters automatically -->
+  <h2 class="shiny-text" id="howItWorks">How it Works</h2>
+</div>  <div class="steps">
     <div class="flip">
       <div class="front">
         <h3>1. Fill KYC Details</h3>
@@ -113,13 +113,34 @@
 
 
   <!-- CTA -->
-<!-- CTA -->
-<section class="container" id="login-section">
-  <div class="black-cta" data-animate>
-    <h2>Start managing KYC documents efficiently</h2>
-    <a href="admin-login.html" class="btn">Admin Login</a>
-    <a href="employee-login.html" class="btn">Employee Login</a>
-    <a href="operator-login.html" class="btn">Operator Login</a>
+<!-- Vertical animated login CTA (replace your existing #login-section) -->
+<section id="login-section" aria-labelledby="login-title">
+  <div class="animated-cta">
+    <div class="lines" aria-hidden="true">
+  <span class="line-orbit"></span>
+    
+    </div>
+
+    <div class="title">
+      <div class="title-inner">
+        <div class="cafe"><div class="cafe-inner">Start managing</div></div>
+        <div class="mozart"><div class="mozart-inner">KYC documents efficiently</div></div>
+      </div>
+    </div>
+
+    <p class="cta-desc">
+      Streamline document collection and verification across branches. Securely upload Aadhaar,
+      PAN and bank proofs with encrypted storage. Role-based dashboards for Admins, Employees and
+      Operators. Faster onboarding, robust audit trails, and compliance-ready workflows.
+    </p>
+
+    <div class="cta-actions">
+      <a class="button-30 cta-btn" href="em_lo-vf.html" role="button">Admin Login</a>
+      <a class="button-30 cta-btn" href="employee-login.html" role="button">Employee Login</a>
+      <a class="button-30 cta-btn" href="operator_view.html" role="button">Operator Login</a>
+    </div>
+
+  
   </div>
 </section>
 
@@ -294,6 +315,64 @@
       });
     },{threshold:0.2});
     els.forEach(el=>io.observe(el));
+(function(){
+  const loginSection = document.getElementById('login-section');
+  if(!loginSection) return;
+  const animatedCard = loginSection.querySelector('.animated-cta');
+  const header = document.querySelector('header');
+
+  // set scroll-margin-top using header height
+  function updateScrollMargin(){
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    loginSection.style.scrollMarginTop = Math.ceil(headerH + 16) + 'px';
+  }
+  updateScrollMargin();
+  window.addEventListener('resize', updateScrollMargin);
+
+  // IntersectionObserver: add 'is-visible' to the .animated-cta when the section becomes visible
+  const io = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        // add class to the animated card (CSS uses .animated-cta.is-visible)
+        animatedCard.classList.add('is-visible');
+        // stop observing so animation won't re-run repeatedly
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { root: null, rootMargin: '0px', threshold: 0.22 });
+
+  io.observe(loginSection);
+
+  // Nav links: scroll center and trigger animation on click
+  document.querySelectorAll('a[href="#login-section"]').forEach(a => {
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      updateScrollMargin();
+      // scroll to center of viewport
+      loginSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // ensure animation is triggered (if not already)
+      animatedCard.classList.add('is-visible');
+
+      // accessibility: set focus to section
+      loginSection.setAttribute('tabindex', '-1');
+      loginSection.focus({ preventScroll: true });
+      setTimeout(() => loginSection.removeAttribute('tabindex'), 1200);
+    });
+  });
+
+  // If page loaded with #login-section hash, animate + center it
+  if(location.hash === '#login-section'){
+    setTimeout(() => {
+      updateScrollMargin();
+      loginSection.scrollIntoView({ behavior:'smooth', block:'center' });
+      animatedCard.classList.add('is-visible');
+    }, 90);
+  }
+})();
+
+
+
   </script>
+  
 </body>
 </html>

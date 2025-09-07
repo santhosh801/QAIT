@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qamar Infotech - Employee Login</title>
+  <link rel="stylesheet" href="em_.login.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Vidaloka&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/3a2e6c5d3d.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="overlay">
+      <!-- Left Panel -->
+      <div class="left-panel">
+        <h1 class="company">Qamar <br> Infotech</h1>
+        <p class="welcome">Welcome back!</p>
+        <p class="subtext">Secure access to your employee portal</p>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="login-box">
+        <h2>Employee Login</h2>
+        <form method="post" action="employee_login.php">
+          <div class="input-group">
+            <i class="fas fa-id-badge"></i>
+            <input type="text" name="employee_id" placeholder="Employee ID" required>
+          </div>
+          <div class="input-group">
+            <i class="fas fa-envelope"></i>
+            <input type="email" name="employee_email" placeholder="Email" required>
+          </div>
+          <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" name="employee_password" placeholder="Password" required>
+          </div>
+          <button type="submit" class="btn">Login</button>
+        </form>
+      </div>
+    </div>
+    <!-- Animated Floating Shapes -->
+    <div class="shapes">
+      <div class="shape shape1"></div>
+      <div class="shape shape2"></div>
+      <div class="shape shape3"></div>
+    </div>
+  </div>
+</body>
+</html>
