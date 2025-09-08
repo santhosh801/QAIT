@@ -3,6 +3,7 @@
 /* Basic fonts & vars */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Vidaloka&display=swap');
 
+
 :root{
   --bg:#f5f6f8; --card:#fff; --text:#0f172a; --muted:#6b7280;
   --primary:#3b82f6; --ring:#e5e7eb; --shadow:0 6px 14px rgba(15,23,42,.08);
@@ -123,7 +124,7 @@ body{
 .k-content{padding:12px}
 .k-container{max-width:1180px;margin:0 auto}
 .k-page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:12px}
-.k-h1{font-size:22px;margin:0;font-family:"Vidaloka",serif;color:var(--gold)}
+.k-h1{font-size:21px;margin:0;font-family:"Vidaloka",serif;color:var(--gold)}
 .k-subtitle{color:var(--muted);margin-top:6px;font-family:"Montserrat",sans-serif}
 
 /* Button-30 (provided & tuned) */
@@ -170,7 +171,7 @@ body{
 .scrollable{max-height:65vh;overflow:auto;border-radius:12px;border:1px solid var(--ring);background:#fff; width:100%; box-sizing:border-box;}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;background:#fafafa;z-index:2;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;border-bottom:1px solid var(--ring)}
-th,td{padding:8px 10px;border-bottom:1px solid #eef2f7} /* slightly larger padding for readability */
+th,td{padding:8px 2px;border-bottom:1px solid #eef2f7} /* slightly larger padding for readability */
 tbody tr:hover{background:#fafcff}
 td .btn{padding:6px 10px;border-radius:8px;border:1px solid var(--ring);background:#fff;cursor:pointer;margin-right:6px}
 .btn-outline-success{border-color:#16a34a;color:#16a34a}
@@ -253,3 +254,11 @@ button:focus, a:focus, input:focus, textarea:focus { outline: 3px solid rgba(189
 #mainShell{opacity:1;transition:opacity .3s ease}
 
 /* End of stylesheet */
+/* Operator Mailing form styles */
+.operator-mail-form{
+  display:flex; flex-direction:column; gap:10px; max-width:520px;
+  padding:12px; background:var(--card); border-radius:10px; border:1px solid var(--ring);
+} 
+.operator-mail-form input{
+  height:42px; padding:8px 12px; border-radius:8px; border:1px solid #e6e9ef; background:#fff;
+}
