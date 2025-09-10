@@ -8,6 +8,10 @@ if($mysqli->connect_error){
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
     $email = $_POST['employee_email'] ?? '';
+
+
+
+
     $password = $_POST['employee_password'] ?? '';
 
     // Check if employee exists

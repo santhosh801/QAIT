@@ -1,62 +1,51 @@
 <?php
-// update_status.php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 session_start();
 if (!isset($_SESSION['employee_email'])) {
-    http_response_code(403);
-    echo json_encode(['success'=>false,'message'=>'Unauthorized']);
-    exit;
-}
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success'=>false,'message'=>'Invalid method']);
+    echo json_encode(['success'=>false, 'message'=>'Not authenticated']);
     exit;
 }
 $mysqli = new mysqli("localhost","root","","qmit_system");
-if ($mysqli->connect_error) {
-    echo json_encode(['success'=>false,'message'=>'DB connection failed']);
-    exit;
-}
+if ($mysqli->connect_error) { echo json_encode(['success'=>false,'message'=>'DB error']); exit; }
+
 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+$status = isset($_POST['status']) ? $mysqli->real_escape_string($_POST['status']) : null;
+$work_status = isset($_POST['work_status']) ? $mysqli->real_escape_string($_POST['work_status']) : null;
+
 if (!$id) { echo json_encode(['success'=>false,'message'=>'Missing id']); exit; }
 
-$updates = [];
+$fields = [];
 $params = [];
 $types = '';
 
-if (isset($_POST['status'])) {
-    $status = $_POST['status'];
-    if (!in_array($status, ['accepted','pending','rejected'], true)) {
-        echo json_encode(['success'=>false,'message'=>'Invalid status']); exit;
-    }
-    $updates[] = "status = ?";
-    $params[] = $status;
-    $types .= 's';
+if ($status !== null) {
+  $fields[] = "status = ?";
+  $types .= 's';
+  $params[] = $status;
 }
-if (isset($_POST['work_status'])) {
-    $work = $_POST['work_status'];
-    if (!in_array($work, ['working','not working'], true)) {
-        echo json_encode(['success'=>false,'message'=>'Invalid work_status']); exit;
-    }
-    $updates[] = "work_status = ?";
-    $params[] = $work;
-    $types .= 's';
+if ($work_status !== null) {
+  $fields[] = "work_status = ?";
+  $types .= 's';
+  $params[] = $work_status;
+}
+if (empty($fields)) {
+  echo json_encode(['success'=>false,'message'=>'Nothing to update']);
+  exit;
 }
 
-if (empty($updates)) {
-    echo json_encode(['success'=>false,'message'=>'Nothing to update']); exit;
-}
-
-$sql = "UPDATE operatordoc SET " . implode(", ", $updates) . " WHERE id = ?";
-$params[] = $id;
-$types .= 'i';
-
+$sql = "UPDATE operatordoc SET " . implode(', ', $fields) . " WHERE id = ?";
 $stmt = $mysqli->prepare($sql);
-if (!$stmt) { echo json_encode(['success'=>false,'message'=>$mysqli->error]); exit; }
+if (!$stmt) { echo json_encode(['success'=>false,'message'=>'Prepare failed: '.$mysqli->error]); exit; }
+
+// bind params dynamically
+$types .= 'i';
+$params[] = $id;
 $stmt->bind_param($types, ...$params);
-if ($stmt->execute()) {
-    echo json_encode(['success'=>true,'message'=>'Updated']);
+$ok = $stmt->execute();
+if ($ok) {
+  echo json_encode(['success'=>true, 'message'=>'Updated']);
 } else {
-    echo json_encode(['success'=>false,'message'=>'Update failed']);
+  echo json_encode(['success'=>false, 'message'=>'Update failed: '.$stmt->error]);
 }
 $stmt->close();
 $mysqli->close();

@@ -1,0 +1,494 @@
+/* emverfi.css — updated styles for excel-like table, cards, donut, calendar, resizable sidebar */
+
+/* Fonts */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Vidaloka&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Vidaloka&display=swap');
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --gold: #bd9a68;
+  --gold-dark: #a5834d;
+  --black: #0f172a;
+  --bg: #ffffff;
+  --card: #ffffff;
+  --muted: rgba(15,23,42,0.55);
+  --ring: rgba(15,23,42,0.06);
+  --shadow: 0 12px 30px rgba(15,23,42,0.08);
+  --radius: 10px;
+  --sidebar-w: 240px;
+  --mono: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --excel-border: rgba(15,23,42,0.08);
+}
+.data-table.excel-like tbody tr:nth-child(even) {
+  background-color: rgba(189, 154, 104, 0.06); /* subtle gold tint */
+}
+
+/* Reset */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--black); font-family:var(--mono);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow-x:hidden;
+}
+
+/* header */
+.qit-header{
+    height: 120px;font-family:"Vidaloka", serif;
+    margin-top: 0px;
+  position:fixed; top:0; width:100%; z-index:1000; background:#fff; border-bottom:2px solid var(--gold);
+}
+.qit-header .container{ display:flex; align-items:center; gap:28px; padding:10px 18px; }
+.logo{ display:flex; align-items:center; gap:10px; }
+
+.logo-grid{ display:grid; font-family:"Vidaloka", serif; grid-template-columns:repeat(2,22px);grid-template-rows:repeat(2,22px); }
+.logo-grid span{ width:20px; height:20px; border-radius:50px;  }
+.sq1,.sq2,.sq3{ background:var(--gold) } .sq4{ background:var(--black) }
+.logo-text .big-q{ font-weight:400; color:var(--gold); font-size:20px; font-size: 45px; margin-left: 3px; }
+.small-it{ font-size:15px; color:var(--black); font-weight:400; }
+
+
+/* header search + export */
+.header-search{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+.header-search input[type="search"]{
+  height:16px; padding:8px 10px; border-radius:8px; border:1px solid var(--ring); width:320px;
+}
+.header-search button, .sidebar-export{
+  height:36px; padding:0 14px; border-radius:8px; border:none; background:var(--gold); color:var(--black); cursor:pointer; font-weight:700;
+  text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+}
+
+/* layout */
+.k-shell{ display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh; padding-top:24px; gap:28px; transition: grid-template-columns .28s ease; }
+@media (max-width:1000px){ .k-shell{ grid-template-columns:1fr } .k-sidebar{ display:none } }
+.k-card{ background:var(--card); border-radius:10px; padding:12px; box-shadow:var(--shadow); border:2px solid var(--ring); }
+
+/* sidebar */
+.k-card-title{ font-weight:500; margin-bottom:8px; margin-top:80px; font-family:"Vidaloka", serif; font-size:25px; }
+nav a{ display:flex; justify-content:space-between; align-items:center; color:var(--black); text-decoration:none; padding:10px 8px; border-radius:8px; font-weight:600; margin-bottom:4px; }
+nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
+.badge{ background:#F3F4F6; color:var(--black); padding:4px 8px; border-radius:999px; font-size:12px; margin-left:12px; }
+
+/* status cards (colored icons) */
+.status-row{ display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;  margin-top: 40px; font-family:"Vidaloka", serif;}
+.status-card{ flex:1; padding:10px; border-radius:20px; display:flex; align-items:center; gap:12px; min-width:110px; transition: transform .18s ease, box-shadow .18s ease; }
+.status-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,0.12); }
+.dash-colored{ color:#111; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-width:160px; position:relative; overflow:hidden }
+.dash-icon{ font-size:20px; margin-bottom:6px; }
+.dash-green{ background:linear-gradient(180deg,#E6FBF2,#DFF7EE); color:var(--black) }
+.dash-orange{ background:linear-gradient(180deg,#FFF7EB,#FFF3E6); color:var(--black) }
+.dash-blue{ background:linear-gradient(180deg,#F1F8FF,#EAF5FF); color:var(--black) }
+.dash-red{ background:linear-gradient(180deg,#FFF1F0,#FFECEB); color:var(--black) }
+
+.k-value{ font-size:18px; font-weight:800; color:var(--black) }
+.k-card-sub{ margin-top:6px; color:var(--muted) }
+
+/* gold heading */
+.k-page-title h1 { margin:0; font-size:30px; color:var(--gold); font-weight:900; }
+
+/* status main layout (clock + calendar + donut) */
+.status-main-row{ display:flex; gap:15px; margin-top:0px; align-items:flex-start; }
+.status-left{ flex:1; min-width:260px; }
+.status-center{ width:440px; display:flex; align-items:center; justify-content:center; }
+.status-right{ width:280px; }
+/* ---------- DROP-IN: Braun-style Circular Clock + Month Calendar ---------- */
+/* Non-destructive override — no HTML changes required */
+
+:root{
+  --qit-clock-size: 200px;         /* adjust to match your dashboard card size */
+  --qit-clock-bg: linear-gradient(180deg,#ffffff,#f7fbfb);
+      /* green accent (change to match PETRI) */
+  --qit-clock-s: #ff7a18;          /* second hand accent */
+  --qit-clock-ring: rgba(0, 0, 0, 0.04);
+  --qit-font: 'Inter', system-ui, sans-serif;
+}
+
+/* make left card circular */
+.status-left .clock-card{
+  width: 250px;
+  height: 250px;
+  min-width: var(--qit-clock-size);
+  border-radius: 50%;
+  padding: 20px;
+  overflow: visible;
+  color: #111;
+  font-size: 26px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin: 20px;
+  position:relative;
+  background: var(--qit-clock-bg);
+  border: 1px solid var(--qit-clock-ring);
+ box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+/* soft highlight */
+
+
+/* center digital time - use existing element .clock-large */
+
+
+/* small date meta below time (inside 
+
+/* center pivot dot injected by JS (or fallback via pseudo if not injected) */
+.status-left .clock-card .pivot-dot{
+  position:absolute;
+  color: black;
+  font-size: 200px;
+  width:10px;height:10px;border-radius:50%;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  background: #ff6e6e; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px; z-index:50;
+}
+
+/* hands: we'll place two rotating pseudo hands using the .clock-large ::before/::after,
+   and a third via .clock-card::after for seconds. This avoids changing HTML. */
+.clock-large{ --hdeg:0; --mdeg:0; }
+
+/* hour */
+.clock-large::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:5px;
+  height:45px;
+  transform-origin:50% 88%;
+ 
+  border-radius:4px;
+  transform: translate(-50%,-88%) rotate(calc(var(--hdeg) * 1deg));
+  z-index:40;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+}
+
+/* minute */
+.clock-large::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:5px;
+  height:78px;
+  transform-origin:50% 88%;
+ 
+  border-radius:4px;
+  transform: translate(-50%,-88%) rotate(calc(var(--mdeg) * 1deg));
+  z-index:39;
+}
+
+/* second hand on the card pseudo */
+.status-left .clock-card::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:2px;
+  height:62px;
+  transform-origin:50% 88%;
+  background: var(--qit-clock-s);
+  transform: translate(-50%,-88%) rotate(calc(var(--sdeg) * 1deg));
+  z-index:38;
+  box-shadow: 0 0 10px rgb(0, 0, 0);
+  border-radius:2px;
+}
+
+/* hour markers (numbers) and minute ticks are generated by JS into the .clock-markers container we create.
+   provide styling targets */
+.status-left .clock-card .qit-clock-markers { position:absolute; inset:0; pointer-events:none; z-index:50; }
+.qit-hour-marker{ position:absolute; left:50%; top:50%; transform-origin:center; color:rgba(255,255,255,0.95); font-weight:700; font-size:12px; text-align:center; }
+.qit-minute-tick{ position:absolute; left:50%; top:50%; width:2px; height:8px; background:rgba(255,255,255,0.28); transform-origin:center; }
+
+/* subtle hover lift */
+.status-left .clock-card:hover{ transform: translateY(-4px); }
+
+/* ---------------- Calendar month card styling ---------------- */
+.status-center .calendar-wrap{
+  width: 100%;
+  max-width: 360px;
+  padding: 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg,#ffffff,#fbfbfb);
+  border: 1px solid rgba(12,18,30,0.04);
+  box-shadow: 0 10px 30px rgba(12,18,30,0.04);font-family:"Vidaloka", serif;
+  transition: box-shadow .28s ease, transform .28s ease;
+}
+
+/* top header with nav */
+.status-center .calendar-wrap .cal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 8px 6px 12px 6px;
+  border-bottom:1px solid rgba(12,18,30,0.03);
+}
+.cal-title{ font-weight:700; color:#334155; }
+.cal-nav{ display:flex; gap:8px; align-items:center; }
+
+/* nav buttons */
+.cal-btn{ background:transparent; border:0; padding:6px 8px; border-radius:6px; cursor:pointer; font-weight:700; color:#475569; }
+.cal-btn:hover{ background:rgba(6,12,24,0.03); transform:translateY(-1px); }
+
+/* days header */
+.cal-days{ display:flex; gap:6px; padding:10px 6px; justify-content:space-between; color: #94a3b8; font-weight:700; font-size:13px; }
+
+/* dates grid */
+.cal-dates{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; padding:10px 6px; }
+.cal-dates span{ display:inline-flex; justify-content:center; align-items:center; height:38px; border-radius:6px; font-weight:600; color:#374151; cursor:pointer; }
+.cal-dates span.disable{ color:#960c0c; background:transparent; box-shadow:none; cursor:default; }
+.cal-dates span:hover:not(.disable){ background:#282a32; transform:translateY(-4px); box-shadow: 0 6px 18px rgba(14,165,233,0.06); }
+.cal-dates span.active{ background: #06b6d4; color:#fff; box-shadow: 0 8px 24px rgba(6,182,212,0.12); }
+
+/* selected label */
+.status-center .date-display{ padding:6px 8px; color:#004ade; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+
+/* make sure calendar fits small devices */
+@media (max-width:760px){
+  :root{ --qit-clock-size: 140px; }
+  .status-center .calendar-wrap{ max-width:100%; }
+}
+/* ---------- small visual tweaks: black clock border + calendar "today" styling ---------- */
+
+/* make clock border solid black without changing other rules */
+.status-left .clock-card{
+  border: 12px solid #000 !important; /* explicit to override theme ring */
+}
+
+/* today's date styling in calendar */
+.cal-dates span.today {
+  border: 2px solid rgba(99,102,241,0.18);   /* subtle violet ring */
+  box-shadow: 0 6px 20px rgba(99,102,241,0.09);
+  background: linear-gradient(180deg, rgba(99,102,241,0.06), rgba(99,102,241,0.02));
+  color: #111827;
+  font-weight:800;
+}
+
+/* hover for any date; special hover for today to make it pop */
+.cal-dates span:hover:not(.disable) { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(14,165,233,0.06); }
+.cal-dates span.today:hover {
+  background: linear-gradient(90deg,#7c3aed,#06b6d4);
+  color: #fff;
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(124,58,237,0.18);
+}
+
+/* active (selected) remains strong — keep clear difference from today */
+.cal-dates span.active {
+  background: #06b6d4; color:#fff; box-shadow:0 8px 24px rgba(6,182,212,0.12);
+  border: none;
+}
+
+/* ensure small devices still ok */
+@media (max-width:760px){
+  .cal-dates span.today { font-weight:700; }
+}
+
+/* hub cards */
+.center-hub-cards{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px; }
+.hub-card{ background:linear-gradient(180deg,#fff,#fbfbfb); border:1px solid var(--ring); border-radius:8px; padding:10px; text-align:center; }
+.hub-num{ font-weight:800; font-size:18px; }
+.hub-label{ color:var(--muted); font-size:12px; margin-top:4px; }
+
+
+
+/* charts row */
+.chart-head{ font-weight:700; margin-bottom:px; color:var(--muted) }
+.chart-wrap{ position:relative; min-height:140px; }
+
+/* table: excel-like compact + auto-scroll wrapper */
+.table-wrap{ border-radius:10px; border:1px solid var(--excel-border); background:#fff; padding:6px; font-family:"Vidaloka", serif; }
+.auto-scroll-wrap{ position:relative; overflow:hidden; }
+.table-scroll-inner{ display:inline-block; white-space:nowrap; transition: transform .25s linear; }
+.data-table{ width:100%; font-family:"Vidaloka", serif;border-collapse:collapse; min-width:900px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; display:table; }
+.data-table thead th{ position:sticky; top:0; background:#fafafa; color:var(--muted); font-size:12px; text-transform:uppercase; padding:8px 10px; border-bottom:2px solid var(--excel-border); }
+.data-table td{ padding:8px 10px; border-bottom:1px solid var(--excel-border); font-size:13px; vertical-align:middle; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:table-cell; }
+.excel-like tbody tr:hover{ background:rgba(15,23,42,0.02) }
+
+/* scroll indicator (slim 5px) */
+.scroll-indicator{ position:absolute; right:10px; bottom:8px; height:5px; width:120px; background:rgba(0,0,0,0.06); border-radius:4px; display:none; }
+.scroll-indicator .scroll-thumb{ position:absolute; left:0; top:0; height:100%; width:40px; background:linear-gradient(90deg,var(--gold), var(--gold-dark)); border-radius:4px; transition: left .12s linear; }
+
+/* inputs & buttons */
+.input-compact{ padding:6px 8px; border-radius:6px; border:1px solid var(--ring); font-size:13px; width:180px; }
+.small-btn{ padding:6px 8px; border-radius:6px; border:1px solid var(--ring); background:#fff; cursor:pointer; font-size:13px; }
+.small-btn + .small-btn{ margin-left:6px }
+
+/* actions column narrow */
+.col-actions{ white-space:nowrap; }
+
+/* fragment toolbar */
+.table-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.table-actions .muted{ color:var(--muted); font-size:13px; }
+
+/* pagination */
+.fragment-pagination{ display:flex; gap:8px; margin-top:12px; }
+.fragment-pagination a{ padding:6px 10px; border-radius:6px; border:1px solid var(--ring); text-decoration:none; color:var(--black) }
+
+/* mailing form */
+.signup.mail-form{ font-family:"Vidaloka", serif; font-size: 30px;  margin-bottom: 30px ;max-width:840px; }
+.mail-row{ display:flex; gap:8px; margin-bottom:18px; }
+.mail-row input{ flex:1; padding:10px; border-radius:8px; border:1px solid var(--ring); }
+
+/* transitions */
+.section-visible{ animation: softAppear .28s ease both; }
+@keyframes softAppear{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
+
+.hidden{ display:none!important }
+.center{ text-align:center }
+.k-sub{ color:var(--muted); font-size:3px }
+.k-subtitle{font-size: 25px;
+    font-weight:300; font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); margin:20px 0 10px 0;
+}
+.k-card-title{ font-weight:500;   font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); }
+/* drag handle style */
+#sidebarDragHandle{ position:absolute; right:-6px; top:0; width:12px; height:100%; cursor:ew-resize; z-index:1200; border-left:1px dashed rgba(15,23,42,0.06); background:linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
+
+/* responsive */
+@media (max-width:900px){
+  .status-main-row{ flex-direction:column; }
+  .status-right, .status-center{ width:100%; }
+  .table-scroll-inner{ display:block; white-space:normal; overflow:auto; }
+}
+@media (max-width:720px){
+  .k-shell{ grid-template-columns:1fr; padding-top:110px }
+  .header-search input{ width:160px }
+}
+
+/* accessibility */
+button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,154,104,0.10); outline-offset:2px }
+
+/* small animations */
+@keyframes auto-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * (100% - 100vw + 40px))); } }
+.tick-anim { transform: scale(1.02); opacity: 0.98; transition: transform .18s ease, opacity .18s ease; }
+  @keyframes auto-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * (100% - 100vw + 40px))); } }
+    .tick-anim { transition: transform 180ms ease, opacity 180ms ease; transform: scale(1.02); opacity: 0.98; }
+    #sidebarDragHandle{ position:absolute; right:-6px; top:0; width:12px; height:100%; cursor:ew-resize; z-index:1200; border-left:1px dashed rgba(15,23,42,0.06); background:linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
+    aside#resizableSidebar{ position:relative; }
+
+    /* collapsed sidebar (icon only) */
+    aside#resizableSidebar.sidebar-collapsed { width:56px !important; min-width:56px; }
+    aside#resizableSidebar.sidebar-collapsed .sidebar-nav .nav-label { display:none;  font-family:"Vidaloka", serif; }
+    aside#resizableSidebar.sidebar-collapsed .sidebar-nav .badge { display:none; }
+    aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; height:1px; overflow:hidden;  }
+
+    /* circular toggle button */
+    .sidebar-toggle{
+      position:absolute; right:-22px; top:18px; z-index:1300;
+      width:44px; height:44px; border-radius:50%; border:none; background:linear-gradient(180deg,var(--gold), #a5834d);
+      box-shadow:0 8px 20px rgba(0,0,0,0.12); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+    }
+
+    
+    /* slim scroll indicator (5px high) */
+ /* ensure the scroll indicator is visible and thumb stands out */
+.scroll-indicator{
+  position:absolute;
+  right:10px;
+  bottom:8px;
+  height:5px;               /* small 5px bar as you requested */
+  width:160px;              /* slightly wider for visibility */
+  background:rgba(0,0,0,0.06);
+  border-radius:4px;
+  display:none;             /* JS will show/hide as needed */
+  z-index:50;
+}
+.scroll-indicator .scroll-thumb{
+  position:absolute;
+  left:0;
+  top:0;
+  height:100%;
+  width:40px;               /* initial thumb width (JS will adjust) */
+  background:linear-gradient(90deg,#bd9a68,#a5834d); /* gold gradient */
+  border-radius:4px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.12);
+  transition:left .08s linear;
+  cursor:grab;
+}
+.scroll-indicator .scroll-thumb:active{ cursor:grabbing; }
+
+
+    /* responsive tweaks */
+    @media (max-width:900px){
+      .status-main-row{ flex-direction:column; }
+      .status-right, .status-center{ width:100%; }
+      .table-scroll-inner{ display:block; white-space:normal; overflow:auto; }
+      aside#resizableSidebar.sidebar-collapsed { width:56px !important; }
+      .sidebar-toggle{ right:-18px; }
+    }
+
+    /* ---------- Row click / detail-panel UI ---------- */
+
+/* Make rows clearly clickable */
+.data-table.excel-like tbody tr { cursor: pointer; transition: background .12s ease, transform .08s ease; }
+.data-table.excel-like tbody tr:hover { background: rgba(15,23,42,0.03); transform: translateY(-1px); }
+
+/* Slide-in right detail panel */
+#opDetailPanel {
+  position: fixed;
+  right: 18px;
+  top: 110px; /* below header */
+  width: 420px;
+  max-width: calc(100% - 48px);
+  max-height: calc(100vh - 140px);
+  overflow:auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(6,12,24,0.16);
+  border: 1px solid rgba(15,23,42,0.06);
+  z-index: 1400;
+  transform: translateX(14px) scale(.995);
+  opacity: 0;
+  transition: transform .22s cubic-bezier(.2,.9,.2,1), opacity .22s ease;
+  padding: 12px;
+  display: none;
+  font-family: var(--mono);
+}
+
+/* visible state */
+#opDetailPanel.visible { display:block; transform: translateX(0) scale(1); opacity:1; }
+
+/* header inside panel */
+#opDetailPanel .hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+#opDetailPanel .hdr .title { font-weight:800; color:var(--gold); font-size:16px; }
+#opDetailPanel .hdr .close { background:transparent;border:0;font-weight:700;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted); }
+#opDetailPanel .hdr .close:hover{ background:rgba(0,0,0,0.03); color:var(--black); }
+
+/* tabs */
+#opDetailPanel .tabs { display:flex; gap:8px; margin-bottom:12px; }
+#opDetailPanel .tabs button { padding:8px 10px; border-radius:8px; border:1px solid rgba(15,23,42,0.04); background:#fff; cursor:pointer; font-weight:700; color:#374151; }
+#opDetailPanel .tabs button.active { background: linear-gradient(90deg,#bd9a68,#a5834d); color:#fff; border-color:transparent; transform:translateY(-2px); }
+
+/* content area */
+#opDetailPanel .stage { display:none; }
+#opDetailPanel .stage.active { display:block; }
+.op-row { display:flex; gap:8px; margin-bottom:8px; }
+.op-row .k { width:42%; font-size:13px; color:var(--muted); }
+.op-row .v { width:58%; font-weight:700; font-size:13px; color:var(--black); word-break:break-word; }
+
+/* small file link styling */
+.op-attachments a { display:inline-block; margin-right:6px; padding:6px 8px; border-radius:8px; border:1px solid rgba(15,23,42,0.06); text-decoration:none; font-weight:700; color:#0f172a; background:#fbfbfb; }
+
+/* hover card (small tooltip) */
+#opRowPreview {
+  position: fixed;
+  pointer-events: none;
+  z-index:1500;
+  min-width:240px;
+  max-width:320px;
+  background:#fff;
+  border-radius:10px;
+  padding:10px;
+  box-shadow: 0 12px 30px rgba(6,12,24,0.14);
+  border:1px solid rgba(15,23,42,0.06);
+  display:none;
+  font-size:13px;
+}
+#opRowPreview .line { color:var(--muted); margin-bottom:6px; }
+#opRowPreview .b { font-weight:800; color:var(--black); }
+
+@media (max-width:980px){
+  #opDetailPanel { right: 12px; left: 12px; width: auto; max-width: none; top: 92px; }
+}

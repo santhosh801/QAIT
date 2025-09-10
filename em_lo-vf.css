@@ -120,14 +120,15 @@ textarea {
 
 /* Login (Employee Login Form) */
 .login {
-  height: 2280px;
+  height: 1280px;
+  margin-top: 30px;
   background: #eee;
   border-radius: 50% / 6%;
   border: 4px solid black;
   transform: translateY(-90px);
   transition: .8s ease-in-out;
   font-size: 20px;
-  padding-top: 10px;
+  padding-top: 0px;
 }
 
 .login label {
