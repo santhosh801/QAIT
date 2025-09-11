@@ -1,5 +1,5 @@
 <?php
-// employee_mail_handler.php
+// employee_mailing_handler.php this is route file from the em_verfi.php
 session_start();
 require __DIR__ . '/vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;

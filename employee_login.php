@@ -1,4 +1,5 @@
 <?php
+// employee_login is used to send the login request page for em_verfi  dontdelete .php
 session_start();
 
 $mysqli = new mysqli('localhost','root','','qmit_system');

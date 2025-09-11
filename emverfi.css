@@ -492,3 +492,79 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 @media (max-width:980px){
   #opDetailPanel { right: 12px; left: 12px; width: auto; max-width: none; top: 92px; }
 }
+/* Search bar: sleek 2px border + glow on focus + pulse animation */
+.header-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  --search-bg: #fff;
+  --search-border: rgba(15,23,42,0.12);
+  --accent: #3BAFDA;
+  --glow: 0 8px 28px rgba(59,175,218,0.18);
+  --transition-time: 220ms;
+}
+
+.header-search input[type="search"] {
+  flex: 1 1 auto;
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 2px solid var(--search-border);
+  border-radius: 10px;
+  background: var(--search-bg);
+  font-size: 14px;
+  transition: border-color var(--transition-time) cubic-bezier(.2,.9,.2,1),
+              box-shadow var(--transition-time) cubic-bezier(.2,.9,.2,1),
+              transform 180ms ease;
+  outline: none;
+  box-shadow: none;
+}
+
+/* focused state (keyboard/hover) */
+.header-search input[type="search"]:focus,
+.header-search.search-focused input[type="search"] {
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+  transform: translateY(-1px);
+}
+
+/* subtle pulse while "searching" */
+@keyframes search-pulse {
+  0% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
+  50% { box-shadow: 0 12px 32px rgba(59,175,218,0.22); transform: translateY(-2px); }
+  100% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
+}
+
+.header-search.searching input[type="search"] {
+  animation: search-pulse 700ms ease-in-out 1;
+}
+
+/* Search button style - consistent look */
+.header-search button#topSearchBtn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease;
+  box-shadow: 0 6px 16px rgba(59,175,218,0.12);
+}
+.header-search button#topSearchBtn:active { transform: translateY(1px); opacity: .95; }
+
+/* Export link should sit visually with the search */
+.header-search a.sidebar-export {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: #fafafa;
+  text-decoration: none;
+  color: #111827;
+  font-size: 13px;
+}
+
+/* Responsive tiny screens */
+@media (max-width:640px){
+  .header-search { gap:6px; }
+  .header-search a.sidebar-export { display:none; }
+}

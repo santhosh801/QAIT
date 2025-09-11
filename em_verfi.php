@@ -713,7 +713,7 @@ $result = $mysqli->query($sql_main);
     }
     function saveReview(id) {
       const el = document.getElementById('review-'+id); if (!el) return;
-      $.post('update_review.php', { id: id, notes: el.value }, function(res){ if (res && res.success) toast(res.message || 'Saved'); else toast('Save failed'); }, 'json').fail(function(){ toast('Request failed'); });
+      $.post('update_review.php', { id: id, review_notes: el.value }, function(res){ if (res && res.success) toast(res.message || 'Saved'); else toast('Save failed'); }, 'json').fail(function(){ toast('Request failed'); });
     }
     function makeRowEditable(id) {
       const tr = document.getElementById('row-'+id);
@@ -1069,16 +1069,25 @@ $result = $mysqli->query($sql_main);
   actions.style = 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;';
   const safeId = opId ? parseInt(opId,10) : null;
 
-  // helper to create button html (safe no-ops if id missing)
-  function mkBtn(label, onClickJs, cls='small-btn') {
-    const btn = document.createElement('button');
-    btn.className = cls;
-    btn.type = 'button';
-    btn.textContent = label;
-    if (safeId) btn.addEventListener('click', ()=>{ (new Function(onClickJs))(); });
-    else btn.disabled = true;
-    return btn;
+function mkBtn(label, onClick, cls='small-btn') {
+  const btn = document.createElement('button');
+  btn.className = cls;
+  btn.type = 'button';
+  btn.textContent = label;
+
+  if (!safeId) { btn.disabled = true; return btn; }
+
+  if (typeof onClick === 'function') {
+    btn.addEventListener('click', onClick);
+  } else if (typeof onClick === 'string') {
+    // keep backward compatibility for code that passes JS-as-string
+    btn.addEventListener('click', function(){ (new Function(onClick))(); });
+  } else {
+    console.warn('mkBtn: unsupported onClick type', onClick);
   }
+  return btn;
+}
+
 
   // Accept / Pending / Reject
   actions.appendChild(mkBtn('Accept', `updateStatus(${safeId},'accepted')`));
@@ -1147,23 +1156,67 @@ $result = $mysqli->query($sql_main);
   panel.querySelector('.tabs button[data-stage="basic"]').click();
 }
 
+// Unified save functions — drop-in replacement (paste once)
+function toast(msg){ alert(msg); } // keep your existing toast if you have one
+
+function saveReview(id) {
+  const el = document.getElementById('review-' + id);
+  if (!el) { console.warn('no review input for', id); return; }
+  const notes = el.value;
+  $.ajax({
+    url: 'update_review.php',
+    method: 'POST',
+    dataType: 'json',
+    data: { id: id, review_notes: notes },
+    success: function(res) {
+      console.log('update_review response', res);
+      if (res && res.success) {
+        // reflect changed value in UI (if needed)
+        if (document.getElementById('review-' + id)) document.getElementById('review-' + id).value = notes;
+        toast(res.message || 'Saved');
+      } else {
+        toast('Save failed: ' + (res && res.message ? res.message : 'unknown'));
+        console.warn('saveReview failed', res);
+      }
+    },
+    error: function(xhr, status, err) {
+      console.error('Request failed', status, err, xhr && xhr.responseText);
+      toast('Request failed — check console');
+    }
+  });
+}
+
 function panelSaveReview(id) {
   if (!id) { toast('Missing id'); return; }
   const ta = document.getElementById('panel-review');
   const notes = ta ? ta.value.trim() : '';
-  // optimistic UX
   toast('Saving review…');
-  $.post('update_review.php', { id: id, notes: notes }, function(res){
-    if (res && res.success) {
-      // update the main table input if present
-      const tableInput = document.getElementById('review-' + id);
-      if (tableInput) tableInput.value = notes;
-      toast(res.message || 'Review saved');
-    } else {
-      toast((res && res.message) ? res.message : 'Save failed');
+  $.ajax({
+    url: 'update_review.php',
+    method: 'POST',
+    dataType: 'json',
+    data: { id: id, review_notes: notes },
+    success: function(res) {
+      console.log('panelSaveReview response', res);
+      if (res && res.success) {
+        // update table input if present
+        const tableInput = document.getElementById('review-' + id);
+        if (tableInput) tableInput.value = notes;
+        toast(res.message || 'Review saved');
+      } else {
+        toast('Save failed: ' + (res && res.message ? res.message : 'unknown'));
+        console.warn('panelSaveReview failed', res);
+      }
+    },
+    error: function(xhr, status, err) {
+      console.error('panel save failed', xhr, status, err);
+      toast('Request failed — check console');
     }
-  }, 'json').fail(function(){ toast('Request failed'); });
+  });
 }
+
+window.saveReview = saveReview;
+window.panelSaveReview = panelSaveReview;
 
   /* Safe text -> HTML helper */
   function escapeHTML(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
@@ -1270,6 +1323,8 @@ function panelSaveReview(id) {
   }, true);
 
 })();
+
+
 </script>
 
 </body>

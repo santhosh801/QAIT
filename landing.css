@@ -1,4 +1,10 @@
 /* ---------- landing.css — two-color Gold & Black theme + Vidaloka headings ---------- */
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Vidaloka&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Vidaloka&display=swap');
+
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 /* Theme variables (two-color) */
 :root{
