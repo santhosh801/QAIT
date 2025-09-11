@@ -48,7 +48,7 @@ try {
     $mail->isHTML(true);
     $mail->Subject = 'New Employee Submission';
     $mail->Body = "<h3>New Employee Submission</h3>
-                   <p>Name: $employee_name<br>Email: $employee_email<br>Aadhaar: $aadhaar_id<br>Unique ID: $unique_id<br>Mobile: $mobile_number</p>
+                   <p>Name: $employee_name<br>Email: $employee_email<br>Aadhaar: $aadhaar_id<br>EMPLOYEE ID: $unique_id<br>Mobile: $mobile_number</p>
                    <p><a href='$operator_link'>View Details</a></p>";
     $mail->send();
     $_SESSION['mail_success'] = 'Details sent to operator!';

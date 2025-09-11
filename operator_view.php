@@ -332,10 +332,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Consent Form</label>
             <input type="file" name="consent_file" accept=".jpg,.jpeg,.png,.pdf" required>
 
-            <label>GPS Selfie</label>
+            <label>HOME GPS Selfie</label>
             <input type="file" name="gps_selfie_file" accept=".jpg,.jpeg,.png,.pdf" required>
 
-            <label>Permanent Address Proof</label>
+            <label>PASSBOOK</label>
             <input type="file" name="permanent_address_proof_file" accept=".jpg,.jpeg,.png,.pdf" required>
 
             <label>Ration Card Number</label>

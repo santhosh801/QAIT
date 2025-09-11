@@ -165,6 +165,17 @@ $result = $mysqli->query($sql_main);
   <!-- Chart.js + datalabels -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+  <style>
+    /* tiny styles for new doc UI */
+    .op-attachments .doc-row { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
+    .op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); }
+    .op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:6px; }
+    .op-attachments .doc-actions { display:inline-flex; gap:6px; margin-top:6px; }
+    .doc-reject-reason .input-compact { width:60%; margin-right:8px; display:inline-block; }
+    .small-btn { padding:6px 8px; font-size:13px; border-radius:6px; border:1px solid rgba(0,0,0,0.06); background:#fff; cursor:pointer; }
+    .small-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  </style>
 </head>
 <body>
   <header class="qit-header">
@@ -195,19 +206,19 @@ $result = $mysqli->query($sql_main);
       <div class="k-card sidebar-inner">
         <div class="k-card-title">Operator</div>
         <nav class="sidebar-nav">
-          <a href="#" data-section="operatorStatusSection" class="is-active"><span class="nav-label">Operator Status</span><span class="nav-icon">📊</span></a>
-          <a href="#" data-section="operatorOverviewSection" data-filter=""><span class="nav-label">OP DATA (All)</span><span class="nav-icon">📋</span></a>
+          <a href="#" data-section="operatorStatusSection" class="is-active"><span class="nav-label">Operator Status</span><span class="nav-icon"></span></a>
+          <a href="#" data-section="operatorOverviewSection" data-filter=""><span class="nav-label">OP DATA (All)</span><span class="nav-icon"></span></a>
 
           <div class="k-subtitle">Working</div>
-          <a href="#" data-section="operatorOverviewSection" data-filter="working"><span class="nav-label" id="sss">Working</span><span class="nav-icon">🟢</span><span class="badge"><?= $operatorWorkingCount ?></span></a>
-          <a href="#" data-section="operatorOverviewSection" data-filter="pending"><span class="nav-label">Pending</span><span class="nav-icon">⏳</span><span class="badge"><?= $operatorPendingCount ?></span></a>
-          <a href="#" data-section="operatorOverviewSection" data-filter="accepted"><span class="nav-label">Accepted</span><span class="nav-icon">✅</span><span class="badge"><?= $operatorFilledCount ?></span></a>
+          <a href="#" data-section="operatorOverviewSection" data-filter="working"><span class="nav-label" id="sss">Working</span><span class="nav-icon"></span><span class="badge"><?= $operatorWorkingCount ?></span></a>
+          <a href="#" data-section="operatorOverviewSection" data-filter="pending"><span class="nav-label">Pending</span><span class="nav-icon"></span><span class="badge"><?= $operatorPendingCount ?></span></a>
+          <a href="#" data-section="operatorOverviewSection" data-filter="accepted"><span class="nav-label">Accepted</span><span class="nav-icon"></span><span class="badge"><?= $operatorFilledCount ?></span></a>
 
           <div class="k-subtitle">Not Working</div>
-          <a href="#" data-section="operatorOverviewSection" data-filter="not working"><span class="nav-label">Not Working</span><span class="nav-icon">🔴</span><span class="badge"><?= $operatorNotWorkingCount ?></span></a>
+          <a href="#" data-section="operatorOverviewSection" data-filter="not working"><span class="nav-label">Not Working</span><span class="nav-icon"></span><span class="badge"><?= $operatorNotWorkingCount ?></span></a>
 
           <div class="k-sb-footer">
-            <a href="#" data-section="operatorMailingSection"><span class="nav-label">Operator Mailing</span><span class="nav-icon">✉️</span></a>
+            <a href="#" data-section="operatorMailingSection"><span class="nav-label">Operator Mailing</span><span class="nav-icon"></span></a>
           </div>
         </nav>
       </div>
@@ -228,25 +239,25 @@ $result = $mysqli->query($sql_main);
         <section id="operatorStatusSection" class="k-section">
           <div class="status-row">
             <div class="k-card status-card dash-colored dash-green">
-              <div class="dash-icon">📧</div>
+              <div class="dash-icon"></div>
               <div class="k-value"><?= $employeeMailCount ?></div>
               <div class="k-card-sub">Employee Send Mail</div>
             </div>
 
             <div class="k-card status-card dash-colored dash-orange">
-              <div class="dash-icon">⏳</div>
+              <div class="dash-icon"></div>
               <div class="k-value"><?= $operatorPendingCount ?></div>
               <div class="k-card-sub">Pending</div>
             </div>
 
             <div class="k-card status-card dash-colored dash-blue">
-              <div class="dash-icon">✅</div>
+              <div class="dash-icon"></div>
               <div class="k-value"><?= $operatorFilledCount ?></div>
               <div class="k-card-sub">Accepted</div>
             </div>
 
             <div class="k-card status-card dash-colored dash-red">
-              <div class="dash-icon">❌</div>
+              <div class="dash-icon"></div>
               <div class="k-value"><?= $operatorRejectedCount ?></div>
               <div class="k-card-sub">non</div>
             </div>
@@ -260,16 +271,6 @@ $result = $mysqli->query($sql_main);
                 <div class="clock-ring"></div>
                 <div class="clock-meta" id="statusClockMeta"></div>
               </div>
-
-             <?php /* center-hub-cards removed per request — original lines commented out
-<div class="center-hub-cards">
-  <div class="hub-card"><div class="hub-num"><?= $operatorWorkingCount ?></div><div class="hub-label">Working</div></div>
-  <div class="hub-card"><div class="hub-num"><?= $operatorPendingCount ?></div><div class="hub-label">Pending</div></div>
-  <div class="hub-card"><div class="hub-num"><?= $operatorFilledCount ?></div><div class="hub-label">Accepted</div></div>
-  <div class="hub-card"><div class="hub-num"><?= $operatorNotWorkingCount ?></div><div class="hub-label">Not Working</div></div>
-  <div class="hub-card"><div class="hub-num"><?= $total_rows ?></div><div class="hub-label">Total</div></div>
-</div>
-*/ ?>
 
             </div>
 
@@ -294,16 +295,6 @@ $result = $mysqli->query($sql_main);
 
         <!-- Overview (OP DATA) - no email chart; table loads into placeholder -->
         <section id="operatorOverviewSection" class="k-section hidden">
-          <?php /* overview-top-cards removed per request — original lines commented out
-<div class="k-card overview-top-cards">
-  <div class="overview-card"><div class="card-num"><?= $operatorPendingCount ?></div><div class="card-label">Pending</div></div>
-  <div class="overview-card"><div class="card-num"><?= $operatorFilledCount ?></div><div class="card-label">Accepted</div></div>
-  <div class="overview-card"><div class="card-num"><?= $operatorRejectedCount ?></div><div class="card-label">Rejected</div></div>
-  <div class="overview-card"><div class="card-num"><?= $total_rows ?></div><div class="card-label">Total Operators</div></div>
-</div>
-*/ ?>
-
-
           <div id="overviewTablePlaceholder" style="margin-top:12px"></div>
         </section>
 
@@ -314,7 +305,7 @@ $result = $mysqli->query($sql_main);
               <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
               <div class="mail-row"><input type="text" name="employee_name" placeholder="Employee Name" required><input type="email" name="employee_email" placeholder="Employee Email" required></div>
               <div class="mail-row"><input type="email" name="operator_email" placeholder="Operator Email" required><input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required></div>
-              <div class="mail-row"><input type="text" name="unique_id" placeholder="Unique ID" required><input type="text" name="mobile_number" placeholder="Mobile Number" required></div>
+              <div class="mail-row"><input type="text" name="unique_id" placeholder="EMPLOYEE ID" required><input type="text" name="mobile_number" placeholder="Mobile Number" required></div>
               <button class="btn-effect3" type="submit">Submit</button>
             </form>
           </div>
@@ -377,6 +368,7 @@ $result = $mysqli->query($sql_main);
   </div>
 
   <script>
+    
 (function(){
   // run after your calendar builder exists
   const calWrap = document.querySelector('.status-center .calendar-wrap');
@@ -986,14 +978,19 @@ $result = $mysqli->query($sql_main);
 
     // events: close and tabs
     panel.querySelector('.close').addEventListener('click', ()=> hidePanel());
-    panel.querySelectorAll('.tabs button').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        const stage = btn.getAttribute('data-stage');
-        panel.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        panel.querySelectorAll('.stage').forEach(s => s.classList.toggle('active', s.getAttribute('data-stage')===stage));
-      });
-    });
+   panel.querySelectorAll('.tabs button').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    const stage = btn.getAttribute('data-stage');
+    // set active class on tabs
+    panel.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    // show the right stage content
+    panel.querySelectorAll('.stage').forEach(s => s.classList.toggle('active', s.getAttribute('data-stage')===stage));
+    // persist choice so future renderIntoPanel() calls restore this tab
+    try { panel.dataset.activeStage = stage; } catch(e) { /* ignore if not settable */ }
+  });
+});
+
 
     // close on ESC
     document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') hidePanel(); });
@@ -1028,6 +1025,7 @@ $result = $mysqli->query($sql_main);
       ['Email','email'],
       ['Branch','branch_name'],
       ['Joining','joining_date'],
+      ['Aadhaar','aadhar_number'],
       ['PAN','pan_number'],
       ['Voter ID','voter_id_no']
   ];
@@ -1045,7 +1043,7 @@ $result = $mysqli->query($sql_main);
       ['Father','father_name'],
       ['DOB','dob'],
       ['Gender','gender'],
-      ['Aadhaar','aadhar_number'],
+      
       ['Current HNo / Street','current_hno_street'],
       ['Current Town','current_village_town'],
       ['Current Pincode','current_pincode'],
@@ -1129,16 +1127,54 @@ function mkBtn(label, onClick, cls='small-btn') {
     docs.appendChild(row);
   });
 
-  // attachments: detect keys ending with _file
+  // --- Enhanced attachments UI (per-doc accept/reject/replace + Mailer) ---
   const attWrap = document.createElement('div'); attWrap.className='op-attachments';
   let anyAttach=false;
-  Object.keys(data).forEach(k=>{
-    if(k.endsWith('_file') && data[k]) {
-      anyAttach=true;
-      const a=document.createElement('a'); a.href=data[k]; a.target='_blank'; a.textContent = prettifyFilename(data[k]); a.style.marginRight='6px';
-      attWrap.appendChild(a);
-    }
+
+  // list of doc keys to manage (update this list if your DB has more _file cols)
+  const docKeys = [
+    'aadhar_file','pan_file','voter_file','ration_file','gps_selfie_file',
+    'consent_file','police_verification_file','edu_10th_file','edu_12th_file','edu_college_file'
+  ];
+
+  // label map for human friendly names
+  const labelMap = {
+    'aadhar_file':'Aadhaar Card','pan_file':'PAN Card','voter_file':'Voter ID','ration_file':'Ration Card',
+    'gps_selfie_file':'GPS Selfie','consent_file':'Consent','police_verification_file':'Police Verification',
+    'edu_10th_file':'10th Certificate','edu_12th_file':'12th Certificate','edu_college_file':'College Certificate'
+  };
+
+  function mkDocRow(k, url) {
+    const lbl = labelMap[k] || k;
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    const viewHtml = url ? `<a href="${escapeHTML(url)}" target="_blank">${prettifyFilename(url)}</a>` : '—';
+    row.innerHTML = `
+      <div class="k">${lbl}</div>
+      <div class="v">
+        <div><span class="doc-link">${viewHtml}</span></div>
+        <div class="doc-actions">
+          <button class="small-btn btn-accept"  data-doc="${k}">Accept</button>
+          <button class="small-btn btn-reject"  data-doc="${k}">Reject</button>
+          <label class="small-btn btn-upload"  style="cursor:pointer;">Replace<input type="file" accept=".pdf,image/*" style="display:none" data-doc="${k}"></label>
+        </div>
+        <div class="doc-reject-reason" style="display:none;margin-top:6px;">
+          <input class="input-compact reason-input" placeholder="Reason for rejection" data-doc="${k}" style="  margin-right:18px ">
+          <button class="small-btn btn-save-reason" data-doc="${k}">Save</button>
+          <button class="small-btn btn-cancel-reason" data-doc="${k}">Cancel</button>
+        </div>
+      </div>
+    `;
+    return row;
+  }
+
+  docKeys.forEach(k=>{
+    const val = data[k] || '';
+    if (val) anyAttach = true;
+    const row = mkDocRow(k, val);
+    attWrap.appendChild(row);
   });
+
   if(!anyAttach) {
     const row = document.createElement('div'); row.className='op-row';
     row.innerHTML = `<div class="k">Attachments</div><div class="v">—</div>`;
@@ -1151,9 +1187,72 @@ function mkBtn(label, onClick, cls='small-btn') {
     docs.appendChild(row);
   }
 
-  // show panel and default tab
-  showPanel();
-  panel.querySelector('.tabs button[data-stage="basic"]').click();
+  // Mailer button
+  const mailWrap = document.createElement('div');
+  mailWrap.style = 'margin-top:12px';
+  mailWrap.innerHTML = `<button class="small-btn" id="panel-mailer">Send Rejection Mail</button>`;
+  docs.appendChild(mailWrap);
+
+  // wire events for accept/reject/replace
+  attWrap.querySelectorAll('.btn-accept').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const doc = this.dataset.doc;
+      if (!confirm('Mark this document as ACCEPTED?')) return;
+      docAction(opId, doc, 'accept', '');
+    });
+  });
+
+  attWrap.querySelectorAll('.btn-reject').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const p = this.closest('.v');
+      const reasonBox = p.querySelector('.doc-reject-reason');
+      if (reasonBox) reasonBox.style.display = 'block';
+    });
+  });
+
+  attWrap.querySelectorAll('.btn-cancel-reason').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      this.closest('.doc-reject-reason').style.display = 'none';
+    });
+  });
+
+  attWrap.querySelectorAll('.btn-save-reason').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const doc = this.dataset.doc;
+      const p = this.closest('.doc-reject-reason');
+      const input = p.querySelector('.reason-input');
+      const reason = (input && input.value.trim()) || '';
+      if (!reason) { alert('Please enter reason'); return; }
+      docAction(opId, doc, 'reject', reason);
+    });
+  });
+
+  attWrap.querySelectorAll('input[type=file]').forEach(fi=>{
+    fi.addEventListener('change', function(){
+      const doc = this.dataset.doc;
+      if (!this.files || !this.files[0]) return;
+      if (!confirm('Upload replacement file?')) { this.value=''; return; }
+      uploadDoc(opId, doc, this);
+    });
+  });
+
+  mailWrap.querySelector('#panel-mailer').addEventListener('click', function(){
+    if (!confirm('Send rejection mail to operator listing rejected documents?')) return;
+    sendRejectionMail(opId);
+  });
+
+ // show panel and restore previously selected tab (fall back to 'basic')
+showPanel();
+let restore = panel.dataset.activeStage || 'basic';
+const restoreBtn = panel.querySelector('.tabs button[data-stage="'+restore+'"]');
+if (restoreBtn) {
+  restoreBtn.click();
+} else {
+  // fallback to basic if stored value missing
+  const b = panel.querySelector('.tabs button[data-stage="basic"]');
+  if (b) b.click();
+}
+
 }
 
 // Unified save functions — drop-in replacement (paste once)
@@ -1218,12 +1317,12 @@ function panelSaveReview(id) {
 window.saveReview = saveReview;
 window.panelSaveReview = panelSaveReview;
 
-  /* Safe text -> HTML helper */
-  function escapeHTML(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+/* Safe text -> HTML helper */
+function escapeHTML(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"]/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
 
-  function prettifyFilename(u){ try{ return u.split('/').pop().split('?')[0]; }catch(e){ return 'file'; } }
+function prettifyFilename(u){ try{ return u.split('/').pop().split('?')[0]; }catch(e){ return 'file'; } }
 
-  function gatherRowData(tr){
+function gatherRowData(tr){
   const data = {};
   tr.querySelectorAll('td[data-col]').forEach(td=>{
     const key = td.getAttribute('data-col');
@@ -1244,83 +1343,129 @@ window.panelSaveReview = panelSaveReview;
   return data;
 }
 
+/* ---- New helper JS functions for doc actions, uploads, mailer ---- */
 
-  /* Hover preview behaviour (small tooltip near pointer) */
-  let previewTimer = null;
-  const preview = document.getElementById ? null : null; // ensure linter ok
-  function showPreviewAt(x,y, name, extra){
+function docAction(opId, docKey, action, reason) {
+  $.post('update_doc_review.php', { id: opId, doc_key: docKey, action: action, reason: reason }, function(res){
+    if (res && res.success) {
+      alert(res.message || 'Updated');
+      // refresh panel if open
+      const trElem = document.getElementById('row-' + opId);
+      if (trElem) renderIntoPanel(gatherRowData(trElem));
+    } else {
+      alert(res && res.message ? res.message : 'Error');
+    }
+  }, 'json').fail(function(){ alert('Request failed'); });
+}
+
+function uploadDoc(opId, docKey, fileInputEl) {
+  const f = fileInputEl.files[0];
+  const fd = new FormData();
+  fd.append('id', opId);
+  fd.append('doc_key', docKey);
+  fd.append('file', f);
+  $.ajax({
+    url: 'upload_doc.php',
+    method: 'POST',
+    data: fd,
+    processData: false,
+    contentType: false,
+    dataType: 'json',
+    success: function(res) {
+      if (res && res.success) {
+        alert('Uploaded');
+        const trElem = document.getElementById('row-' + opId);
+        if (trElem) renderIntoPanel(gatherRowData(trElem));
+        else location.reload();
+      } else alert(res && res.message ? res.message : 'Upload failed');
+    },
+    error: function(){ alert('Upload request failed'); }
+  });
+}
+
+function sendRejectionMail(opId) {
+  $.post('send_rejection_mail.php', { id: opId }, function(res){
+    if (res && res.success) alert(res.message || 'Mail sent');
+    else alert(res && res.message ? res.message : 'Mail failed');
+  }, 'json').fail(function(){ alert('Mail request failed'); });
+}
+
+/* Hover preview behaviour (small tooltip near pointer) */
+let previewTimer = null;
+const preview = document.getElementById ? null : null; // ensure linter ok
+function showPreviewAt(x,y, name, extra){
+  createUI();
+  const p = document.getElementById('opRowPreview');
+  if(!p) return;
+  p.style.left = (x+14)+'px';
+  p.style.top = (y+14)+'px';
+  p.querySelector('.preview-name').textContent = name || '—';
+  p.querySelector('.preview-sub').textContent = extra || '';
+  p.style.display = 'block';
+}
+function hidePreview(){
+  const p = document.getElementById('opRowPreview');
+  if(p) p.style.display = 'none';
+}
+
+/* Event delegation: clicks on any row with id row-<id> open details */
+document.addEventListener('click', function(e){
+  // ignore clicks inside the panel
+  if (e.target.closest && e.target.closest('#opDetailPanel')) return;
+  const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
+  if(tr){
+    const data = gatherRowData(tr);
+    renderIntoPanel(data);
+  }
+}, false);
+
+/* Hover preview using mouseover/mouseout (mouseenter doesn't bubble) */
+document.addEventListener('mouseover', function(e){
+  const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
+  if(!tr) return;
+  // prevent if target is within panel or input etc.
+  previewTimer = setTimeout(()=>{
+    const name = (tr.querySelector('td[data-col="operator_full_name"]')||{textContent:''}).textContent.trim();
+    const idcell = (tr.querySelector('td[data-col="operator_id"]')||{textContent:''}).textContent.trim();
+    const phone = (tr.querySelector('td[data-col="operator_contact_no"]')||{textContent:''}).textContent.trim();
+    const htmlExtra = `${idcell} · ${phone}`;
+    // position near mouse if available else near row bounding box
+    const rc = tr.getBoundingClientRect();
+    const x = (window._lastMouseX || rc.right);
+    const y = (window._lastMouseY || rc.top);
     createUI();
     const p = document.getElementById('opRowPreview');
-    if(!p) return;
-    p.style.left = (x+14)+'px';
-    p.style.top = (y+14)+'px';
-    p.querySelector('.preview-name').textContent = name || '—';
-    p.querySelector('.preview-sub').textContent = extra || '';
-    p.style.display = 'block';
-  }
-  function hidePreview(){
-    const p = document.getElementById('opRowPreview');
-    if(p) p.style.display = 'none';
-  }
-
-  /* Event delegation: clicks on any row with id row-<id> open details */
-  document.addEventListener('click', function(e){
-    // ignore clicks inside the panel
-    if (e.target.closest && e.target.closest('#opDetailPanel')) return;
-    const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
-    if(tr){
-      const data = gatherRowData(tr);
-      renderIntoPanel(data);
+    if(p){
+      p.querySelector('.preview-name').textContent = name || '—';
+      p.querySelector('.preview-sub').textContent = htmlExtra;
+      p.style.left = (x + 14) + 'px';
+      p.style.top = (y + 14) + 'px';
+      p.style.display = 'block';
     }
-  }, false);
+  }, 220); // small delay so quick mouse move doesn't pop everything
+}, false);
 
-  /* Hover preview using mouseover/mouseout (mouseenter doesn't bubble) */
-  document.addEventListener('mouseover', function(e){
-    const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
-    if(!tr) return;
-    // prevent if target is within panel or input etc.
-    previewTimer = setTimeout(()=>{
-      const name = (tr.querySelector('td[data-col="operator_full_name"]')||{textContent:''}).textContent.trim();
-      const idcell = (tr.querySelector('td[data-col="operator_id"]')||{textContent:''}).textContent.trim();
-      const phone = (tr.querySelector('td[data-col="operator_contact_no"]')||{textContent:''}).textContent.trim();
-      const htmlExtra = `${idcell} · ${phone}`;
-      // position near mouse if available else near row bounding box
-      const rc = tr.getBoundingClientRect();
-      const x = (window._lastMouseX || rc.right);
-      const y = (window._lastMouseY || rc.top);
-      createUI();
-      const p = document.getElementById('opRowPreview');
-      if(p){
-        p.querySelector('.preview-name').textContent = name || '—';
-        p.querySelector('.preview-sub').textContent = htmlExtra;
-        p.style.left = (x + 14) + 'px';
-        p.style.top = (y + 14) + 'px';
-        p.style.display = 'block';
-      }
-    }, 220); // small delay so quick mouse move doesn't pop everything
-  }, false);
+document.addEventListener('mouseout', function(e){
+  const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
+  if(previewTimer){ clearTimeout(previewTimer); previewTimer = null; }
+  hidePreview();
+}, false);
 
-  document.addEventListener('mouseout', function(e){
-    const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
-    if(previewTimer){ clearTimeout(previewTimer); previewTimer = null; }
-    hidePreview();
-  }, false);
+// track mouse position for preview placement
+document.addEventListener('mousemove', function(e){ window._lastMouseX = e.clientX; window._lastMouseY = e.clientY; });
 
-  // track mouse position for preview placement
-  document.addEventListener('mousemove', function(e){ window._lastMouseX = e.clientX; window._lastMouseY = e.clientY; });
+// ensure UI exists if user clicks programmatically
+createUI();
 
-  // ensure UI exists if user clicks programmatically
-  createUI();
-
-  // Make sure panel hides if user clicks outside (but not when clicking table rows)
-  document.addEventListener('click', function(e){
-    const panel = document.getElementById('opDetailPanel');
-    if (!panel) return;
-    if (panel.classList.contains('visible')) {
-      const clickedInside = e.target.closest && (e.target.closest('#opDetailPanel') || e.target.closest('tr[id^="row-"]'));
-      if (!clickedInside) hidePanel();
-    }
-  }, true);
+// Make sure panel hides if user clicks outside (but not when clicking table rows)
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('opDetailPanel');
+  if (!panel) return;
+  if (panel.classList.contains('visible')) {
+    const clickedInside = e.target.closest && (e.target.closest('#opDetailPanel') || e.target.closest('tr[id^="row-"]'));
+    if (!clickedInside) hidePanel();
+  }
+}, true);
 
 })();
 
