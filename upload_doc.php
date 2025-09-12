@@ -2,6 +2,8 @@
 // upload_doc.php
 session_start();
 
+header('Content-Type: application/json; charset=utf-8');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); echo json_encode(['success'=>false,'message'=>'Method not allowed']); exit;
 }
@@ -47,8 +49,27 @@ if (!move_uploaded_file($file['tmp_name'], $dest)) {
 // create web-accessible path relative to project root (adjust if you store uploads outside webroot)
 $webPath = 'uploads/operatordoc/' . $id . '/' . $filename;
 
-// update DB column
-$stmt = $mysqli->prepare("UPDATE operatordoc SET $doc_key = ?, last_modified_at = NOW() WHERE id = ?");
+// Security: validate doc_key against allowlist to avoid SQL injection via column name
+$allowedDocKeys = [
+  'aadhar_file','pan_file','voter_file','ration_file','consent_file','gps_selfie_file',
+  'police_verification_file','permanent_address_proof_file','parent_aadhar_file',
+  'nseit_cert_file','self_declaration_file','non_disclosure_file','edu_10th_file',
+  'edu_12th_file','edu_college_file'
+];
+
+if (!in_array($doc_key, $allowedDocKeys, true)) {
+    // remove just-uploaded file to avoid orphan
+    @unlink($dest);
+    echo json_encode(['success'=>false,'message'=>'Invalid document key']); exit;
+}
+
+// update DB column (column name inserted only after validation)
+$col = $doc_key; // safe because validated
+$sql = "UPDATE operatordoc SET `$col` = ?, last_modified_at = NOW() WHERE id = ?";
+$stmt = $mysqli->prepare($sql);
+if (!$stmt) {
+    echo json_encode(['success'=>false,'message'=>'DB prepare failed']); exit;
+}
 $stmt->bind_param('si', $webPath, $id);
 $ok = $stmt->execute();
 $stmt->close();

@@ -3,13 +3,11 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-// quick auth guard (adjust if your app uses different check)
 if (!isset($_SESSION['employee_email'])) {
     http_response_code(401);
     echo json_encode(['success'=>false,'message'=>'Not authenticated']);
     exit;
 }
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success'=>false,'message'=>'Method not allowed']);
@@ -19,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $mysqli = new mysqli('localhost','root','','qmit_system');
 if ($mysqli->connect_errno) {
     http_response_code(500);
-    echo json_encode(['success'=>false,'message'=>'DB connection error: '.$mysqli->connect_error]);
+    echo json_encode(['success'=>false,'message'=>'DB connection error']);
     exit;
 }
 
@@ -35,12 +33,21 @@ if (!$id || !$doc_key || !in_array($action, ['accept','reject'])) {
 
 // label map (keep in sync)
 $labels = [
-  'aadhar_file'=>'Aadhaar Card','pan_file'=>'PAN Card','voter_file'=>'Voter ID',
-  'ration_file'=>'Ration Card','consent_file'=>'Consent','gps_selfie_file'=>'GPS Selfie',
-  'permanent_address_proof_file'=>'Permanent Address Proof','nseit_cert_file'=>'NSEIT Certificate',
-  'self_declaration_file'=>'Self Declaration','non_disclosure_file'=>'Non-Disclosure Agreement',
-  'police_verification_file'=>'Police Verification','parent_aadhar_file'=>"Parent's Aadhaar",
-  'edu_10th_file'=>'10th Certificate','edu_12th_file'=>'12th Certificate','edu_college_file'=>'College Certificate'
+  'aadhar_file' => 'Aadhaar Card',
+  'pan_file' => 'PAN Card',
+  'voter_file' => 'Voter ID',
+  'ration_file' => 'Ration Card',
+  'consent_file' => 'Consent',
+  'gps_selfie_file' => 'GPS Selfie',
+  'permanent_address_proof_file' => 'Permanent Address Proof',
+  'nseit_cert_file' => 'NSEIT Certificate',
+  'self_declaration_file' => 'Self Declaration',
+  'non_disclosure_file' => 'Non-Disclosure Agreement',
+  'police_verification_file' => 'Police Verification',
+  'parent_aadhar_file' => "Parent's Aadhaar",
+  'edu_10th_file' => '10th Certificate',
+  'edu_12th_file' => '12th Certificate',
+  'edu_college_file' => 'College Certificate'
 ];
 
 $label = $labels[$doc_key] ?? $doc_key;
@@ -69,6 +76,7 @@ function remove_doc_line($lines, $label) {
 }
 
 if ($action === 'accept') {
+    // Accept: remove any existing rejection line for this doc
     $lines = remove_doc_line($lines, $label);
     $newSummary = count($lines) ? implode("\n", $lines) : null;
     $stmt = $mysqli->prepare("UPDATE operatordoc SET rejection_summary = ?, last_modified_at = NOW() WHERE id = ?");
@@ -88,11 +96,12 @@ if ($action === 'reject') {
     $lines[] = $label . ': ' . $reason;
     $newSummary = implode("\n", $lines);
 
+    // Update rejection_summary and set status to 'pending' (so operator still considered not accepted)
     $stmt = $mysqli->prepare("UPDATE operatordoc SET rejection_summary = ?, last_modified_at = NOW(), status = 'pending' WHERE id = ?");
     $stmt->bind_param('si', $newSummary, $id);
     $ok = $stmt->execute();
     $stmt->close();
-    echo json_encode(['success'=>(bool)$ok,'message'=>'Document rejected']);
+    echo json_encode(['success'=>(bool)$ok,'message'=>'Document rejected (summary updated)']);
     exit;
 }
 

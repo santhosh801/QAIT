@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 // -----------------------------
 // AUTH
@@ -23,6 +23,10 @@ $limit  = 10;
 $page   = isset($_GET['page']) ? max(1,(int)$_GET['page']) : 1;
 $search = isset($_GET['search']) ? $mysqli->real_escape_string($_GET['search']) : '';
 $offset = ($page - 1) * $limit;
+
+// New: bank filter param (explicit separate param)
+$bank = isset($_GET['bank']) ? $mysqli->real_escape_string($_GET['bank']) : '';
+
 $filter = isset($_GET['filter']) ? $mysqli->real_escape_string($_GET['filter']) : '';
 
 $whereClauses = [];
@@ -31,12 +35,17 @@ if ($search !== '') {
     $whereClauses[] = "(operator_full_name LIKE '%$s%' OR email LIKE '%$s%' OR operator_id LIKE '%$s%')";
 }
 if ($filter !== '') {
-    if (in_array($filter, ['pending','accepted'])) {
+    if (in_array($filter, ['pending','accepted','rejected'])) {
         $whereClauses[] = "status = '" . $mysqli->real_escape_string($filter) . "'";
     } elseif (in_array($filter, ['working','not working'])) {
         $whereClauses[] = "work_status = '" . $mysqli->real_escape_string($filter) . "'";
     }
 }
+// New: apply bank filter if provided (exact match)
+if ($bank !== '') {
+    $whereClauses[] = "bank = '" . $mysqli->real_escape_string($bank) . "'";
+}
+
 $where = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
 // -----------------------------
@@ -53,7 +62,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     <div class="k-card table-fragment">
       <div class="table-actions">
         <div class="left"><span class="muted">Showing <?= (int)$total_rows ?> rows</span></div>
-        <div class="right"><a class="sidebar-export fragment-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?>">Export CSV</a></div>
+        <div class="right">
+          <a class="sidebar-export fragment-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
+        </div>
       </div>
 
       <div class="table-wrap auto-scroll-wrap">
@@ -90,7 +101,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                       echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
                       $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
                       echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
-                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"updateStatus({$id},'rejected')\">Reject</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
+                      // Added quick resubmit button
+                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"updateStatus({$id},'rejected')\">Reject</button><button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
                       echo "</tr>";
                   }
               } else {
@@ -168,13 +180,67 @@ $result = $mysqli->query($sql_main);
 
   <style>
     /* tiny styles for new doc UI */
-    .op-attachments .doc-row { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
-    .op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); }
-    .op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:6px; }
-    .op-attachments .doc-actions { display:inline-flex; gap:6px; margin-top:6px; }
-    .doc-reject-reason .input-compact { width:60%; margin-right:8px; display:inline-block; }
-    .small-btn { padding:6px 8px; font-size:13px; border-radius:6px; border:1px solid rgba(0,0,0,0.06); background:#fff; cursor:pointer; }
+    .op-attachments .doc-row { display:flex; gap:12px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
+    .op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); flex:0 0 180px; }
+    .op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:8px; }
+
+    /* doc-actions: grid keeps buttons tidy and responsive */
+    .op-attachments .doc-actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      align-items: center;
+      margin-top:6px;
+    }
+    @media (max-width: 720px) {
+      .op-attachments .doc-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .doc-reject-reason { display:none; margin-top:6px; gap:6px; align-items:center; }
+    .doc-reject-reason .reason-input { width:100%; max-width:420px; }
+
+    .small-btn { padding: 8px 10px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #fff; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap:6px; white-space: nowrap; transition: transform .06s ease, box-shadow .06s ease; }
+    .small-btn:active { transform: translateY(1px); }
     .small-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    .small-btn.btn-accept { background:#e6ffef; border-color:#b7f3c7; }
+    .small-btn.btn-reject { background:#fff2f2; border-color:#ffcccc; }
+    .small-btn.btn-upload { background:#f5f8ff; border-color:#dbe9ff; cursor:pointer; }
+    .small-btn.btn-download { background:#f7f7ff; border-color:#e2e2ff; }
+
+    /* actions bar in panel (Accept/Working/Edit/Save/Review) */
+    .op-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .op-actions .small-btn { min-width:120px; }
+
+    /* resubmission modal overlay */
+    .resubmit-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.48); display:flex; align-items:center; justify-content:center; z-index:99999; }
+    .resubmit-modal { background:#fff; padding:18px; border-radius:12px; width:720px; max-width:96%; box-shadow:0 24px 48px rgba(12,20,50,0.18); }
+    .resubmit-modal h3 { margin:0 0 12px 0; font-size:18px; }
+    .resubmit-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:340px; overflow:auto; padding:6px; border:1px dashed #eee; border-radius:8px; margin-bottom:12px; }
+    .resubmit-footer { display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:12px; }
+
+    /* work button row next to work status in table */
+    .btn-row { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+    .btn-row .small-btn { min-width:100px; padding:6px 10px; font-size:13px; }
+
+    /* table actions cell: make buttons align & wrap */
+    .col-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .col-actions .small-btn { min-width:90px; }
+
+    .file-link { color: #2b6cb0; text-decoration: underline; }
+
+    .op-row { display:flex; gap:12px; padding:6px 0; }
+    .op-row .k { width:180px; font-weight:700; color:#425066; }
+    .op-row .v { flex:1; word-break:break-word; }
+
+    /* basic responsive table tweaks */
+    .data-table td, .data-table th { padding:6px 8px; border-bottom:1px solid rgba(0,0,0,0.04); vertical-align:middle; }
+    .nowrap { white-space:nowrap; }
+
+    /* bank filter UI styles */
+    .filter-bar { display:flex; gap:10px; align-items:center; margin-left:18px; }
+    .filter-bar select { height:40px; padding:8px 12px; border-radius:4px; border:none; background:#ffeba7; color:#102770; font-weight:500; box-shadow:0 12px 35px rgba(255,235,167,.15); }
+    .filter-bar .btn { height:40px; padding:8px 12px; border-radius:4px; border:none; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -186,10 +252,27 @@ $result = $mysqli->query($sql_main);
         <span class="small-it"> IT</span></div>
       </div>
 
-      <div class="header-search">
+      <div class="header-search" style="display:flex;align-items:center;gap:8px;">
         <input id="topSearch" type="search" placeholder="Search operator..." value="<?= htmlspecialchars($search) ?>">
         <button id="topSearchBtn">Search</button>
-        <a id="topExport" class="sidebar-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?>">Export CSV</a>
+
+        <!-- BANK filter select -->
+        <div class="filter-bar">
+  <label for="bankFilter" class="filter-label">Bank:</label>
+  <select id="bankFilter" name="bank" class="qit-select">
+    <option value="" class="sas">All Banks</option>
+    <option value="Karur Vysya Bank">Karur Vysya Bank</option>  
+    <option value="City Union Bank">City Union Bank</option>
+    <option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank</option>
+    <option value="Indian Bank">Indian Bank</option>
+    <option value="Karnataka Bank">Karnataka Bank</option>
+    <option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option>
+    <option value="Union Bank Of India">Union Bank Of India</option>
+  </select>
+</div>
+
+
+        <a id="topExport" class="sidebar-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
       </div>
 
       <nav class="qit-nav">
@@ -344,7 +427,8 @@ $result = $mysqli->query($sql_main);
                       echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
                       $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
                       echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
-                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
+                      // Added Resubmit quick button in server-rendered table as well
+                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
                       echo "</tr>";
                     endwhile;
                   else:
@@ -368,7 +452,12 @@ $result = $mysqli->query($sql_main);
   </div>
 
   <script>
-    
+    // Helper: read selected bank from header select if present
+    function getSelectedBank() {
+      const el = document.getElementById('bankFilter');
+      return el ? el.value.trim() : '';
+    }
+
 (function(){
   // run after your calendar builder exists
   const calWrap = document.querySelector('.status-center .calendar-wrap');
@@ -484,8 +573,7 @@ $result = $mysqli->query($sql_main);
         const tick = document.createElement('div');
         tick.className = 'qit-minute-tick';
         const angle = i*6;
-        tick.style.transform = `rotate(${angle}deg) translateY(-${(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--qit-clock-size')||180)*0.4325)||-77}px)`;
-        markers.appendChild(tick);
+        tick.style.transform = `rotate(${angle}deg) translateY(-${(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--qit-clock-size')||180)*0.4325)||-77}px)`;        markers.appendChild(tick);
       }
     }
 
@@ -658,14 +746,17 @@ $result = $mysqli->query($sql_main);
       try { const url = new URL(window.location.href); return url.searchParams.get('search') || ''; } catch(e){ return ''; }
     }
 
+    // Updated: loadOverview now includes bank param read from UI
     function loadOverview(filter='', page=1) {
       const placeholder = document.getElementById('overviewTablePlaceholder');
       const search = getCurrentSearchParam();
+      const bankSel = getSelectedBank();
       const params = new URLSearchParams();
       params.set('ajax','1');
       if (filter) params.set('filter', filter);
       if (page) params.set('page', page);
       if (search) params.set('search', search);
+      if (bankSel) params.set('bank', bankSel);
       const url = 'em_verfi.php?' + params.toString();
       if (placeholder) placeholder.innerHTML = '<div class="k-card">Loading…</div>';
       $.ajax({
@@ -678,6 +769,7 @@ $result = $mysqli->query($sql_main);
             p.set('export','1');
             if (filter) p.set('filter',filter);
             if (search) p.set('search',search);
+            if (bankSel) p.set('bank', bankSel);
             exportEl.href = 'em_verfi.php?' + p.toString();
           }
           initAutoScrollAll();
@@ -691,18 +783,64 @@ $result = $mysqli->query($sql_main);
 
     // small helpers (AJAX posts)
     function toast(msg){ alert(msg); }
+
+    // --- UPDATED updateStatus: safer cell update ---
     function updateStatus(id, status) {
       $.post('update_status.php', { id:id, status: status }, function(res){
-        if (res && res.success) { const tr = document.getElementById('row-'+id); if (tr) { const sCell = tr.querySelector('td[data-col="status"]'); if (sCell) sCell.textContent = status; } toast(res.message || 'Updated'); }
-        else toast('Update failed');
-      }, 'json').fail(function(){ toast('Request failed'); });
+        if (res && res.success) {
+          const tr = document.getElementById('row-'+id);
+          if (tr) {
+            const sCell = tr.querySelector('td[data-col="status"]');
+            if (sCell) {
+              const inner = sCell.querySelector('strong, span') || sCell;
+              inner.textContent = status;
+            }
+          }
+          toast(res.message || 'Updated');
+        } else {
+          toast('Update failed: ' + (res && res.message ? res.message : 'unknown'));
+        }
+      }, 'json').fail(function(xhr, status, err){ toast('Request failed'); console.error('updateStatus fail', status, err, xhr && xhr.responseText); });
     }
+
+    // --- UPDATED setWork: updates <strong> inside work cell and panel ---
     function setWork(id, work) {
-      $.post('update_status.php', { id:id, work_status: work }, function(res){
-        if (res && res.success) { const el = document.getElementById('work-'+id); if (el) el.textContent = work; toast(res.message || 'Work updated'); }
-        else toast('Failed');
-      }, 'json').fail(function(){ toast('Request failed'); });
+      $.post('update_status.php', { id: id, work_status: work }, function(res){
+        if (res && res.success) {
+          const workWrap = document.getElementById('work-' + id);
+          if (workWrap) {
+            const strong = workWrap.querySelector('strong');
+            if (strong) strong.textContent = work;
+            else workWrap.textContent = work;
+          }
+
+          // if panel open for this id, update its work status display
+          const panel = document.getElementById('opDetailPanel');
+          if (panel && panel.dataset.opId == String(id)) {
+            const docsStage = panel.querySelector('.stage[data-stage="docs"]');
+            if (docsStage) {
+              const rows = docsStage.querySelectorAll('.op-row');
+              rows.forEach(r => {
+                const k = r.querySelector('.k');
+                const v = r.querySelector('.v');
+                if (k && v && /work status/i.test(k.textContent || '')) {
+                  v.textContent = work;
+                }
+              });
+            }
+          }
+
+          toast(res.message || 'Work updated');
+        } else {
+          toast('Update failed: ' + (res && res.message ? res.message : 'unknown'));
+          console.warn('setWork failed', res);
+        }
+      }, 'json').fail(function(xhr, status, err){
+        toast('Request failed — check console');
+        console.error('setWork failed', status, err, xhr && xhr.responseText);
+      });
     }
+
     function saveReview(id) {
       const el = document.getElementById('review-'+id); if (!el) return;
       $.post('update_review.php', { id: id, review_notes: el.value }, function(res){ if (res && res.success) toast(res.message || 'Saved'); else toast('Save failed'); }, 'json').fail(function(){ toast('Request failed'); });
@@ -740,7 +878,34 @@ $result = $mysqli->query($sql_main);
 
       // header search
       const topBtn = document.getElementById('topSearchBtn'), topInp = document.getElementById('topSearch');
-      if (topBtn && topInp) topBtn.addEventListener('click', function(){ const q = topInp.value.trim(); const url = new URL(window.location.href); const params = url.searchParams; if (q) params.set('search', q); else params.delete('search'); window.location = window.location.pathname + '?' + params.toString(); });
+      if (topBtn && topInp) topBtn.addEventListener('click', function(){
+        const q = topInp.value.trim();
+        const url = new URL(window.location.href);
+        const params = url.searchParams;
+        if (q) params.set('search', q); else params.delete('search');
+        // preserve bank filter in URL
+        const selBank = getSelectedBank();
+        if (selBank) params.set('bank', selBank); else params.delete('bank');
+        window.location = window.location.pathname + '?' + params.toString();
+      });
+
+      // bank filter change -> refresh overview if overview visible, else update URL param
+      const bankEl = document.getElementById('bankFilter');
+      if (bankEl) {
+        bankEl.addEventListener('change', function(){
+          // if in overview section, reload via AJAX, else update URL to remember filter
+          const overviewVisible = !document.getElementById('operatorOverviewSection').classList.contains('hidden');
+          if (overviewVisible) {
+            loadOverview('', 1);
+          } else {
+            const url = new URL(window.location.href);
+            const params = url.searchParams;
+            if (this.value) params.set('bank', this.value);
+            else params.delete('bank');
+            window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
+          }
+        });
+      }
 
       // initialize donut
       initCharts();
@@ -942,8 +1107,8 @@ $result = $mysqli->query($sql_main);
     // expose helpers
     window.initCharts = initCharts;
     window.initAutoScrollAll = window.initAutoScrollAll || function(){};
- 
-(function(){
+
+ (function(){
   /* Helper: create panel and preview elements once */
   function createUI() {
     if (document.getElementById('opDetailPanel')) return;
@@ -1069,9 +1234,11 @@ $result = $mysqli->query($sql_main);
 
 function mkBtn(label, onClick, cls='small-btn') {
   const btn = document.createElement('button');
-  btn.className = cls;
+  btn.className = cls + ' panel-btn';
   btn.type = 'button';
   btn.textContent = label;
+  btn.style.minWidth = '140px';
+  btn.style.padding = '10px 12px';
 
   if (!safeId) { btn.disabled = true; return btn; }
 
@@ -1095,6 +1262,9 @@ function mkBtn(label, onClick, cls='small-btn') {
   // Working toggles
   actions.appendChild(mkBtn('Working', `setWork(${safeId},'working')`));
   actions.appendChild(mkBtn('Not Working', `setWork(${safeId},'not working')`));
+
+  // Request Resubmission (new)
+  actions.appendChild(mkBtn('Request Resubmission', function(){ openResubmitModal(safeId); }, 'small-btn'));
 
   // Edit / Save Row
   actions.appendChild(mkBtn('Edit Row', `makeRowEditable(${safeId})`));
@@ -1131,18 +1301,48 @@ function mkBtn(label, onClick, cls='small-btn') {
   const attWrap = document.createElement('div'); attWrap.className='op-attachments';
   let anyAttach=false;
 
-  // list of doc keys to manage (update this list if your DB has more _file cols)
-  const docKeys = [
-    'aadhar_file','pan_file','voter_file','ration_file','gps_selfie_file',
-    'consent_file','police_verification_file','edu_10th_file','edu_12th_file','edu_college_file'
-  ];
+  // list of doc keys to manage (complete list from DB)
+const docKeys = [
+  'aadhar_file',
+  'pan_file',
+  'voter_file',
+  'ration_file',
+  'consent_file',
+  'gps_selfie_file',
+  'police_verification_file',
+  'permanent_address_proof_file',
+  'parent_aadhar_file',
+  'nseit_cert_file',
+  'self_declaration_file',
+  'non_disclosure_file',
+  'edu_10th_file',
+  'edu_12th_file',
+  'edu_college_file'
+];
 
-  // label map for human friendly names
-  const labelMap = {
-    'aadhar_file':'Aadhaar Card','pan_file':'PAN Card','voter_file':'Voter ID','ration_file':'Ration Card',
-    'gps_selfie_file':'GPS Selfie','consent_file':'Consent','police_verification_file':'Police Verification',
-    'edu_10th_file':'10th Certificate','edu_12th_file':'12th Certificate','edu_college_file':'College Certificate'
-  };
+// label map for human friendly names
+const labelMap = {
+  'aadhar_file': 'Aadhaar Card',
+  'pan_file': 'PAN Card',
+  'voter_file': 'Voter ID',
+  'ration_file': 'Ration Card',
+  'consent_file': 'Consent',
+  'gps_selfie_file': 'GPS Selfie',
+  'police_verification_file': 'Police Verification',
+  'permanent_address_proof_file': 'Permanent Address Proof',
+  'parent_aadhar_file': 'Parent Aadhaar',
+  'nseit_cert_file': 'NSEIT Certificate',
+  'self_declaration_file': 'Self Declaration',
+  'non_disclosure_file': 'Non-Disclosure Agreement',
+  'edu_10th_file': '10th Certificate',
+  'edu_12th_file': '12th Certificate',
+  'edu_college_file': 'College Certificate'
+};
+
+// expose doc keys globally so modal builder can use them
+window.DOC_KEYS = docKeys;
+window.LABEL_MAP = labelMap;
+
 
   function mkDocRow(k, url) {
     const lbl = labelMap[k] || k;
@@ -1157,7 +1357,8 @@ function mkBtn(label, onClick, cls='small-btn') {
           <button class="small-btn btn-accept"  data-doc="${k}">Accept</button>
           <button class="small-btn btn-reject"  data-doc="${k}">Reject</button>
           <label class="small-btn btn-upload"  style="cursor:pointer;">Replace<input type="file" accept=".pdf,image/*" style="display:none" data-doc="${k}"></label>
-        </div>
+          <button class="small-btn btn-download" data-doc="${k}" ${!url ? 'disabled' : ''}>Download</button>
+        </div> 
         <div class="doc-reject-reason" style="display:none;margin-top:6px;">
           <input class="input-compact reason-input" placeholder="Reason for rejection" data-doc="${k}" style="  margin-right:18px ">
           <button class="small-btn btn-save-reason" data-doc="${k}">Save</button>
@@ -1236,8 +1437,20 @@ function mkBtn(label, onClick, cls='small-btn') {
     });
   });
 
+  // *** Download button wiring: opens download.php with id & doc_key
+  attWrap.querySelectorAll('.btn-download').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const doc = this.dataset.doc;
+      if (!opId) { alert('Missing operator id'); return; }
+      // open download endpoint in new tab so dashboard stays intact
+      const dlUrl = 'download.php?id=' + encodeURIComponent(opId) + '&doc_key=' + encodeURIComponent(doc);
+      window.open(dlUrl, '_blank');
+    });
+  });
+
   mailWrap.querySelector('#panel-mailer').addEventListener('click', function(){
     if (!confirm('Send rejection mail to operator listing rejected documents?')) return;
+    // if a resubmission token exists for this operator (session/server), you may pass it here.
     sendRejectionMail(opId);
   });
 
@@ -1383,11 +1596,128 @@ function uploadDoc(opId, docKey, fileInputEl) {
   });
 }
 
-function sendRejectionMail(opId) {
-  $.post('send_rejection_mail.php', { id: opId }, function(res){
+/* sendRejectionMail now optionally accepts a token — if token is provided, it's included in the request
+   so send_rejection_mail.php can include a resubmission link in the email. */
+function sendRejectionMail(opId, token) {
+  const payload = { id: opId };
+  if (token) payload.token = token;
+  $.post('send_rejection_mail.php', payload, function(res){
     if (res && res.success) alert(res.message || 'Mail sent');
     else alert(res && res.message ? res.message : 'Mail failed');
   }, 'json').fail(function(){ alert('Mail request failed'); });
+}
+
+/* ---- RESUBMISSION MODAL + flow ---- */
+
+// Opens the modal to pick docs for resubmission for a given operator id
+function openResubmitModal(opId){
+  if (!opId) return alert('Missing operator id');
+  // create overlay if not exists
+  let overlay = document.getElementById('resubmitOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'resubmitOverlay';
+    overlay.className = 'resubmit-overlay';
+    overlay.style.display = 'none';
+    overlay.innerHTML = `
+      <div class="resubmit-modal" role="dialog" aria-modal="true">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <h3>Request resubmission</h3>
+          <div><button id="resubmitClose" class="small-btn">Close</button></div>
+        </div>
+        <div style="font-size:13px;color:#445">Select documents you want the operator to re-upload. Optionally set token validity (days).</div>
+        <div class="resubmit-list" id="resubmitList"></div>
+        <div style="margin-top:8px">
+          <label>Expires in (days): <input id="resubmitDays" type="number" value="7" min="1" style="width:80px;margin-left:8px;padding:6px;border-radius:6px;border:1px solid #ddd"></label>
+        </div>
+        <div class="resubmit-footer">
+          <div style="display:flex;gap:8px">
+            <button id="resubmitCreateBtn" class="small-btn">Create & Send</button>
+            <button id="resubmitCreateOnlyBtn" class="small-btn">Create (no email)</button>
+          </div>
+          <div id="resubmitResult" style="font-size:13px;color:#222"></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.getElementById('resubmitClose').addEventListener('click', ()=> overlay.style.display='none');
+  }
+
+  // populate doc checkboxes
+  const listEl = overlay.querySelector('#resubmitList');
+  listEl.innerHTML = '';
+  // prefer global DOC_KEYS and LABEL_MAP exposed by renderIntoPanel
+  const keys = window.DOC_KEYS || ['aadhar_file','pan_file','voter_file','ration_file'];
+  const labels = window.LABEL_MAP || {};
+  // find table row to see which docs exist (we won't assume)
+  const tr = document.getElementById('row-' + opId);
+  keys.forEach(k=>{
+    const lbl = labels[k] || k;
+    // pre-check if doc exists in table row
+    let checked = false;
+    if (tr) {
+      const td = tr.querySelector('td[data-col="'+k+'"]');
+      if (td && td.querySelector('a')) checked = true;
+    }
+    const idc = 'rs_' + k;
+    const item = document.createElement('label');
+    item.style = 'display:flex;gap:10px;align-items:center;padding:6px;border-radius:6px;background:#fbfbfb';
+    item.innerHTML = `<input type="checkbox" id="${idc}" name="docs[]" value="${k}" ${checked ? 'checked' : ''}> <span style="font-weight:600">${lbl}</span> <small style="color:#666;margin-left:6px">(${k})</small>`;
+    listEl.appendChild(item);
+  });
+
+  // button handlers
+  const createBtn = overlay.querySelector('#resubmitCreateBtn');
+  const createOnlyBtn = overlay.querySelector('#resubmitCreateOnlyBtn');
+  createBtn.onclick = function(){
+    submitResubmissionRequest(opId, true);
+  };
+  createOnlyBtn.onclick = function(){
+    submitResubmissionRequest(opId, false);
+  };
+
+  overlay.style.display = 'flex';
+  // clear previous result
+  overlay.querySelector('#resubmitResult').textContent = '';
+}
+
+// Submits to server to create resubmission request; if 'emailNow' is true, will auto-send mail with token.
+function submitResubmissionRequest(opId, emailNow){
+  const overlay = document.getElementById('resubmitOverlay');
+  if (!overlay) return;
+  const checkboxes = overlay.querySelectorAll('input[name="docs[]"]:checked');
+  const docs = Array.from(checkboxes).map(cb => cb.value);
+  if (!docs.length) return alert('Select at least one document for resubmission.');
+  const days = parseInt((overlay.querySelector('#resubmitDays')||{value:7}).value,10) || 7;
+  // send to create_resubmission.php
+  const payload = { id: opId, docs: docs, expires_days: days, email_now: (emailNow ? 1 : 0) };
+  overlay.querySelector('#resubmitResult').textContent = 'Creating token…';
+  $.ajax({
+    url: 'create_resubmission.php',
+    method: 'POST',
+    dataType: 'json',
+    data: payload,
+    success: function(res){
+      if (res && res.success) {
+        const url = res.url || ('duplicateoperator.php?token=' + encodeURIComponent(res.token || ''));
+        overlay.querySelector('#resubmitResult').innerHTML = `Resubmission created. Link: <a href="${escapeHTML(url)}" target="_blank">${escapeHTML(url)}</a> &nbsp; <button id="copyResubmitLink" class="small-btn">Copy</button>`;
+        overlay.querySelector('#copyResubmitLink').addEventListener('click', function(){
+          try { navigator.clipboard.writeText(url); alert('Copied'); } catch(e){ prompt('Copy link', url); }
+        });
+        // if server didn’t auto-email and reviewer chose to email now, call mail endpoint
+        if (emailNow && !res.emailed) {
+          // call send_rejection_mail.php with token
+          sendRejectionMail(opId, res.token);
+        }
+      } else {
+        overlay.querySelector('#resubmitResult').textContent = (res && res.message) ? res.message : 'Failed to create resubmission';
+      }
+    },
+    error: function(xhr,status,err){
+      overlay.querySelector('#resubmitResult').textContent = 'Request failed';
+      console.error('create_resubmission failed', status, err, xhr && xhr.responseText);
+    }
+  });
 }
 
 /* Hover preview behaviour (small tooltip near pointer) */
@@ -1469,7 +1799,14 @@ document.addEventListener('click', function(e){
 
 })();
 
-
+(function(){
+  const sel = document.getElementById('bankFilter');
+  if(!sel) return;
+  sel.addEventListener('focus', ()=> sel.classList.add('open'));
+  sel.addEventListener('blur',  ()=> sel.classList.remove('open'));
+  // Some browsers fire 'change' when user opens then cancels — keep class removal defensive
+  sel.addEventListener('change', ()=> sel.classList.remove('open'));
+})();
 </script>
 
 </body>

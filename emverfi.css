@@ -775,3 +775,153 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
 }
+/* ---- Button layout + sizing ---- */
+.op-attachments .doc-row { display:flex; gap:12px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
+.op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); flex:0 0 180px; }
+.op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:8px; }
+
+/* doc-actions: grid keeps buttons tidy and responsive */
+.op-attachments .doc-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+  margin-top:6px;
+}
+@media (max-width: 720px) {
+  .op-attachments .doc-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* small button baseline: bigger tap target and consistent look */
+.small-btn {
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap:6px;
+  white-space: nowrap;
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+.small-btn:active { transform: translateY(1px); }
+.small-btn[disabled] { opacity:0.5; cursor:not-allowed; }
+
+/* accent styles for accept/reject etc */
+.small-btn.btn-accept { background:#e6ffef; border-color:#b7f3c7;  color: #000000;}
+.small-btn.btn-reject { background:#fff2f2; border-color:#ffcccc;   color: #000000;}
+.small-btn.btn-upload { background:#f5f8ff; border-color:#dbe9ff; cursor:pointer; color: #000;}
+.small-btn.btn-download { background:#f7f7ff; border-color:#e2e2ff; cursor:pointer; color: #000;}
+
+/* doc-reject-reason layout */
+.doc-reject-reason { display:none; margin-top:6px; gap:6px; align-items:center; }
+.doc-reject-reason .reason-input { width:100%; max-width:420px; }
+
+/* actions bar in panel (Accept/Working/Edit/Save/Review) */
+.op-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.op-actions .small-btn { min-width:120px; }
+
+/* work button row next to work status in table */
+.btn-row { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+.btn-row .small-btn { min-width:100px; padding:6px 10px; font-size:13px; }
+
+/* table actions cell: make buttons align & wrap */
+.col-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.col-actions .small-btn { min-width:90px; }
+
+/* keep the file-link visible */
+.file-link { color: #2b6cb0; text-decoration: underline; }
+
+/* small helpers */
+.op-row { display:flex; gap:12px; padding:6px 0; }
+.op-row .k { width:180px; font-weight:700; color:#425066; }
+.op-row .v { flex:1; word-break:break-word; }
+/* ---- Bank filter: gold-on-black dropdown UI ---- */
+:root{
+  --qit-gold: #cfa043;   /* theme gold — tweak if you want warmer/brighter */
+  --qit-dark: #0b0b0d;   /* pill background */
+  --qit-text: #fff;
+  --qit-shadow: rgba(12,14,18,0.35);
+}
+.sas{
+  background-color: var(--qit-shadow) ;
+}
+/* wrapper & label */
+.filter-bar { display:inline-flex; gap:12px; align-items:center; }
+.filter-label { color: var(--qit-shadow); font-weight:700; font-size:19px; margin-right:6px; }
+
+/* base select styling */
+.qit-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: var(--qit-dark);
+  color: var(--qit-text);
+  padding: 10px 42px 10px 16px; /* room for arrow */
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  font-weight:600;
+  min-width: 290px;
+  line-height:1.1;
+  box-shadow: 0 8px 30px var(--qit-shadow), inset 0 -6px 12px rgba(255,255,255,0.02);
+  transition: transform .18s cubic-bezier(.2,.9,.2,1), box-shadow .18s ease, border-color .18s ease, color .15s ease;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+}
+
+/* hover and focus visual lift */
+.qit-select:hover,
+.qit-select:focus {
+  transform: translateY(-3px);
+  border-color: var(--qit-dark);
+  box-shadow: 0 18px 40px rgba(8,10,12,0.5), 0 0 24px rgba(207,160,67,0.06);
+  color: var(--qit-dark);
+}
+
+/* custom arrow (drawn with gradients so no extra HTML) */
+.qit-select {
+  background-color:
+    linear-gradient(45deg, transparent 50%, var(--qit-dark) 50%),
+    linear-gradient(135deg, var(--qit-dark) 50%, transparent 50%),
+    linear-gradient(to right, rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+  background-position:
+    calc(100% - 16px) calc(50% - 6px),
+    calc(100% - 8px) calc(50% - 6px),
+    0 0;
+  background-repeat: no-repeat;
+  background-size: 8px 8px, 8px 8px, 100% 100%;
+}
+
+/* subtle focus ring for keyboard users */
+.qit-select:focus {
+  box-shadow:
+    0 18px 40px rgba(8,10,12,0.55),
+    0 0 18px rgba(207,160,67,0.08),
+    0 0 0 3px rgba(207,160,67,0.06);
+}
+
+/* option styling (limited browser support) */
+.qit-select option {
+  color: #111;
+  background: #fff;
+  border: 2px solid var(--qit-dark);
+  border-radius: 20px;
+  padding: 10px;
+}
+
+/* small fade/slide on focus (applies to the closed select element) */
+@keyframes qitFadeUp {
+  from { opacity: 0; transform: translateY(4px) scale(.997); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.qit-select:focus { animation: qitFadeUp .22s ease both; }
+
+/* responsive */
+@media (max-width:720px) {
+  .qit-select { min-width: 160px; padding-right:36px; border-radius:10px; }
+  .filter-label { font-size:13px; }
+}
