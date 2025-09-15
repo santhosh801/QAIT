@@ -9,231 +9,169 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Vidaloka&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/3a2e6c5d3d.js" crossorigin="anonymous"></script>
 
-  <!-- Minimal reset + styles (self-contained) -->
   <style>
     :root{
-      --bg:#f5f7fb;
       --card:#ffffff;
       --accent:#bd9a68;
       --accent-2:#0ea5e9;
       --muted:#6b7280;
-      --glass: rgba(255,255,255,0.6);
-      --radius:12px;
-      --elev: 0 10px 30px rgba(12,18,30,0.08);
-      --max-w: 980px;
-      --left-w: 42%;
-      --right-w: 58%;
-      --form-pad: 34px;
+      --max-w:1200px;
+      --left-w:42%;
+      --right-w:60%;
+      --form-pad:44px;
+      --ease-soft:cubic-bezier(.96,1.8,.48,2);
+      --anim-slow:1500ms;
+      --anim-slower:1800ms;
+      --stagger:200ms;
     }
+
     *{box-sizing:border-box}
-    html,body{height:100%; margin:0; font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, Arial; background: linear-gradient(180deg,#eef2f7,#f9fafb); color:#0f172a}
-    a{color:inherit}
-    .container{
-      max-width: var(--max-w);
-      margin: 48px auto;
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 30px 80px rgba(2,6,23,0.06);
-      background: var(--card);
-      position:relative;
-      display:flex;
-      min-height: 520px;
+    html,body{height:200px; margin:0; font-family:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial; color:#0f172a;}
+    body{ background: linear-gradient(180deg,#eef2f7,#f9fafb); }
+
+    #background-container{
+      position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;
+      background: linear-gradient(135deg, #bd9a6855 25%, transparent 25%) -10px 0/20px 20px,
+                  linear-gradient(225deg, #bd9a68 25%, transparent 25%) -10px 0/20px 20px,
+                  linear-gradient(315deg, #bd9a6855 25%, transparent 25%) 0px 0/20px 20px,
+                  linear-gradient(45deg, #bd9a68 25%, #e5e5f7 25%) 0px 0/20px 20px;
     }
 
-    /* Left panel */
-    .left-panel{
-      width: var(--left-w);
-      padding:48px 36px;
-      background: linear-gradient(180deg, rgba(189,154,104,0.06), rgba(11,20,30,0.01));
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:6px;
-      border-right:1px solid rgba(15,23,42,0.03);
-    }
-    .company{
-      font-family: 'Vidaloka', serif;
-      margin:0;
-      font-size:44px;
-      line-height:1;
-      color:var(--accent);
-      letter-spacing:0.5px;
-    }
-    .welcome{ margin: 8px 0 0; font-size:20px; color:var(--muted); font-weight:600; }
-    .subtext{ margin:0; color:var(--muted); font-size:13px }
+    .root-wrapper{ position:relative; z-index:2; min-height:200px; display:flex; align-items:center; justify-content:center; padding:28px; }
+    .container{ max-width:var(--max-w); margin:48px auto; border-radius:18px; overflow:hidden; box-shadow:0 30px 80px rgba(2,6,23,0.06);
+      background:var(--card); display:flex; min-height:400px; }
 
-    /* Right login area */
-    .login-box{
-      width: var(--right-w);
-      padding: var(--form-pad);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .login-card{
-      width:100%;
-      max-width:420px;
-      background: linear-gradient(180deg,#fff,#fbfdff);
-      border-radius:12px;
-      padding:28px;
-      box-shadow:var(--elev);
-      border: 1px solid rgba(15,23,42,0.03);
-    }
-    .login-card h2{ margin:0 0 10px; font-size:22px; color:#0f172a; }
+    /* LEFT PANEL */
+    .left-panel{ width:var(--left-w); padding:48px 36px; background:linear-gradient(180deg,rgba(189,154,104,0.06),rgba(11,20,30,0.01));
+      display:flex; flex-direction:column; justify-content:center; gap:6px; border-right:1px solid rgba(15,23,42,0.03); }
+    .company{ font-family:'Vidaloka',serif; margin:0; font-size:54px; color:var(--accent); line-height:1;font-weight: 300;
+      opacity:0; transform:translateX(28px); animation:slideInRight var(--anim-slower) var(--ease-soft) 190ms both; }
+    .welcome{ margin-top:8px; font-size:25px; color:var(--muted); font-weight:300;
+      opacity:0; transform:translateX(-22px); animation:slideInLeft var(--anim-slow) var(--ease-soft) 520ms both; }
+    .subtext{ margin:0; color:var(--muted); font-size:15px;
+      opacity:0; transform:translateX(-22px); animation:slideInLeft var(--anim-slow) var(--ease-soft) 720ms both; }
+
+    /* RIGHT PANEL */
+    .login-box{ width:var(--right-w); padding:var(--form-pad); display:flex; align-items:center; justify-content:center; }
+    .login-card{ width:100%; max-width:550px; background:linear-gradient(180deg,#fff,rgb(255, 255, 255)); border-radius:22px; padding:28px;
+      box-shadow:0 10px 30px rgba(12,18,30,0.08); border:2px solid rgba(0, 76, 255, 0.03); }
+    .login-card h2{ margin:0 0 20px; font-size:32px; color:#0f172a; }
     .login-card p.lead{ margin:0 0 20px; color:var(--muted); font-size:13px }
 
-    .input-group{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:14px;
-      border-radius:8px;
-      background: #fff;
-      padding:10px 12px;
-      border:1px solid rgba(15,23,42,0.04);
-    }
-    .input-group i{ color:var(--muted); min-width:18px; text-align:center; font-size:14px }
-    .input-group input{
-      border:0; outline:0; flex:1; font-size:14px; font-weight:600; color:#0b1220;
-      background:transparent;
-    }
-    .input-compact{ padding:8px 10px; border-radius:6px; border:1px solid rgba(15,23,42,0.06); width:100%; }
+    /* CRYSTALLINE INPUT */
+    .crystalline-container{ position:relative; margin:24px 0; opacity:0; transform:translateY(-18px);
+      animation:dropIn var(--anim-slow) var(--ease-soft) both; }
+    .crystalline-container:nth-of-type(1){ animation-delay:360ms; }
+    .crystalline-container:nth-of-type(2){ animation-delay:560ms; }
+    .crystalline-container:nth-of-type(3){ animation-delay:760ms; }
 
-    .btn{
-      width:100%;
-      padding:12px 14px;
-      border-radius:10px;
-      border:0;
-      background: linear-gradient(90deg,var(--accent),var(--accent-2));
-      color:#fff; font-weight:700; font-size:15px;
-      cursor:pointer;
-      box-shadow: 0 8px 22px rgba(11,22,44,0.08);
+    .crystalline-input{
+      width:90%; padding:14px 16px; border:2px solid rgba(0,0,0,0.1);
+      background:linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02));
+      font-size:14px; color:#0f172a; border-radius:0;
+      clip-path:polygon(22px 0%,100% 0%,calc(0px -120%) 100%,0% 100%);
+      transition:all .4s ease;
     }
-    .btn:active{ transform:translateY(1px) }
+    .crystalline-input:focus{ border-color:var(--accent-3); box-shadow:0 0 18px rgba(33, 184, 203, 0.836); outline:none; }
 
-    .small-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:10px; font-size:13px; color:var(--muted) }
-    .link{ color:var(--accent-2); text-decoration:none; font-weight:700 }
+    /* CURL BUTTON */
+    .btn-curl{
+      position:relative; display:inline-block; width:100%; margin-top:12px; padding:12px 14px;
+      border:none; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#ffffff; font-weight:700; font-size:20px; border-radius:15px; transition:all .3s ease; overflow:hidden;
+      opacity:0; transform:translateY(-18px); animation:dropIn 1400ms var(--ease-soft) 980ms both;
+    }
+    .btn-curl:after{
+      content:""; position:absolute; top:0; right:0; width:0; height:0;
+      border-top:-58px solid #000000; border-left:110px ;
+      color: #ffffff;background: #000000;border-bottom:58px solid #000000;
+      transition:all .2s ease;
+    }
+    .btn-curl:hover:after{ border-radius: 10px;border: 2px solid  black; }
 
-    /* floating shapes (decorative) */
+    .small-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:10px; font-size:13px; color:var(--muted);
+      opacity:0; transform:translateY(-12px); animation:dropIn 1200ms var(--ease-soft) 1220ms both; }
+
+    /* Shapes */
     .shapes{ position:absolute; inset:0; pointer-events:none; z-index:2 }
-    .shape{ position:absolute; border-radius:50%; filter: blur(22px); opacity:0.16 }
-    .shape1{ width:220px; height:220px; background:linear-gradient(90deg,#bd9a68,#f2c77d); left:-80px; top: -40px; transform: rotate(12deg) }
-    .shape2{ width:140px; height:140px; background:linear-gradient(90deg,#06b6d4,#7c3aed); right: -40px; bottom: -20px; transform: rotate(-8deg) }
-    .shape3{ width:88px; height:88px; background:linear-gradient(90deg,#10b981,#0ea5e9); left:30%; bottom: -60px; opacity:0.12 }
+    .shape{ position:absolute; border-radius:50%; filter:blur(22px); opacity:0.14 }
+    .shape1{ width:220px; height:220px; background:linear-gradient(90deg,#bd9a68,#f2c77d); left:-80px; top:-40px; }
+    .shape2{ width:140px; height:140px; background:linear-gradient(90deg,#06b6d4,#7c3aed); right:-40px; bottom:-20px; }
+    .shape3{ width:88px; height:88px; background:linear-gradient(90deg,#10b981,#0ea5e9); left:30%; bottom:-60px; opacity:0.12 }
 
-    /* preview tooltip (used in dashboard; harmless to keep) */
-    #opRowPreview{ position:fixed; display:none; z-index:7000; background:#fff; border-radius:8px; padding:10px 12px; box-shadow:0 10px 30px rgba(2,6,23,0.12); font-size:13px; color:#0f172a; border:1px solid rgba(2,6,23,0.06) }
+    /* Animations */
+    @keyframes slideInRight{ from{opacity:0; transform:translateX(28px);} to{opacity:1; transform:translateX(0);} }
+    @keyframes slideInLeft{ from{opacity:0; transform:translateX(-22px);} to{opacity:1; transform:translateX(0);} }
+    @keyframes dropIn{ 0%{opacity:0; transform:translateY(-18px);} 70%{opacity:1; transform:translateY(6px);} 100%{opacity:1; transform:translateY(0);} }
 
-    /* responsive */
-    @media (max-width:880px){
-      .container{ flex-direction:column; margin: 28px 18px; min-height:0 }
+    @media(max-width:880px){
+      .container{ flex-direction:column; margin:28px 18px; }
       .left-panel{ width:100%; padding:28px; border-right:none; border-bottom:1px solid rgba(15,23,42,0.03) }
       .login-box{ width:100%; padding:22px }
       .company{ font-size:36px }
     }
-
-    /* subtle focus style for accessibility */
-    input:focus{ outline:3px solid rgba(189,154,104,0.09); outline-offset:2px; border-radius:6px }
   </style>
 </head>
 <body>
-  <div class="container" role="main" aria-labelledby="loginTitle">
+  <div id="background-container"></div>
 
-    <!-- Left panel (brand) -->
-    <div class="left-panel" aria-hidden="false">
-      <h1 class="company">Qamar <br> Infotech</h1>
-      <p class="welcome">Welcome back!</p>
-      <p class="subtext">Sign in to access the employee portal — secure and fast.</p>
-    </div>
-
-    <!-- Right panel: login form -->
-    <div class="login-box">
-      <div class="login-card" role="form" aria-labelledby="loginTitle">
-        <h2 id="loginTitle">Employee Login</h2>
-        <p class="lead">Enter your employee credentials</p>
-
-        <!-- NOTE: keep action to your server endpoint -->
-        <form id="employeeLoginForm" method="post" action="employee_login.php" novalidate>
-          <div class="input-group" title="Employee ID">
-            <i class="fas fa-id-badge" aria-hidden="true"></i>
-            <input id="employee_id" name="employee_id" type="text" placeholder="Employee ID" required autocomplete="username">
-          </div>
-
-          <div class="input-group" title="Email">
-            <i class="fas fa-envelope" aria-hidden="true"></i>
-            <input id="employee_email" name="employee_email" type="email" placeholder="Email" required autocomplete="email">
-          </div>
-
-          <div class="input-group" title="Password" style="position:relative">
-            <i class="fas fa-lock" aria-hidden="true"></i>
-            <input id="employee_password" name="employee_password" type="password" placeholder="Password" required autocomplete="current-password">
-            <button id="togglePwd" type="button" aria-label="Show password" style="border:0;background:none;color:var(--muted);font-size:13px;cursor:pointer">Show</button>
-          </div>
-
-          <button type="submit" class="btn" id="submitBtn">Login</button>
-
-          <div class="small-row">
-            <label style="display:flex;align-items:center;gap:8px">
-              <input id="remember" name="remember" type="checkbox" style="transform:scale(1.06)"> <span style="font-size:13px;color:var(--muted)">Remember me</span>
-            </label>
-            <a class="link" href="#" onclick="alert('Please contact admin to reset your password'); return false;">Forgot password?</a>
-          </div>
-        </form>
+  <div class="root-wrapper">
+    <div class="container">
+      <div class="left-panel">
+        <h1 class="company">Qamar <br> Infotech</h1>
+        <p class="welcome">Welcome back!</p>
+        <p class="subtext">Sign in to access the employee portal — secure and fast.</p>
       </div>
-    </div>
 
-    <!-- Floating shapes -->
-    <div class="shapes" aria-hidden="true">
-      <div class="shape shape1"></div>
-      <div class="shape shape2"></div>
-      <div class="shape shape3"></div>
+      <div class="login-box">
+        <div class="login-card">
+          <h2 id="loginTitle">Employee Login</h2>
+          <p class="lead">Enter your employee credentials</p>
+
+          <form id="employeeLoginForm" method="post" action="employee_login.php" novalidate>
+            <div class="crystalline-container">
+              <input class="crystalline-input" id="employee_id" name="employee_id" type="text" placeholder="Employee ID" required autocomplete="username">
+            </div>
+            <div class="crystalline-container">
+              <input class="crystalline-input" id="employee_email" name="employee_email" type="email" placeholder="Email" required autocomplete="email">
+            </div>
+            <div class="crystalline-container">
+              <input class="crystalline-input" id="employee_password" name="employee_password" type="password" placeholder="Password" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-curl" id="submitBtn">Login</button>
+
+            <div class="small-row">
+              <label style="display:flex;align-items:center;gap:8px">
+                <input id="remember" name="remember" type="checkbox"> Remember me
+              </label>
+              <a href="#" onclick="alert('Please contact admin to reset your password'); return false;">Forgot password?</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="shapes" aria-hidden="true">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+      </div>
     </div>
   </div>
 
-  <!-- small client-side UX script -->
   <script>
+    // Toggle password visibility
     (function(){
-      const form = document.getElementById('employeeLoginForm');
-      const toggle = document.getElementById('togglePwd');
+      const toggle = document.createElement('button');
       const pwd = document.getElementById('employee_password');
-      const submitBtn = document.getElementById('submitBtn');
+      toggle.textContent = "Show";
+      toggle.type = "button";
+      toggle.style = "position:absolute;top:50%;right:12px;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px";
+      pwd.parentNode.appendChild(toggle);
 
-      // show/hide password
-      toggle.addEventListener('click', function(){
-        if (pwd.type === 'password') { pwd.type = 'text'; toggle.textContent = 'Hide'; toggle.setAttribute('aria-pressed','true'); }
-        else { pwd.type = 'password'; toggle.textContent = 'Show'; toggle.setAttribute('aria-pressed','false'); }
-        pwd.focus();
-      });
-
-      // basic client-side validation and nicer button feedback
-      form.addEventListener('submit', function(e){
-        // client validation: required fields
-        const id = document.getElementById('employee_id').value.trim();
-        const email = document.getElementById('employee_email').value.trim();
-        const password = document.getElementById('employee_password').value;
-        if (!id || !email || !password) {
-          e.preventDefault();
-          alert('Please fill in all required fields.');
-          return false;
-        }
-
-        // disable submit quickly to avoid double posts (server still handles authentication)
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Signing in…';
-        setTimeout(()=>{ submitBtn.disabled = false; submitBtn.textContent = 'Login'; }, 6000);
-        // let the form submit normally to server
-      });
-
-      // minor UX: enter key on single fields will submit
-      ['employee_id','employee_email','employee_password'].forEach(id=>{
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('keydown', function(ev){
-          if (ev.key === 'Enter') {
-            ev.preventDefault();
-            form.requestSubmit ? form.requestSubmit() : form.submit();
-          }
-        });
+      toggle.addEventListener('click', () => {
+        if(pwd.type === "password"){ pwd.type="text"; toggle.textContent="Hide"; }
+        else{ pwd.type="password"; toggle.textContent="Show"; }
       });
     })();
   </script>
