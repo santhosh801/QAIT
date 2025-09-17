@@ -17,6 +17,35 @@ if ($mysqli->connect_error) {
 }
 
 // -----------------------------
+// DOC_KEYS - single source of truth for dropdowns
+// -----------------------------
+$DOC_KEYS = [
+  'aadhar_file' => 'Aadhaar',
+  'pan_file' => 'PAN',
+  'voter_file' => 'VoterID',
+  'ration_file' => 'RationCard',
+  'consent_file' => 'Consent',
+  'gps_selfie_file' => 'GPS_Selfie',
+  'police_verification_file' => 'PoliceVerification',
+  'permanent_address_proof_file' => 'PermanentAddressProof',
+  'parent_aadhar_file' => 'ParentAadhaar',
+  'nseit_cert_file' => 'NSEIT_Cert',
+  'self_declaration_file' => 'SelfDeclaration',
+  'non_disclosure_file' => 'NDA',
+  'edu_10th_file' => '10th',
+  'edu_12th_file' => '12th',
+  'edu_college_file' => 'CollegeCert'
+];
+
+// helper: build options html server-side once
+$docOptionsHtml = '<option value="">Export…</option>';
+$docOptionsHtml .= '<option value="all">Export All Docs (ZIP)</option>';
+foreach ($DOC_KEYS as $k => $label) {
+    $safeLabel = htmlspecialchars($label, ENT_QUOTES);
+    $docOptionsHtml .= "<option value=\"{$k}\">{$safeLabel} Only</option>";
+}
+
+// -----------------------------
 // params
 // -----------------------------
 $limit  = 10;
@@ -64,6 +93,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         <div class="left"><span class="muted">Showing <?= (int)$total_rows ?> rows</span></div>
         <div class="right">
           <a class="sidebar-export fragment-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
+
+          <!-- BULK EXPORT (AJAX fragment) -->
+          <div id="bulkExportWrapFrag" style="display:inline-block; margin-left:12px; vertical-align:middle;">
+            <select id="bulkExportSelectFrag" class="form-select" style="min-width:220px;">
+              <?= $docOptionsHtml ?>
+            </select>
+            <button id="bulkExportBtnFrag" type="button" class="small-btn" style="margin-left:6px;">Export Docs</button>
+          </div>
         </div>
       </div>
 
@@ -101,8 +138,23 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
                       echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
                       $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
                       echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
-                      // Added quick resubmit button
-                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"updateStatus({$id},'rejected')\">Reject</button><button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
+
+                      // Added quick resubmit button + per-row export UI
+                      echo "<td class='col-actions nowrap'>";
+                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button>";
+                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button>";
+                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'rejected')\">Reject</button>";
+                      echo "<button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button>";
+                      echo "<button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button>";
+                      echo "<button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button>";
+
+                      // Per-row export dropdown + button
+                      echo "<div class='row-export' style='display:inline-block; margin-left:8px; margin-top:6px;'>";
+                      echo "<select class='rowExportSelect form-select' data-id='{$id}' style='min-width:160px;'>{$docOptionsHtml}</select>";
+                      echo "<button class='rowExportBtn small-btn' data-id='{$id}' style='margin-left:6px;'>Export</button>";
+                      echo "</div>";
+
+                      echo "</td>";
                       echo "</tr>";
                   }
               } else {
@@ -241,6 +293,11 @@ $result = $mysqli->query($sql_main);
     .filter-bar { display:flex; gap:10px; align-items:center; margin-left:18px; }
     .filter-bar select { height:40px; padding:8px 12px; border-radius:4px; border:none; background:#ffeba7; color:#102770; font-weight:500; box-shadow:0 12px 35px rgba(255,235,167,.15); }
     .filter-bar .btn { height:40px; padding:8px 12px; border-radius:4px; border:none; cursor:pointer; }
+
+    /* minimal styles for export controls */
+    .form-select { padding:6px 8px; font-size:13px; border-radius:4px; }
+    #bulkExportWrap, #bulkExportWrapFrag { display:inline-flex; gap:8px; align-items:center; }
+    .row-export .form-select { padding:6px; }
   </style>
 </head>
 <body>
@@ -271,8 +328,15 @@ $result = $mysqli->query($sql_main);
   </select>
 </div>
 
-
         <a id="topExport" class="sidebar-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
+
+        <!-- BULK EXPORT (TOP-RIGHT) -->
+        <div id="bulkExportWrap" style="display:inline-block; margin-left:12px; vertical-align:middle;">
+          <select id="bulkExportSelect" class="form-select" style="min-width:220px;">
+            <?= $docOptionsHtml ?>
+          </select>
+          <button id="bulkExportBtn" type="button" class="small-btn" style="margin-left:8px;">Export Docs</button>
+        </div>
       </div>
 
       <nav class="qit-nav">
@@ -283,6 +347,13 @@ $result = $mysqli->query($sql_main);
       </nav>
     </div>
   </header>
+<!-- BULK EXPORT (TOP) -->
+<div id="bulkExportWrap" style="display:inline-flex; margin-left:12px; vertical-align:middle; align-items:center; gap:8px;">
+  <select id="bulkExportSelect" class="form-select" style="min-width:220px;">
+    <?= $docOptionsHtml ?>
+  </select>
+  <button id="bulkExportBtn" type="button" class="small-btn">Export Docs</button>
+</div>
 
   <div class="k-shell">
     <aside id="resizableSidebar">
@@ -427,8 +498,22 @@ $result = $mysqli->query($sql_main);
                       echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
                       $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
                       echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
+
                       // Added Resubmit quick button in server-rendered table as well
-                      echo "<td class='col-actions nowrap'><button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button><button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button><button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button><button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button><button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button></td>";
+                      echo "<td class='col-actions nowrap'>";
+                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button>";
+                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button>";
+                      echo "<button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button>";
+                      echo "<button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button>";
+                      echo "<button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button>";
+
+                      // Per-row export dropdown + button
+                      echo "<div class='row-export' style='display:inline-block; margin-left:8px; margin-top:6px;'>";
+                      echo "<select class='rowExportSelect form-select' data-id='{$id}' style='min-width:160px;'>{$docOptionsHtml}</select>";
+                      echo "<button class='rowExportBtn small-btn' data-id='{$id}' style='margin-left:6px;'>Export</button>";
+                      echo "</div>";
+
+                      echo "</td>";
                       echo "</tr>";
                     endwhile;
                   else:
@@ -773,6 +858,8 @@ $result = $mysqli->query($sql_main);
             exportEl.href = 'em_verfi.php?' + p.toString();
           }
           initAutoScrollAll();
+          // bind row export buttons after fragment load
+          if (typeof bindRowExports === 'function') bindRowExports();
         },
         error: function(xhr, status, err) {
           if (placeholder) placeholder.innerHTML = '<div class="k-card">Error loading overview table</div>';
@@ -927,6 +1014,32 @@ $result = $mysqli->query($sql_main);
 
       // clock
       startSmoothClock();
+
+      // bind row exports for server-rendered initial table
+      if (typeof bindRowExports === 'function') bindRowExports();
+
+      // bulk export (top control)
+var bulkBtn = document.getElementById('bulkExportBtn');
+if (bulkBtn) {
+  bulkBtn.addEventListener('click', function(){
+    var sel = document.getElementById('bulkExportSelect');
+    var doc = sel ? sel.value : '';
+    if (!doc) { alert('Choose a document to export'); return; }
+    var params = new URLSearchParams();
+    params.set('doc', doc);
+
+    // preserve current filter/search/bank (read from URL or UI)
+    var urlp = new URL(window.location.href).searchParams;
+    if (urlp.get('filter')) params.set('filter', urlp.get('filter'));
+    if (urlp.get('search')) params.set('search', urlp.get('search'));
+    var bankSel = getSelectedBank();
+    if (bankSel) params.set('bank', bankSel);
+
+    window.location.href = 'export_all.php?' + params.toString();
+  });
+}
+
+
     });
 
     // CHARTS: only status donut
@@ -1106,7 +1219,59 @@ $result = $mysqli->query($sql_main);
 
     // expose helpers
     window.initCharts = initCharts;
-    window.initAutoScrollAll = window.initAutoScrollAll || function(){};
+    window.initAutoScrollAll = window.initAutoScrollAll || function(){}; 
+
+    /* ===== Export UI binding (per-row + bulk) ===== */
+
+    // Bind per-row export buttons (call after fragment load or initial render)
+    function bindRowExports(){
+  document.querySelectorAll('.rowExportBtn').forEach(function(btn){
+    if (btn._bound) return;
+    btn._bound = true;
+    btn.addEventListener('click', function(){
+      var id = this.getAttribute('data-id') || this.dataset.id;
+      if (!id) { alert('Missing operator id'); return; }
+      var sel = this.parentElement.querySelector('.rowExportSelect');
+      var doc = sel ? sel.value : '';
+      if (!doc) { alert('Choose document to export for this operator'); return; }
+
+      // include current filter/search/bank
+      var params = new URLSearchParams();
+      params.set('id', id);
+      params.set('doc', doc);
+      var urlp = new URL(window.location.href).searchParams;
+      if (urlp.get('filter')) params.set('filter', urlp.get('filter'));
+      if (urlp.get('search')) params.set('search', urlp.get('search'));
+      var bankSel = getSelectedBank();
+      if (bankSel) params.set('bank', bankSel);
+
+      var url = 'export_operator.php?' + params.toString();
+      window.location.href = url;
+    });
+  });
+}
+
+    // expose globally
+    window.bindRowExports = bindRowExports;
+
+    // Bulk export fragment button (if fragment uses different ids)
+    var bulkFragBtn = document.getElementById('bulkExportBtnFrag');
+    if (bulkFragBtn) {
+      bulkFragBtn.addEventListener('click', function(){
+        var sel = document.getElementById('bulkExportSelectFrag');
+        var doc = sel ? sel.value : '';
+        if (!doc) { alert('Choose a document to export'); return; }
+        var params = new URLSearchParams();
+        params.set('doc', doc);
+        // preserve active fragment filters (they come from current URL)
+        var urlp = new URL(window.location.href).searchParams;
+        if (urlp.get('filter')) params.set('filter', urlp.get('filter'));
+        if (urlp.get('search')) params.set('search', urlp.get('search'));
+        var bankSel = getSelectedBank();
+        if (bankSel) params.set('bank', bankSel);
+        window.location.href = 'export_all.php?' + params.toString();
+      });
+    }
 
  (function(){
   /* Helper: create panel and preview elements once */
@@ -1807,6 +1972,25 @@ document.addEventListener('click', function(e){
   // Some browsers fire 'change' when user opens then cancels — keep class removal defensive
   sel.addEventListener('change', ()=> sel.classList.remove('open'));
 })();
+
+
+var bulkBtn = document.getElementById('bulkExportBtn');
+if (bulkBtn) {
+  bulkBtn.addEventListener('click', function(){
+    var sel = document.getElementById('bulkExportSelect');
+    var doc = sel ? sel.value : '';
+    if (!doc) { alert('Choose a document to export'); return; }
+    var params = new URLSearchParams();
+    params.set('doc', doc);
+    var urlp = new URL(window.location.href).searchParams;
+    if (urlp.get('filter')) params.set('filter', urlp.get('filter'));
+    if (urlp.get('search')) params.set('search', urlp.get('search'));
+    var bankSel = getSelectedBank();
+    if (bankSel) params.set('bank', bankSel);
+    window.location.href = 'export_all.php?' + params.toString();
+  });
+}
+
 </script>
 
 </body>
