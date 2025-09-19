@@ -52,9 +52,13 @@ $limit  = 10;
 $page   = isset($_GET['page']) ? max(1,(int)$_GET['page']) : 1;
 $search = isset($_GET['search']) ? $mysqli->real_escape_string($_GET['search']) : '';
 $offset = ($page - 1) * $limit;
-
-// New: bank filter param (explicit separate param)
-$bank = isset($_GET['bank']) ? $mysqli->real_escape_string($_GET['bank']) : '';
+// New: bank filter param (accept either 'bank' or 'bank_name' for backward compatibility)
+$bank = '';
+if (isset($_GET['bank_name'])) {
+    $bank = $mysqli->real_escape_string($_GET['bank_name']);
+} elseif (isset($_GET['bank'])) {
+    $bank = $mysqli->real_escape_string($_GET['bank']);
+}
 
 $filter = isset($_GET['filter']) ? $mysqli->real_escape_string($_GET['filter']) : '';
 
@@ -70,10 +74,12 @@ if ($filter !== '') {
         $whereClauses[] = "work_status = '" . $mysqli->real_escape_string($filter) . "'";
     }
 }
-// New: apply bank filter if provided (exact match)
+// New: apply bank filter if provided (exact match) — use DB column bank_name
 if ($bank !== '') {
-    $whereClauses[] = "bank = '" . $mysqli->real_escape_string($bank) . "'";
+    $whereClauses[] = "bank_name = '" . $mysqli->real_escape_string($bank) . "'";
 }
+
+
 
 $where = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
@@ -99,7 +105,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             <select id="bulkExportSelectFrag" class="form-select" style="min-width:220px;">
               <?= $docOptionsHtml ?>
             </select>
-            <button id="bulkExportBtnFrag" type="button" class="small-btn" style="margin-left:6px;">Export Docs</button>
+            <button id="bulkExportBtnFrag" type="button" class="small-btn" style="margin-left:6px;">Export Do</button>
           </div>
         </div>
       </div>
@@ -313,20 +319,20 @@ $result = $mysqli->query($sql_main);
         <input id="topSearch" type="search" placeholder="Search operator..." value="<?= htmlspecialchars($search) ?>">
         <button id="topSearchBtn">Search</button>
 
-        <!-- BANK filter select -->
-        <div class="filter-bar">
+      <div class="filter-bar">
   <label for="bankFilter" class="filter-label">Bank:</label>
   <select id="bankFilter" name="bank" class="qit-select">
-    <option value="" class="sas">All Banks</option>
-    <option value="Karur Vysya Bank">Karur Vysya Bank</option>  
-    <option value="City Union Bank">City Union Bank</option>
-    <option value="Tamilnad Mercantile Bank">Tamilnad Mercantile Bank</option>
-    <option value="Indian Bank">Indian Bank</option>
-    <option value="Karnataka Bank">Karnataka Bank</option>
-    <option value="Equitas Small Finance Bank">Equitas Small Finance Bank</option>
-    <option value="Union Bank Of India">Union Bank Of India</option>
+    <option value="" class="sas" <?= $bank === '' ? 'selected' : '' ?>>All Banks</option>
+    <option value="Karur Vysya Bank" <?= $bank === 'Karur Vysya Bank' ? 'selected' : '' ?>>Karur Vysya Bank</option>
+    <option value="City Union Bank" <?= $bank === 'City Union Bank' ? 'selected' : '' ?>>City Union Bank</option>
+    <option value="Tamilnad Mercantile Bank" <?= $bank === 'Tamilnad Mercantile Bank' ? 'selected' : '' ?>>Tamilnad Mercantile Bank</option>
+    <option value="Indian Bank" <?= $bank === 'Indian Bank' ? 'selected' : '' ?>>Indian Bank</option>
+    <option value="Karnataka Bank" <?= $bank === 'Karnataka Bank' ? 'selected' : '' ?>>Karnataka Bank</option>
+    <option value="Equitas Small Finance Bank" <?= $bank === 'Equitas Small Finance Bank' ? 'selected' : '' ?>>Equitas Small Finance Bank</option>
+    <option value="Union Bank Of India" <?= $bank === 'Union Bank Of India' ? 'selected' : '' ?>>Union Bank Of India</option>
   </select>
 </div>
+
 
         <a id="topExport" class="sidebar-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
 
@@ -335,7 +341,7 @@ $result = $mysqli->query($sql_main);
           <select id="bulkExportSelect" class="form-select" style="min-width:220px;">
             <?= $docOptionsHtml ?>
           </select>
-          <button id="bulkExportBtn" type="button" class="small-btn" style="margin-left:8px;">Export Docs</button>
+          <button id="bulkExportBtn" type="button" class="small-btn" style="margin-left:8px;">Export Dos</button>
         </div>
       </div>
 
@@ -349,10 +355,10 @@ $result = $mysqli->query($sql_main);
   </header>
 <!-- BULK EXPORT (TOP) -->
 <div id="bulkExportWrap" style="display:inline-flex; margin-left:12px; vertical-align:middle; align-items:center; gap:8px;">
-  <select id="bulkExportSelect" class="form-select" style="min-width:220px;">
+  <select id="bulkExportSelect" class="form-select" style="min-width:20px;">
     <?= $docOptionsHtml ?>
   </select>
-  <button id="bulkExportBtn" type="button" class="small-btn">Export Docs</button>
+  <button id="bulkExportBtn" type="button" class="small-btndddf">Export Docs</button>
 </div>
 
   <div class="k-shell">

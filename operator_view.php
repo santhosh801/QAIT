@@ -45,7 +45,7 @@ $allowlist = [
     'nseit_number','nseit_date','current_hno_street','current_village_town','current_pincode',
     'current_postoffice','current_district','current_state','permanent_hno_street',
     'permanent_village_town','permanent_pincode','permanent_postoffice','permanent_district',
-    'permanent_state','bank','status','work_status','review_notes','rejection_summary',
+    'permanent_state','bank_name','status','work_status','review_notes','rejection_summary',
     'created_at','last_modified_at'
 ];
 
@@ -95,10 +95,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         }
     }
 
-    // Optional bank filter passed via AJAX (exact match)
+    // Optional bank filter passed via AJAX (exact match) - now uses bank_name column
     if (isset($_GET['bank']) && $_GET['bank'] !== '') {
         $bn = $mysqli->real_escape_string($_GET['bank']);
-        $whereParts[] = "bank = '$bn'";
+        $whereParts[] = "bank_name = '$bn'";
     }
 
     $whereSql = $whereParts ? ('WHERE ' . implode(' AND ', $whereParts)) : '';
@@ -151,7 +151,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             while ($row = $res->fetch_assoc()) {
                 echo "<tr id='row-".htmlspecialchars($row['id'])."'>";
                 foreach ($row as $col => $val) {
-                    echo "<td class='px-6 py-3 border-b' style='padding:8px;border-bottom:1px solid #f6f6f6'>";
+                    echo "<td class='px-6 py-3 border-b' style='padding:8px;border-bottom:1px solid #f6f6f6'";
+                    // add data-col for easier JS update
+                    echo " data-col=\"" . htmlspecialchars($col) . "\">";
                     if (str_ends_with($col, '_file')) {
                         if ($val) {
                             $view = htmlspecialchars($val);
@@ -200,13 +202,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mysqli = get_db();
 
-    // accepted fields (matching DB) — using 'bank' column
+    // accepted fields (matching DB) — using 'bank_name' column
     $allowed = [
         'branch_name','joining_date','operator_id','operator_full_name','father_name','nseit_number','nseit_date',
         'gender','dob','operator_contact_no','email','aadhar_number','pan_number','voter_id_no','ration_card',
         'current_hno_street','current_village_town','current_pincode','current_postoffice','current_district','current_state',
         'permanent_hno_street','permanent_village_town','permanent_pincode','permanent_postoffice','permanent_district','permanent_state',
-        'bank',
+        'bank_name',
         // file fields (keys only)
         ...array_keys($labels)
     ];
@@ -240,14 +242,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data[$k] = isset($_POST[$k]) ? trim((string)$_POST[$k]) : '';
     }
 
-    // Validate bank server-side - ensure only allowed values are stored
-    if (isset($data['bank'])) {
-        $bn = trim($data['bank']);
+    // Validate bank_name server-side - ensure only allowed values are stored
+    if (isset($data['bank_name'])) {
+        $bn = trim($data['bank_name']);
         if ($bn === '' || !in_array($bn, $allowedBanks, true)) {
             // store empty string if invalid / not provided
-            $data['bank'] = '';
+            $data['bank_name'] = '';
         } else {
-            $data['bank'] = $bn;
+            $data['bank_name'] = $bn;
         }
     }
 
@@ -451,8 +453,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="branch_name" placeholder="Branch Name" required>
             <input type="date" name="joining_date" required>
 
-            <label for="bank">Bank</label>
-            <select name="bank" id="bank" class="bank-select" required>
+            <label for="bank_name">Bank</label>
+            <select name="bank_name" id="bank_name" class="bank-select" required>
                 <option value="">Select Bank</option>
                 <option value="Karur Vysya Bank">Karur Vysya Bank</option>
                 <option value="City Union Bank">City Union Bank</option>
@@ -623,19 +625,15 @@ function prettifyFilename(u){ try{ return u.split('/').pop().split('?')[0]; }cat
 function sendRejectionMail(opId) {
   if (!opId) { alert('Missing operator id'); return; }
 
-  // collect candidate doc keys from LABELS keys (UI should pass reasons elsewhere)
-  // Prefer: collect from your panel UI if you have visible reason inputs
   const panel = document.getElementById('opDetailPanel');
   let docs = [];
 
   if (panel) {
-    // collect doc keys for which a reason input exists with non-empty value
     panel.querySelectorAll('.doc-reject-reason .reason-input').forEach(inp => {
       const docKey = inp.getAttribute('data-doc') || inp.dataset.doc;
       if (docKey && inp.value && inp.value.trim()) docs.push(docKey);
     });
 
-    // fallback: any doc-row which has a .btn-reject that was clicked and shows reason box
     if (docs.length === 0) {
       panel.querySelectorAll('.doc-row').forEach(row => {
         const rejectArea = row.querySelector('.doc-reject-reason');
@@ -648,10 +646,8 @@ function sendRejectionMail(opId) {
     }
   }
 
-  // Deduplicate & ensure allowed keys
   docs = Array.from(new Set(docs || [])).filter(k => Object.prototype.hasOwnProperty.call(LABELS, k));
 
-  // Prepare payload to create resubmission request. If docs is empty, server fallback will use rejection_summary.
   const payload = { id: opId, docs: JSON.stringify(docs), email_now: 0 };
   $.ajax({
     url: 'create_resubmission.php',
@@ -666,7 +662,6 @@ function sendRejectionMail(opId) {
       }
       return;
     }
-    // success -> resp.token & resp.url
     const token = resp.token;
     $.post('send_rejection_mail.php', { token: token }, function(mres) {
       if (mres && mres.success) {
@@ -680,7 +675,6 @@ function sendRejectionMail(opId) {
   }).fail(function() { alert('Failed to create resubmission request'); });
 }
 
-
 // Client-side uploader helper that calls upload_doc.php and updates UI if present.
 // Usage: uploadDocClient(id, 'aadhar_file', inputEl, function(resp){ /* optional success */ })
 function uploadDocClient(opId, docKey, fileInputEl, onSuccess) {
@@ -689,7 +683,6 @@ function uploadDocClient(opId, docKey, fileInputEl, onSuccess) {
     return;
   }
 
-  // quick docKey validation client-side
   if (!Object.prototype.hasOwnProperty.call(LABELS, docKey)) {
     alert('Invalid document key: ' + docKey);
     return;
@@ -710,10 +703,8 @@ function uploadDocClient(opId, docKey, fileInputEl, onSuccess) {
     success: function(res) {
       if (res && res.success) {
         alert('Uploaded: ' + (res.path || ''));
-        // update panel if present
         const panel = document.getElementById('opDetailPanel');
         if (panel) {
-          // find doc row by data-doc attr on file input or buttons
           const row = panel.querySelector('.doc-row [data-doc="'+docKey+'"]') ? panel.querySelector('.doc-row [data-doc="'+docKey+'"]').closest('.doc-row') : null;
           if (row) {
             const linkSpan = row.querySelector('.doc-link');
@@ -722,14 +713,13 @@ function uploadDocClient(opId, docKey, fileInputEl, onSuccess) {
             if (dlBtn) dlBtn.disabled = false;
           }
         }
-        // update table row if present
+
         const tr = document.getElementById('row-' + opId);
         if (tr) {
           const td = tr.querySelector('td[data-col="'+docKey+'"]');
           if (td) {
             td.innerHTML = '<a href="'+res.path+'" target="_blank">View</a>';
           } else {
-            // fallback: replace any cell that contains the old file path text
             tr.querySelectorAll('td').forEach(c => {
               if (c.textContent && c.textContent.indexOf(docKey) !== -1) {
                 c.innerHTML = '<a href="'+res.path+'" target="_blank">View</a>';

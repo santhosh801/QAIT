@@ -1,7 +1,7 @@
 <?php
 // update_row.php (improved)
 // Accepts POST of editable fields and updates operatordoc row.
-// - Uses 'bank' column (validated against allowed list).
+// - Uses 'bank_name' column (validated against allowed list).
 // - Only whitelisted columns may be changed.
 
 header('Content-Type: application/json; charset=utf-8');
@@ -57,7 +57,7 @@ $allowlist = [
     'permanent_postoffice',
     'permanent_district',
     'permanent_state',
-    'bank',               // <-- using 'bank' column
+    'bank_name',          // <-- now using 'bank_name' column
     'status',
     'work_status',
     'review_notes',
@@ -77,7 +77,7 @@ $maxLengths = [
     // add limits for other fields as you prefer
 ];
 
-// Allowed banks - same list as registration form; validate updates to 'bank'
+// Allowed banks - same list as registration form; validate updates to 'bank_name'
 $allowedBanks = [
   'Karur Vysya Bank',
   'City Union Bank',
@@ -95,12 +95,12 @@ foreach ($_POST as $k => $v) {
     // normalize value (keep non-strings as-is)
     $val = is_string($v) ? trim($v) : $v;
 
-    // If updating bank, handle validation:
-    // - allow empty string to clear bank
+    // If updating bank_name, handle validation:
+    // - allow empty string to clear bank_name
     // - otherwise require exact match from allowedBanks
-    if ($k === 'bank') {
+    if ($k === 'bank_name') {
         if ($val === '') {
-            // allow clearing bank
+            // allow clearing bank_name
             $val = '';
         } else {
             if (!in_array($val, $allowedBanks, true)) {
@@ -114,9 +114,6 @@ foreach ($_POST as $k => $v) {
     if (isset($maxLengths[$k]) && is_string($val) && mb_strlen($val, 'UTF-8') > $maxLengths[$k]) {
         $val = mb_substr($val, 0, $maxLengths[$k], 'UTF-8');
     }
-
-    // convert PHP null-ish to actual SQL null if you want (currently keeping empty strings)
-    // if ($val === '') { $val = null; }
 
     $fields[] = "`$k` = ?";
     $params[] = $val;
