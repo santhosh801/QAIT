@@ -19,9 +19,8 @@ use PHPMailer\PHPMailer\Exception;
 // ---------------- CONFIG (for quick testing these are in-file; move to env for prod) ----------------
 $smtpHost = 'smtp.gmail.com';
 $smtpUser = 'kelaon73@gmail.com';                // <-- your Gmail
-$smtpPass = 'alwkccislfaqsztr';                  // <-- your Gmail App Password (16 chars)
+$smtpPass = 'alwkccislfaqsztr';                  // <-- app password (move to env)
 $smtpPort = 587;
-$smtpSecure = 'tls';
 $fromEmail = $smtpUser;                          // use authenticated account as From to avoid Gmail issues
 $fromName  = 'QIT Verification Team';
 $replyTo   = 'support@qit.com';
@@ -35,7 +34,6 @@ if (!is_dir($outDir)) @mkdir($outDir, 0755, true);
 // helper
 $esc = function($s){ return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); };
 function json_exit($arr) {
-    // clear any buffered output to avoid invalid JSON
     while (ob_get_level() > 0) ob_end_clean();
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($arr, JSON_UNESCAPED_UNICODE);
@@ -73,6 +71,58 @@ if ($operator_email === '' || !filter_var($operator_email, FILTER_VALIDATE_EMAIL
     json_exit(['success'=>false,'message'=>'Invalid operator email']);
 }
 
+// helper: create a resubmission request (used as fallback)
+function ensure_token_for_operator($mysqli, $operator_id, $docsList = [], $created_by = null, $expires_days = 7) {
+    // create table if missing
+    $mysqli->query("CREATE TABLE IF NOT EXISTS `resubmission_requests` (
+      `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      `operator_id` INT NOT NULL,
+      `token` VARCHAR(128) NOT NULL UNIQUE,
+      `docs_json` TEXT,
+      `expires_at` DATETIME DEFAULT NULL,
+      `created_by` VARCHAR(255),
+      `status` VARCHAR(32) DEFAULT 'open',
+      `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+      `completed_at` DATETIME DEFAULT NULL,
+      `used` TINYINT(1) DEFAULT 0,
+      `used_at` DATETIME DEFAULT NULL,
+      INDEX (operator_id),
+      INDEX (token)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // normalise docs to array
+    if (!is_array($docsList)) $docsList = [];
+
+    // generate token
+    $token = bin2hex(random_bytes(16));
+    $tries = 0;
+    while ($tries < 6) {
+        $q = $mysqli->prepare("SELECT 1 FROM resubmission_requests WHERE token = ? LIMIT 1");
+        if (!$q) break;
+        $q->bind_param('s', $token);
+        $q->execute();
+        $qr = $q->get_result();
+        $exists = ($qr && $qr->num_rows > 0);
+        $q->close();
+        if (!$exists) break;
+        $token = bin2hex(random_bytes(16));
+        $tries++;
+    }
+    if ($tries >= 6) return false;
+
+    $expires_at = (new DateTime())->modify('+' . intval($expires_days) . ' days')->format('Y-m-d H:i:s');
+    $docs_json = json_encode(array_values($docsList), JSON_UNESCAPED_UNICODE);
+    $created_by = $created_by ?? 'system';
+
+    $ins = $mysqli->prepare("INSERT INTO resubmission_requests (operator_id, token, docs_json, expires_at, created_by) VALUES (?, ?, ?, ?, ?)");
+    if (!$ins) return false;
+    $ins->bind_param('issss', $operator_id, $token, $docs_json, $expires_at, $created_by);
+    $ok = $ins->execute();
+    $ins->close();
+    if (!$ok) return false;
+    return $token;
+}
+
 // resolve token (if not provided, use latest for operator)
 if ($token === '') {
     $q = $mysqli->prepare("SELECT id, token FROM resubmission_requests WHERE operator_id = ? ORDER BY created_at DESC LIMIT 1");
@@ -87,6 +137,26 @@ if ($token === '') {
         $q->close();
     }
 }
+
+// If still no token: try to create one using rejection_summary lines (fallback)
+if ($token === '') {
+    $docsList = [];
+    if (!empty($rejSummary)) {
+        // parse lines like "Aadhaar Card: reason" -> keep keys rough (we can't map friendly label back to canonical reliably)
+        $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $rejSummary))));
+        foreach ($lines as $ln) {
+            // if the line looks like canonical key (contains '_file'), keep it, otherwise try to keep label as fallback
+            $docsList[] = $ln;
+        }
+    }
+    // create token
+    $newToken = ensure_token_for_operator($mysqli, $id, $docsList, ($_SESSION['employee_email'] ?? 'system'), 7);
+    if ($newToken !== false) {
+        $token = $newToken;
+    }
+}
+
+// final guard
 if ($token === '') json_exit(['success'=>false,'message'=>'No resubmission token found for operator']);
 
 // build resubmission URL
@@ -105,8 +175,8 @@ if ($p) {
     $rr = $p->get_result();
     if ($rr && $rr->num_rows) {
         $rrow = $rr->fetch_assoc();
-        $docsList = json_decode($rrow['docs_json'] ?? '[]', true);
-        if (!is_array($docsList)) $docsList = [];
+        $decoded = json_decode($rrow['docs_json'] ?? '[]', true);
+        $docsList = is_array($decoded) ? $decoded : [];
     }
     $p->close();
 }
@@ -167,7 +237,7 @@ try {
     $mail = new PHPMailer(true);
 
     // capture debug
-    $mail->SMTPDebug = 3; // verbose; set to 0 after debugging
+    $mail->SMTPDebug = 0; // set to 0 for production; change to 3 for debug
     $mail->Debugoutput = function($str, $level) use (&$smtpDebugOutput) {
         $smtpDebugOutput .= "[".date('c')."][DBG{$level}] " . rtrim($str) . PHP_EOL;
     };
@@ -181,7 +251,6 @@ try {
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = $smtpPort;
 
-    // use authenticated Gmail as From to avoid Gmail send-as rejection
     $mail->setFrom($fromEmail, $fromName);
     $mail->addAddress($operator_email, $opName);
     $mail->addReplyTo($replyTo, 'QIT Support');

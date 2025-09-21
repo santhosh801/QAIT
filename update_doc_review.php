@@ -86,6 +86,12 @@ if ($action === 'accept') {
     echo json_encode(['success'=>(bool)$ok,'message'=>'Document accepted']);
     exit;
 }
+// replace $newSummary assignment where you had null:
+$newSummary = count($lines) ? implode("\n", $lines) : '';
+
+// then run the same update:
+$stmt = $mysqli->prepare("UPDATE operatordoc SET rejection_summary = ?, last_modified_at = NOW() WHERE id = ?");
+$stmt->bind_param('si', $newSummary, $id);
 
 if ($action === 'reject') {
     if ($reason === '') {

@@ -1,0 +1,78 @@
+[2025-09-20T13:33:15+02:00][DBG3] Connection: opening to smtp.gmail.com:587, timeout=300, options=array()
+[2025-09-20T13:33:15+02:00][DBG3] Connection: opened
+[2025-09-20T13:33:15+02:00][DBG2] SERVER -> CLIENT: 220 smtp.gmail.com ESMTP d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:15+02:00][DBG1] CLIENT -> SERVER: EHLO localhost
+[2025-09-20T13:33:16+02:00][DBG2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2401:4900:1ce2:ccf1:108f:9f6f:e33:9d54]
+250-SIZE 35882577
+250-8BITMIME
+250-STARTTLS
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+[2025-09-20T13:33:16+02:00][DBG1] CLIENT -> SERVER: STARTTLS
+[2025-09-20T13:33:16+02:00][DBG2] SERVER -> CLIENT: 220 2.0.0 Ready to start TLS
+[2025-09-20T13:33:16+02:00][DBG1] CLIENT -> SERVER: EHLO localhost
+[2025-09-20T13:33:16+02:00][DBG2] SERVER -> CLIENT: 250-smtp.gmail.com at your service, [2401:4900:1ce2:ccf1:108f:9f6f:e33:9d54]
+250-SIZE 35882577
+250-8BITMIME
+250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+250-ENHANCEDSTATUSCODES
+250-PIPELINING
+250-CHUNKING
+250 SMTPUTF8
+[2025-09-20T13:33:16+02:00][DBG1] CLIENT -> SERVER: AUTH LOGIN
+[2025-09-20T13:33:16+02:00][DBG2] SERVER -> CLIENT: 334 VXNlcm5hbWU6
+[2025-09-20T13:33:16+02:00][DBG1] CLIENT -> SERVER: [credentials hidden]
+[2025-09-20T13:33:17+02:00][DBG2] SERVER -> CLIENT: 334 UGFzc3dvcmQ6
+[2025-09-20T13:33:17+02:00][DBG1] CLIENT -> SERVER: [credentials hidden]
+[2025-09-20T13:33:17+02:00][DBG2] SERVER -> CLIENT: 235 2.7.0 Accepted
+[2025-09-20T13:33:17+02:00][DBG1] CLIENT -> SERVER: MAIL FROM:<kelaon73@gmail.com>
+[2025-09-20T13:33:17+02:00][DBG2] SERVER -> CLIENT: 250 2.1.0 OK d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:17+02:00][DBG1] CLIENT -> SERVER: RCPT TO:<san0thosh08@gmail.com>
+[2025-09-20T13:33:17+02:00][DBG2] SERVER -> CLIENT: 250 2.1.5 OK d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:17+02:00][DBG1] CLIENT -> SERVER: DATA
+[2025-09-20T13:33:18+02:00][DBG2] SERVER -> CLIENT: 354 Go ahead d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Date: Sat, 20 Sep 2025 13:33:15 +0200
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: To: SANTHOSH <san0thosh08@gmail.com>
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: From: QIT Verification Team <kelaon73@gmail.com>
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Reply-To: QIT Support <support@qit.com>
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Subject: KYC documents require re-submission
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Message-ID: <qxPDPlcGijZ69aAW1w86DOS5iiELLYP0mBWfmeyJJNk@localhost>
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: X-Mailer: PHPMailer 6.10.0 (https://github.com/PHPMailer/PHPMailer)
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: MIME-Version: 1.0
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Content-Type: multipart/alternative;
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:  boundary="b1=_qxPDPlcGijZ69aAW1w86DOS5iiELLYP0mBWfmeyJJNk"
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: --b1=_qxPDPlcGijZ69aAW1w86DOS5iiELLYP0mBWfmeyJJNk
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Content-Type: text/plain; charset=us-ascii
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Hi SANTHOSH,
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: During verification the following items require correction or re-upload:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: - PAN Card
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Re-submission link:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: http://localhost/QAIT/duplicateoperator.php?token=52ecb112089031be0230e7d5f017b2224b1e5338110cbb150f5f37986a78dded
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: If you have questions, contact support@qit.com
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Regards,
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: QIT Verification Team
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: --b1=_qxPDPlcGijZ69aAW1w86DOS5iiELLYP0mBWfmeyJJNk
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Content-Type: text/html; charset=iso-8859-1
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: Content-Transfer-Encoding: 8bit
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: <div style="font-family:Arial,Helvetica,sans-serif;color:#222;"><h3 style="color:#c0392b;margin-bottom:6px;">KYC Document Review — Action Required</h3><p>Hi SANTHOSH,</p><p>During verification the following documents require correction or re-upload. Use the link below to re-submit the corrected documents:</p><ul style="background:#f8fafc;padding:12px;border-radius:6px;line-height:1.6;"><li>PAN Card</li></ul><p><strong>Re-submission link:</strong><br><a href="http://localhost/QAIT/duplicateoperator.php?token=52ecb112089031be0230e7d5f017b2224b1e5338110cbb150f5f37986a78dded">http://localhost/QAIT/duplicateoperator.php?token=52ecb112089031be0230e7d5f017b2224b1e5338110cbb150f5f37986a78dded</a></p><p>If you have trouble uploading files, reply to this email or contact <a href="mailto:support@qit.com">support@qit.com</a>.</p><p>Regards,<br/><strong>QIT Verification Team</strong></p></div>
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: --b1=_qxPDPlcGijZ69aAW1w86DOS5iiELLYP0mBWfmeyJJNk--
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER:
+[2025-09-20T13:33:18+02:00][DBG1] CLIENT -> SERVER: .
+[2025-09-20T13:33:19+02:00][DBG2] SERVER -> CLIENT: 250 2.0.0 OK  1758368000 d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:19+02:00][DBG1] CLIENT -> SERVER: QUIT
+[2025-09-20T13:33:19+02:00][DBG2] SERVER -> CLIENT: 221 2.0.0 closing connection d2e1a72fcca58-77cfbb79be6sm7645085b3a.5 - gsmtp
+[2025-09-20T13:33:19+02:00][DBG3] Connection: closed

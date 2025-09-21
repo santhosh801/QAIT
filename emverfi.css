@@ -1,12 +1,11 @@
-/* emverfi.css — updated styles for excel-like table, cards, donut, calendar, resizable sidebar */
-
-/* Fonts */
+/* emverfi.modified.css
+   Full modified CSS: original + targeted overrides implementing tasks T1–T19.
+   Save as emverfi.modified.css and include after your main CSS or replace it.
+*/
 
 /* Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&family=Vidaloka&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Vidaloka&display=swap');
-
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 :root{
@@ -23,6 +22,11 @@
   --mono: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --excel-border: rgba(15,23,42,0.08);
 }
+
+
+
+
+/* ---------- Original baseline styles (kept intact) ---------- */
 .data-table.excel-like tbody tr:nth-child(even) {
   background-color: rgba(189, 154, 104, 0.06); /* subtle gold tint */
 }
@@ -35,78 +39,353 @@ body{
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; overflow-x:hidden;
 }
 
-/* header */
-.qit-header{
-    height: 120px;font-family:"Vidaloka", serif;
-    margin-top: 0px;
-  position:fixed; top:0; width:100%; z-index:1000; background:#fff; border-bottom:2px solid var(--gold);
-}
-.qit-header .container{ display:flex; align-items:center; gap:28px; padding:10px 18px; }
-.logo{ display:flex; align-items:center; gap:10px; }
+/* Logo */
+.logo { display:flex; display: relative;
+  align-items:center; gap:10px; }
+.logo-grid { display:grid; grid-template-columns:repeat(2,14px); grid-template-rows:repeat(2,14px); gap:8px; }
+.logo-grid span{ width:18px; height:18px; border-radius:12px;margin-left: 20px; }
+.sq1{ background:var(--gold); }
+.sq2{ background:var(--gold); }
+.sq3{ background:var(--gold); }
+.sq4{ background:var(--black); }
 
-.logo-grid{ display:grid; font-family:"Vidaloka", serif; grid-template-columns:repeat(2,22px);grid-template-rows:repeat(2,22px); }
-.logo-grid span{ width:20px; height:20px; border-radius:50px;  }
-.sq1,.sq2,.sq3{ background:var(--gold) } .sq4{ background:var(--black) }
-.logo-text .big-q{ font-weight:400; color:var(--gold); font-size:20px; font-size: 45px; margin-left: 3px; }
-.small-it{ font-size:15px; color:var(--black); font-weight:400; }
-
+.logo-text { font-family:"Vidaloka", serif; font-weight:350; display:flex; align-items:baseline; gap:3px;margin-top:14px;  margin-left: 15px; }
+.big-q { font-size:42px; color:var(--gold); font-family:"Vidaloka",serif;margin-top:1px;  }
+.small-it { font-size:17px; font-weight:200; color:var(--black); margin-left:2px; margin-top:1px; letter-spacing:1px; }
 
 /* header search + export */
-.header-search{ margin-left:auto; display:flex; gap:8px; align-items:center; }
-.header-search input[type="search"]{
-  height:16px; padding:8px 10px; border-radius:8px; border:1px solid var(--ring); width:320px;
-}
-.header-search button, .sidebar-export{
-  height:36px; padding:0 14px; border-radius:8px; border:none; background:var(--gold); color:var(--black); cursor:pointer; font-weight:700;
-  text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+.header-search {
+  display:flex !important;
+  align-items:center;
+  gap:24px;
+  width: 15%;
+  margin-left: 250px;
+  box-sizing:border-box;
+  padding:16px 16px;
+  height:64px;
 }
 
+/* Search input */
+.header-search input[type="search"], #topSearch {
+  height:40px;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid var(--ring);
+  width:360px;
+  box-sizing:border-box;
+  background:#fff;
+  font-size:14px;
+}
+
+/* keep header items on single row — no wrap */
+.header-search {
+  display:flex !important;
+  align-items:center;
+  gap:16px;
+  flex-wrap:nowrap !important;     /* prevent wrapping to next line */
+  white-space:nowrap;
+}
+
+/* ensure bank select and export csv don't expand and push Export Docs down */
+.header-search .filter-bar,
+.header-search .qit-select,
+.header-search #topExport {
+  flex: 0 0 auto;
+  min-width: 60px;
+}
+
+/* Make the bulkExportWrap inline and aligned with header items */
+#bulkExportWrap {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin-left: 1px !important;    /* adjust spacing */
+  vertical-align: middle;
+  flex: 0 0 auto ;
+}
+
+/* Make the Export Docs button gold and rounded (targetting existing .small-btn inside the #bulkExportWrap) */
+#bulkExportWrap .small-btn,
+#bulkExportWrap button {
+  background: var(--gold, #000000);
+  color: #fff;
+  border: none;
+  height: 40px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(184,134,80,0.10);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+#bulkExportWrap .small-btn:hover,
+#bulkExportWrap button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(184,134,80,0.12);
+}
+
+/* defensive: if the Export Docs was wrapped by an extra container, force it inline */
+#bulkExportWrap { white-space: nowrap; }
+
+/* small screens: allow wrapping but keep Export Docs visible under search (tweak as needed) */
+@media (max-width: 880px) {
+  .header-search { flex-wrap:wrap !important; width:100%; margin-left:8px; }
+  #bulkExportWrap { display:flex !important; margin-left:0 !important; margin-top:8px; }
+}
+/* gold-export style (clean, targeted) */
+.gold-export {
+  background: var(--gold, #ffffff);
+  color: #fff;
+  border: none;
+  height: 40px;
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-weight:700;
+  box-shadow:0 8px 20px rgba(184,134,80,0.10);
+  cursor:pointer;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.gold-export:hover { transform: translateY(-2px); box-shadow:0 12px 28px rgba(184,134,80,0.12); }
+
+/* Custom animated dropdown baseline */
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+  min-width: 160px;
+  font-family: var(--font-main, "Funnel Display", system-ui);
+  z-index: 80;
+  color: rgb(0, 0, 0);
+}
+
+/* Hidden original select but still in DOM (keeps form behavior) */
+.custom-dropdown select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  
+  pointer-events: none;
+}
+
+/* Toggle button (shows current selection) */
+.custom-dropdown .cd-toggle {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:10px 12px;
+  height:50px;
+  background: linear-gradient(190deg, var(--mod-gold), #fff) !important;
+  border:0px solid ;
+  border-radius:15px;
+  cursor:pointer;
+  box-shadow:0 6px 16px rgba(16,24,40,0.03);
+  user-select:none;
+}
+.custom-dropdown .cd-toggle .cd-label { color: #222; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.custom-dropdown .cd-toggle .cd-caret {
+  width:10px; height:10px; display:inline-block; transform-origin:center; transition:transform .22s ease;
+  border:4px solid rgba(0,0,0,0.12); border-left:none; border-top:none; transform:rotate(45deg);
+  margin-left:6px;
+}
+
+/* menu wrapper */
+.custom-dropdown .cd-menu {
+  position:absolute;
+  top: calc(100% + 8px);
+  left:0;
+  min-width:100%;
+  max-height:320px;
+  overflow:auto;
+  background:#fff;
+  border-radius:10px;
+  border:5px solid rgba(15,23,42,0.06);
+  box-shadow: 0 18px 50px rgba(16,24,40,0.06);
+  padding:8px;
+  display:none;
+  gap:6px;
+  transform-origin:top center;
+  animation: cdDropIn 5.89s cubic-bezier(.6,.19,1.95,8) both;
+}
+
+/* visible state */
+.custom-dropdown.open .cd-menu { display:flex; flex-direction:column; }
+.custom-dropdown.open .cd-toggle .cd-caret { transform: rotate(-135deg); }
+
+/* animation */
+@keyframes cdDropIn {
+  from { opacity:0; transform: translateY(-6px) scale(.98); }
+  to { opacity:1; transform: translateY(0) scale(1); }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* items */
+.custom-dropdown .cd-item {
+  padding:10px 12px;
+  border-radius:18px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition: background .14s ease, transform 1.12s ease;
+}
+.custom-dropdown .cd-item:hover,
+.custom-dropdown .cd-item[aria-selected="true"],
+.custom-dropdown .cd-item.focused {
+  background: linear-gradient(90deg, rgba(184,134,80,0.06), rgba(184,134,80,0.03));
+  transform: translateX(4px);
+  outline: none;
+}
+
+/* small metadata (value) */
+.custom-dropdown .cd-item .meta { color:var(--muted,#6b7280); font-size:13px; margin-left:auto; }
+
+/* support nested groups (if you want nested menus later) */
+.custom-dropdown .cd-submenu {
+  margin-left:8px;
+  padding-left:8px;
+  border-left:1px dashed rgba(0,0,0,0.04);
+}
+
+/* scrollbar small polish */
+.custom-dropdown .cd-menu::-webkit-scrollbar { width:8px; }
+.custom-dropdown .cd-menu::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.06); border-radius:6px; }
+
+/* small responsive tweak */
+@media (max-width:640px){
+  .custom-dropdown { min-width:160px; }
+  .custom-dropdown .cd-toggle { padding:8px 10px; }
+}
+
+/* ensure its wrapper is inline with header */
+#bulkExportWrap { display:inline-flex !important; align-items:center; gap:8px; margin-left:12px; }
+
+/* Make export buttons look like the custom-dropdown toggle */
+.gold-export,
+.sidebar-export,
+#topExport,
+#bulkExportWrap .small-btn,
+#bulkExportWrap button {
+  background: linear-gradient(180deg,#fff,#fbfbfb) !important;
+  border: 1px solid rgba(15,23,42,0.06) !important;
+  box-shadow: 0 10px 30px rgba(16,24,40,0.04) !important;
+  color: #1f2937 !important; /* dark text */
+  height: 40px !important;
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: transform .12s ease, box-shadow .12s ease !important;
+}
+
+/* caret icon to the right — uses pseudo element so no HTML edits needed */
+.gold-export::after,
+.sidebar-export::after,
+#bulkExportWrap .small-btn::after,
+#bulkExportWrap button::after,
+#topExport::after {
+  content: "";
+  display:inline-block;
+  width:12px;
+  height:12px;
+  border-right:2px solid rgba(0,0,0,0.18);
+  border-bottom:2px solid rgba(0,0,0,0.18);
+  transform: rotate(45deg);
+  margin-left:6px;
+  margin-top:2px;
+  opacity:0.75;
+}
+
+/* hover */
+.gold-export:hover,
+.sidebar-export:hover,
+#topExport:hover,
+#bulkExportWrap .small-btn:hover,
+#bulkExportWrap button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 18px 40px rgba(16,24,40,0.06) !important;
+}
+
+/* ensure the Export CSV text (topExport) has limited width and doesn't stretch */
+#topExport { min-width:110px; max-width:160px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Make bulkExportSelect and Export Docs inline and aligned with select height */
+#bulkExportWrap {
+  display:inline-flex !important;
+  gap:8px;
+  align-items:center;
+  vertical-align:middle;
+  margin-left:12px !important;
+}
+#bulkExportWrap select.form-select {
+  height:40px !important;
+  padding:8px 10px !important;
+  border-radius:10px !important;
+  border:1px solid rgba(15,23,42,0.06) !important;
+  background:linear-gradient(180deg,#fff,#fbfbfb) !important;
+  box-shadow:0 6px 18px rgba(16,24,40,0.03) !important;
+}
+
+/* Align everything inside header-search on a single line (defensive) */
+.header-search { display:flex !important; align-items:center; gap:12px; flex-wrap:nowrap !important; }
+
+/* Small screens: allow break but keep Export adjacent */
+@media (max-width:880px) {
+  .header-search { flex-wrap:wrap !important; width:100%; margin-left:8px; }
+  #bulkExportWrap { margin-top:8px; margin-left:0 !important; }
+}
+
+/* Remove any leftover gold accent on children (force neutral) */
+.gold-export *, .sidebar-export * { color: inherit !important; background: transparent !important; }
+
+/* Final polish: slightly darker text on export buttons */
+#bulkExportWrap button, #bulkExportWrap .small-btn { color: #111827 !important; }
+
+/* end original baseline */
+
 /* layout */
-.k-shell{ display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh; padding-top:24px; gap:28px; transition: grid-template-columns .28s ease; }
+.k-shell{ display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh;  gap:28px; transition: grid-template-columns .28s ease; }
 @media (max-width:1000px){ .k-shell{ grid-template-columns:1fr } .k-sidebar{ display:none } }
 .k-card{ background:var(--card); border-radius:10px; padding:12px; box-shadow:var(--shadow); border:2px solid var(--ring); }
 
 /* sidebar */
-.k-card-title{ font-weight:500; margin-bottom:8px; margin-top:80px; font-family:"Vidaloka", serif; font-size:25px; }
+.k-card-title{ font-weight:500; margin-bottom:8px;  font-family:"Vidaloka", serif; font-size:115px; }
 nav a{ display:flex; justify-content:space-between; align-items:center; color:var(--black); text-decoration:none; padding:10px 8px; border-radius:8px; font-weight:600; margin-bottom:4px; }
 nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
 .badge{ background:#F3F4F6; color:var(--black); padding:4px 8px; border-radius:999px; font-size:12px; margin-left:12px; }
 
 /* status cards (colored icons) */
-.status-row{ display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;  margin-top: 40px; font-family:"Vidaloka", serif;}
-.status-card{ flex:1; padding:10px; border-radius:20px; display:flex; align-items:center; gap:12px; min-width:110px; transition: transform .18s ease, box-shadow .18s ease; }
-.status-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 40px rgba(15,23,42,0.12); }
+.status-row{ display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;  margin-top: 1px; font-family:"Vidaloka", serif;}
+.status-card{ flex:1; padding:10px; border-radius:20px; display:relative; align-items:center; gap:12px; min-width:60px; transition: transform .18s ease, box-shadow .18s ease; }
+.status-card:hover{ transform: translateY(-1px); box-shadow: 0 18px 40px rgba(15,23,42,0.12); }
 .dash-colored{ color:#111; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-width:160px; position:relative; overflow:hidden }
-.dash-icon{ font-size:20px; margin-bottom:6px; }
+.dash-icon{ font-size:20px; margin-bottom:1px; }
 .dash-green{ background:linear-gradient(180deg,#E6FBF2,#DFF7EE); color:var(--black) }
 .dash-orange{ background:linear-gradient(180deg,#FFF7EB,#FFF3E6); color:var(--black) }
 .dash-blue{ background:linear-gradient(180deg,#F1F8FF,#EAF5FF); color:var(--black) }
 .dash-red{ background:linear-gradient(180deg,#FFF1F0,#FFECEB); color:var(--black) }
 
 .k-value{ font-size:18px; font-weight:800; color:var(--black) }
-.k-card-sub{ margin-top:6px; color:var(--muted) }
+.k-card-sub{ margin-top:1px; color:var(--muted) }
 
 /* gold heading */
-.k-page-title h1 { margin:0; font-size:30px; color:var(--gold); font-weight:900; }
+.k-page-title h1 { margin: 0px; font-size:30px; color:var(--gold); font-weight:900; }
 
 /* status main layout (clock + calendar + donut) */
-.status-main-row{ display:flex; gap:15px; margin-top:0px; align-items:flex-start; }
+.status-main-row{ display:flex; gap:15px; margin: 0px; align-items:flex-start; }
 .status-left{ flex:1; min-width:260px; }
 .status-center{ width:440px; display:flex; align-items:center; justify-content:center; }
 .status-right{ width:280px; }
-/* ---------- DROP-IN: Braun-style Circular Clock + Month Calendar ---------- */
-/* Non-destructive override — no HTML changes required */
 
+/* Clock / Calendar baseline (kept) */
 :root{
-  --qit-clock-size: 200px;         /* adjust to match your dashboard card size */
+  --qit-clock-size: 200px;
   --qit-clock-bg: linear-gradient(180deg,#ffffff,#f7fbfb);
-      /* green accent (change to match PETRI) */
-  --qit-clock-s: #ff7a18;          /* second hand accent */
+  --qit-clock-s: #ff7a18;
   --qit-clock-ring: rgba(0, 0, 0, 0.04);
   --qit-font: 'Inter', system-ui, sans-serif;
 }
-
-/* make left card circular */
 .status-left .clock-card{
   width: 250px;
   height: 250px;
@@ -125,16 +404,6 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   border: 1px solid var(--qit-clock-ring);
  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
 }
-
-/* soft highlight */
-
-
-/* center digital time - use existing element .clock-large */
-
-
-/* small date meta below time (inside 
-
-/* center pivot dot injected by JS (or fallback via pseudo if not injected) */
 .status-left .clock-card .pivot-dot{
   position:absolute;
   color: black;
@@ -143,12 +412,7 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   left:50%;top:50%;transform:translate(-50%,-50%);
   background: #ff6e6e; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px; z-index:50;
 }
-
-/* hands: we'll place two rotating pseudo hands using the .clock-large ::before/::after,
-   and a third via .clock-card::after for seconds. This avoids changing HTML. */
 .clock-large{ --hdeg:0; --mdeg:0; }
-
-/* hour */
 .clock-large::before{
   content:"";
   position:absolute;
@@ -157,14 +421,11 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   width:5px;
   height:45px;
   transform-origin:50% 88%;
- 
   border-radius:4px;
   transform: translate(-50%,-88%) rotate(calc(var(--hdeg) * 1deg));
   z-index:40;
   box-shadow: 0 1px 2px rgba(0,0,0,0.12);
 }
-
-/* minute */
 .clock-large::after{
   content:"";
   position:absolute;
@@ -173,13 +434,10 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   width:5px;
   height:78px;
   transform-origin:50% 88%;
- 
   border-radius:4px;
   transform: translate(-50%,-88%) rotate(calc(var(--mdeg) * 1deg));
   z-index:39;
 }
-
-/* second hand on the card pseudo */
 .status-left .clock-card::after{
   content:"";
   position:absolute;
@@ -194,17 +452,12 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   box-shadow: 0 0 10px rgb(0, 0, 0);
   border-radius:2px;
 }
-
-/* hour markers (numbers) and minute ticks are generated by JS into the .clock-markers container we create.
-   provide styling targets */
 .status-left .clock-card .qit-clock-markers { position:absolute; inset:0; pointer-events:none; z-index:50; }
 .qit-hour-marker{ position:absolute; left:50%; top:50%; transform-origin:center; color:rgba(255,255,255,0.95); font-weight:700; font-size:12px; text-align:center; }
 .qit-minute-tick{ position:absolute; left:50%; top:50%; width:2px; height:8px; background:rgba(255,255,255,0.28); transform-origin:center; }
-
-/* subtle hover lift */
 .status-left .clock-card:hover{ transform: translateY(-4px); }
 
-/* ---------------- Calendar month card styling ---------------- */
+/* Calendar baseline */
 .status-center .calendar-wrap{
   width: 100%;
   max-width: 360px;
@@ -215,8 +468,6 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   box-shadow: 0 10px 30px rgba(12,18,30,0.04);font-family:"Vidaloka", serif;
   transition: box-shadow .28s ease, transform .28s ease;
 }
-
-/* top header with nav */
 .status-center .calendar-wrap .cal-header{
   display:flex;
   align-items:center;
@@ -226,37 +477,24 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
 }
 .cal-title{ font-weight:700; color:#334155; }
 .cal-nav{ display:flex; gap:8px; align-items:center; }
-
-/* nav buttons */
 .cal-btn{ background:transparent; border:0; padding:6px 8px; border-radius:6px; cursor:pointer; font-weight:700; color:#475569; }
 .cal-btn:hover{ background:rgba(6,12,24,0.03); transform:translateY(-1px); }
-
-/* days header */
 .cal-days{ display:flex; gap:6px; padding:10px 6px; justify-content:space-between; color: #94a3b8; font-weight:700; font-size:13px; }
-
-/* dates grid */
 .cal-dates{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; padding:10px 6px; }
 .cal-dates span{ display:inline-flex; justify-content:center; align-items:center; height:38px; border-radius:6px; font-weight:600; color:#374151; cursor:pointer; }
 .cal-dates span.disable{ color:#960c0c; background:transparent; box-shadow:none; cursor:default; }
 .cal-dates span:hover:not(.disable){ background:#282a32; transform:translateY(-4px); box-shadow: 0 6px 18px rgba(14,165,233,0.06); }
 .cal-dates span.active{ background: #06b6d4; color:#fff; box-shadow: 0 8px 24px rgba(6,182,212,0.12); }
-
-/* selected label */
 .status-center .date-display{ padding:6px 8px; color:#004ade; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-
-/* make sure calendar fits small devices */
 @media (max-width:760px){
   :root{ --qit-clock-size: 140px; }
   .status-center .calendar-wrap{ max-width:100%; }
 }
-/* ---------- small visual tweaks: black clock border + calendar "today" styling ---------- */
 
-/* make clock border solid black without changing other rules */
+/* small visual tweaks: black clock border + calendar "today" styling */
 .status-left .clock-card{
   border: 12px solid #000 !important; /* explicit to override theme ring */
 }
-
-/* today's date styling in calendar */
 .cal-dates span.today {
   border: 2px solid rgba(99,102,241,0.18);   /* subtle violet ring */
   box-shadow: 0 6px 20px rgba(99,102,241,0.09);
@@ -264,8 +502,6 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   color: #111827;
   font-weight:800;
 }
-
-/* hover for any date; special hover for today to make it pop */
 .cal-dates span:hover:not(.disable) { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(14,165,233,0.06); }
 .cal-dates span.today:hover {
   background: linear-gradient(90deg,#7c3aed,#06b6d4);
@@ -273,27 +509,19 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
   transform: translateY(-6px) scale(1.02);
   box-shadow: 0 12px 32px rgba(124,58,237,0.18);
 }
-
-/* active (selected) remains strong — keep clear difference from today */
 .cal-dates span.active {
   background: #06b6d4; color:#fff; box-shadow:0 8px 24px rgba(6,182,212,0.12);
   border: none;
 }
-
-/* ensure small devices still ok */
 @media (max-width:760px){
   .cal-dates span.today { font-weight:700; }
 }
 
-/* hub cards */
 .center-hub-cards{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px; }
 .hub-card{ background:linear-gradient(180deg,#fff,#fbfbfb); border:1px solid var(--ring); border-radius:8px; padding:10px; text-align:center; }
 .hub-num{ font-weight:800; font-size:18px; }
 .hub-label{ color:var(--muted); font-size:12px; margin-top:4px; }
 
-
-
-/* charts row */
 .chart-head{ font-weight:700; margin-bottom:px; color:var(--muted) }
 .chart-wrap{ position:relative; min-height:140px; }
 
@@ -310,28 +538,20 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
 .scroll-indicator{ position:absolute; right:10px; bottom:8px; height:5px; width:120px; background:rgba(0,0,0,0.06); border-radius:4px; display:none; }
 .scroll-indicator .scroll-thumb{ position:absolute; left:0; top:0; height:100%; width:40px; background:linear-gradient(90deg,var(--gold), var(--gold-dark)); border-radius:4px; transition: left .12s linear; }
 
-/* inputs & buttons */
 .input-compact{ padding:6px 8px; border-radius:6px; border:1px solid var(--ring); font-size:13px; width:180px; }
 .small-btn{ padding:6px 8px; border-radius:6px; border:1px solid var(--ring); background:#fff; cursor:pointer; font-size:13px; }
 .small-btn + .small-btn{ margin-left:6px }
 
-/* actions column narrow */
 .col-actions{ white-space:nowrap; }
-
-/* fragment toolbar */
 .table-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .table-actions .muted{ color:var(--muted); font-size:13px; }
-
-/* pagination */
 .fragment-pagination{ display:flex; gap:8px; margin-top:12px; }
 .fragment-pagination a{ padding:6px 10px; border-radius:6px; border:1px solid var(--ring); text-decoration:none; color:var(--black) }
 
-/* mailing form */
 .signup.mail-form{ font-family:"Vidaloka", serif; font-size: 30px;  margin-bottom: 30px ;max-width:840px; }
 .mail-row{ display:flex; gap:8px; margin-bottom:18px; }
 .mail-row input{ flex:1; padding:10px; border-radius:8px; border:1px solid var(--ring); }
 
-/* transitions */
 .section-visible{ animation: softAppear .28s ease both; }
 @keyframes softAppear{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
 
@@ -342,10 +562,9 @@ nav a:hover{ background: rgba(189,154,104,0.06); transform: translateX(4px); }
     font-weight:300; font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); margin:20px 0 10px 0;
 }
 .k-card-title{ font-weight:500;   font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); }
-/* drag handle style */
+
 #sidebarDragHandle{ position:absolute; right:-6px; top:0; width:12px; height:100%; cursor:ew-resize; z-index:1200; border-left:1px dashed rgba(15,23,42,0.06); background:linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
 
-/* responsive */
 @media (max-width:900px){
   .status-main-row{ flex-direction:column; }
   .status-right, .status-center{ width:100%; }
@@ -362,28 +581,24 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 /* small animations */
 @keyframes auto-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * (100% - 100vw + 40px))); } }
 .tick-anim { transform: scale(1.02); opacity: 0.98; transition: transform .18s ease, opacity .18s ease; }
-  @keyframes auto-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * (100% - 100vw + 40px))); } }
-    .tick-anim { transition: transform 180ms ease, opacity 180ms ease; transform: scale(1.02); opacity: 0.98; }
-    #sidebarDragHandle{ position:absolute; right:-6px; top:0; width:12px; height:100%; cursor:ew-resize; z-index:1200; border-left:1px dashed rgba(15,23,42,0.06); background:linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
-    aside#resizableSidebar{ position:relative; }
+@keyframes auto-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * (100% - 100vw + 40px))); } }
+.tick-anim { transition: transform 180ms ease, opacity 180ms ease; transform: scale(1.02); opacity: 0.98; }
+#sidebarDragHandle{ position:absolute; right:-6px; top:0; width:12px; height:100%; cursor:ew-resize; z-index:1200; border-left:1px dashed rgba(15,23,42,0.06); background:linear-gradient(90deg, rgba(0,0,0,0.02), transparent); }
+aside#resizableSidebar{ position:relative; }
 
-    /* collapsed sidebar (icon only) */
-    aside#resizableSidebar.sidebar-collapsed { width:56px !important; min-width:56px; }
-    aside#resizableSidebar.sidebar-collapsed .sidebar-nav .nav-label { display:none;  font-family:"Vidaloka", serif; }
-    aside#resizableSidebar.sidebar-collapsed .sidebar-nav .badge { display:none; }
-    aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; height:1px; overflow:hidden;  }
+aside#resizableSidebar.sidebar-collapsed { width:56px !important; min-width:56px; }
+aside#resizableSidebar.sidebar-collapsed .sidebar-nav .nav-label { display:none;  font-family:"Vidaloka", serif; }
+aside#resizableSidebar.sidebar-collapsed .sidebar-nav .badge { display:none; }
+aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; height:1px; overflow:hidden;  }
 
-    /* circular toggle button */
-    .sidebar-toggle{
-      position:absolute; right:-22px; top:18px; z-index:1300;
-      width:44px; height:44px; border-radius:50%; border:none; background:linear-gradient(180deg,var(--gold), #a5834d);
-      box-shadow:0 8px 20px rgba(0,0,0,0.12); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-    }
+.sidebar-toggle{
+  position:absolute; right:-22px; top:18px; z-index:1300;
+  width:44px; height:44px; border-radius:50%; border:none; background:linear-gradient(180deg,var(--gold), #a5834d);
+  box-shadow:0 8px 20px rgba(0,0,0,0.12); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
 
-    
-    /* slim scroll indicator (5px high) */
- /* ensure the scroll indicator is visible and thumb stands out */
+/* slim scroll indicator (5px high) */
 .scroll-indicator{
   position:absolute;
   right:10px;
@@ -407,27 +622,121 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   transition:left .08s linear;
   cursor:grab;
 }
+.op-attachments .doc-row { display:flex; gap:12px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
+.op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); flex:0 0 180px; }
+.op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:8px; }
+.op-attachments .doc-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+  margin-top:6px;
+}
+@media (max-width: 720px) {
+  .op-attachments .doc-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.doc-reject-reason { display:none; margin-top:6px; gap:6px; align-items:center; }
+.doc-reject-reason .reason-input { width:100%; max-width:420px; }
+/* ===== Revised button + attachments layout ===== */
+.small-btn {
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: transform .06s ease, box-shadow .12s ease, background .12s ease;
+  line-height: 1;
+}
+.small-btn:active { transform: translateY(1px); }
+.small-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* semantic variants */
+.small-btn.btn-accept { background: #e6ffef; border-color: #b7f3c7; }
+.small-btn.btn-reject { background: #fff2f2; border-color: #ffcccc; }
+.small-btn.btn-upload { background: #f5f8ff; border-color: #c6d7ff; cursor: pointer; }
+
+/* Download button: visible, subtle accent, no huge margin */
+.small-btn.btn-download {
+  background: #f7f7ff;
+  border-color: #e2e2ff;
+  color: #2b2b7a;
+  margin: 0;                /* remove big right margin that hid it */
+  min-width: 120px;
+  padding: 8px 12px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.small-btn.btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(30,30,60,0.06); }
+
+/* doc-actions container: horizontal flow, wraps on small screens */
+.doc-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start; /* keeps buttons together, change to space-between if you want space */
+  flex-wrap: wrap;
+  margin-top: 6px;
+  z-index: 20; /* ensure visible above overlays if needed */
+}
+
+/* ensure larger action bar styling in panel */
+.op-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.op-actions .small-btn { min-width:120px; }
+
+/* smaller rows (keep responsive) */
+.btn-row { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+.btn-row .small-btn { min-width:120px; padding:6px 10px; font-size:13px; }
+
+.col-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.col-actions .small-btn { min-width:140px; }
+
+/* keep file link style */
+.file-link { color: #2b6cb0; text-decoration: underline; }
+
+/* attachments rows */
+.op-row { display:flex; gap:12px; padding:6px 0; align-items:flex-start; }
+.op-row .k { width:240px; font-weight:700; color:#425066; }
+.op-row .v { flex:1; word-break:break-word; }
+
+/* table spacing */
+.data-table td, .data-table th { padding:6px 8px; border-bottom:1px solid rgba(0,0,0,0.04); vertical-align:middle; }
+.nowrap { white-space:nowrap; }
+
+/* small responsive tweak: if container is narrow, make buttons stack */
+@media (max-width:720px) {
+  .doc-actions { justify-content: flex-start; }
+  .small-btn { font-size:13px; padding:7px 10px; }
+  .op-row .k { width: 160px; }
+}
+
+/* bank filter UI styles */
+.filter-bar { display:flex; gap:10px; align-items:center; margin-left:18px; }
+.filter-bar select { height:40px; padding:8px 12px; border-radius:4px; border:none; background:#ffeba7; color:#ffffff; font-weight:500; box-shadow:0 12px 35px rgba(255,235,167,.15); }
+.filter-bar .btn { height:40px; padding:8px 12px; border-radius:4px; border:none; cursor:pointer; }
+
+.form-select { padding:6px 8px; font-size:13px; border-radius:4px; }
+#bulkExportWrap, #bulkExportWrapFrag { display:inline-flex; gap:8px; align-items:center; }
+.row-export .form-select { padding:6px;  }
 .scroll-indicator .scroll-thumb:active{ cursor:grabbing; }
 
-
-    /* responsive tweaks */
-    @media (max-width:900px){
-      .status-main-row{ flex-direction:column; }
-      .status-right, .status-center{ width:100%; }
-      .table-scroll-inner{ display:block; white-space:normal; overflow:auto; }
-      aside#resizableSidebar.sidebar-collapsed { width:56px !important; }
-      .sidebar-toggle{ right:-18px; }
-    }
-
-    /* ---------- Row click / detail-panel UI ---------- */
+@media (max-width:900px){
+  .status-main-row{ flex-direction:column; }
+  .status-right, .status-center{ width:100%; }
+  .table-scroll-inner{ display:block; white-space:normal; overflow:auto; }
+  aside#resizableSidebar.sidebar-collapsed { width:56px !important; }
+  .sidebar-toggle{ right:-18px; }
+}
 
 /* Make rows clearly clickable */
 .data-table.excel-like tbody tr { cursor: pointer; transition: background .12s ease, transform .08s ease; }
 .data-table.excel-like tbody tr:hover { background: rgba(15,23,42,0.03); transform: translateY(-1px); }
 
-/*/* -------------------------
-   Slide-in right detail panel (default / small screens)
-   ------------------------- */
+/* Slide-in right detail panel (default / small screens) */
 #opDetailPanel {
   position: fixed;
   right: 18px;
@@ -447,7 +756,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   padding: 18px;
   display: none;
   font-family: var(--mono);
-  /* larger responsive panel font-size */
   --panel-font-size: clamp(15px, 1.2vw + 12px, 18px);
   font-size: 20px;
   line-height: 1.42;
@@ -462,7 +770,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 /* visible state (used by your JS: add/remove .visible) */
 #opDetailPanel.visible {
   display: block;
-  /* animation is applied conditionally in media queries below */
 }
 
 /* header inside panel */
@@ -515,11 +822,8 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 #opRowPreview .line { color:var(--muted); margin-bottom:6px; }
 #opRowPreview .b { font-weight:800; color:var(--black); }
 
-/* -------------------------
-   Large-screen: centered modal with 10px viewport padding
-   ------------------------- */
+/* Large-screen: centered modal with 10px viewport padding */
 @media (min-width: 1200px) {
-  /* center panel and keep 10px outer gap */
   #opDetailPanel {
     left: 10px;
     right: 10px;
@@ -541,13 +845,11 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
     line-height: 1.46;
   }
 
-  /* large-screen fade/slide-up animation keyframe */
   @keyframes panelFadeInUp {
     0% { opacity:0; transform: translateY(20px) scale(.985); }
     100% { opacity:1; transform: translateY(0) scale(1); }
   }
 
-  /* when visible on wide screen: animate in */
   #opDetailPanel.visible {
     display: block;
     animation: panelFadeInUp .40s cubic-bezier(.16,.84,.24,1) both;
@@ -557,18 +859,13 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
     background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
   }
 
-  /* make header/title larger */
   #opDetailPanel .hdr .title { font-size: clamp(20px, 2.6vw + 18px, 26px); }
-
-  /* row font tweaks */
   .op-row .k { font-size: 2.02em; }
   .op-row .v { font-size: 1.06em; }
-
-  /* keep hover preview above centered panel */
   #opRowPreview { z-index: 1600; }
 }
 
-/* keep small-screen responsive override */
+/* small-screen responsive override */
 @media (max-width: 1199px) {
   #opDetailPanel {
     right: 12px;
@@ -582,13 +879,13 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
     display: none;
   }
 
-  /* visible on small screens -> slide-in-from-right */
   #opDetailPanel.visible {
     display: block;
     animation: panelFadeInRight .28s cubic-bezier(.2,.9,.2,1) both;
   }
 }
-/* --- Compact + Softer Theme Overrides --- */
+
+/* Compact + Softer Theme Overrides */
 #opDetailPanel {
   --panel-font-size: clamp(20px, 2vw + 10px, 16px) !important;
   font-size: var(--panel-font-size) !important;
@@ -628,10 +925,8 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   transform: translateY(-2px);
 }
 .op-attachments .doc-row { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 0; margin-top: 2px;}
-.op-attachments .doc-row .doc-actions { display:inline-flex; gap:16px; margin-left:18px; }
+.op-attachments .doc-row .doc-actions { display:inline-flex; gap:16px; margin-left:1px; }
 .doc-reject-reason .input-compact { width:90%; }
-
-/* Hover card preview */
 #opRowPreview {
   font-size: 1.82em !important;
   background: #fefefe !important;
@@ -665,27 +960,20 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   outline: none;
   box-shadow: none;
 }
-
-/* focused state (keyboard/hover) */
 .header-search input[type="search"]:focus,
 .header-search.search-focused input[type="search"] {
   border-color: var(--accent);
   box-shadow: var(--glow);
   transform: translateY(-1px);
 }
-
-/* subtle pulse while "searching" */
 @keyframes search-pulse {
   0% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
   50% { box-shadow: 0 12px 32px rgba(59,175,218,0.22); transform: translateY(-2px); }
   100% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
 }
-
 .header-search.searching input[type="search"] {
   animation: search-pulse 700ms ease-in-out 1;
 }
-
-/* Search button style - consistent look */
 .header-search button#topSearchBtn {
   padding: 8px 12px;
   border-radius: 8px;
@@ -716,7 +1004,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   .header-search a.sidebar-export { display:none; }
 }
 .small-btn {
-  
   font-size: 24px;
   font-weight: 600;
   border: 1px solid #d1d5db; /* neutral gray border */
@@ -726,7 +1013,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   margin-right: 0px;
   transition: all 0.2s ease;
 }
-
 .small-btn:hover {
   background: #163b84;
   border-color: #9ca3af;
@@ -735,14 +1021,12 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 
 .btn-accept {
   background: #16a34a;
-  
   color: #000000;
   border-color: #16a34a;
 }
 .btn-accept:hover {
   background: #15803d;
 }
-
 .btn-reject {
   background: #dc2626;
   color: #000000;
@@ -751,7 +1035,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 .btn-reject:hover {
   background: #b91c1c;
 }
-
 .btn-upload {
   background: #2563eb;
   color: #000000;
@@ -760,7 +1043,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 .btn-upload:hover {
   background: #1d4ed8;
 }
-
 .reason-input {
   padding: 1px;
   font-size: 13px;
@@ -775,12 +1057,11 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   border-color: #2563eb;
   box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
 }
-/* ---- Button layout + sizing ---- */
+
+/* doc rows + buttons (baseline kept) */
 .op-attachments .doc-row { display:flex; gap:12px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
 .op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); flex:0 0 180px; }
 .op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:8px; }
-
-/* doc-actions: grid keeps buttons tidy and responsive */
 .op-attachments .doc-actions {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -791,8 +1072,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 @media (max-width: 720px) {
   .op-attachments .doc-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-/* small button baseline: bigger tap target and consistent look */
 .small-btn {
   padding: 8px 10px;
   font-size: 14px;
@@ -810,36 +1089,10 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 .small-btn:active { transform: translateY(1px); }
 .small-btn[disabled] { opacity:0.5; cursor:not-allowed; }
 
-/* accent styles for accept/reject etc */
-.small-btn.btn-accept { background:#e6ffef; border-color:#b7f3c7;  color: #000000;}
-.small-btn.btn-reject { background:#fff2f2; border-color:#ffcccc;   color: #000000;}
-.small-btn.btn-upload { background:#f5f8ff; border-color:#dbe9ff; cursor:pointer; color: #000;}
-.small-btn.btn-download { background:#f7f7ff; border-color:#e2e2ff; cursor:pointer; color: #000;}
-
-/* doc-reject-reason layout */
-.doc-reject-reason { display:none; margin-top:6px; gap:6px; align-items:center; }
-.doc-reject-reason .reason-input { width:100%; max-width:420px; }
-
-/* actions bar in panel (Accept/Working/Edit/Save/Review) */
-.op-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-.op-actions .small-btn { min-width:120px; }
-
-/* work button row next to work status in table */
-.btn-row { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
-.btn-row .small-btn { min-width:100px; padding:6px 10px; font-size:13px; }
-
-/* table actions cell: make buttons align & wrap */
-.col-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.col-actions .small-btn { min-width:90px; }
-
-/* keep the file-link visible */
+/* keep file-link visible */
 .file-link { color: #2b6cb0; text-decoration: underline; }
 
-/* small helpers */
-.op-row { display:flex; gap:12px; padding:6px 0; }
-.op-row .k { width:180px; font-weight:700; color:#425066; }
-.op-row .v { flex:1; word-break:break-word; }
-/* ---- Bank filter: gold-on-black dropdown UI ---- */
+/* bank filter: gold-on-black dropdown UI */
 :root{
   --qit-gold: #cfa043;   /* theme gold — tweak if you want warmer/brighter */
   --qit-dark: #0b0b0d;   /* pill background */
@@ -849,11 +1102,8 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
 .sas{
   background-color: var(--qit-shadow) ;
 }
-/* wrapper & label */
 .filter-bar { display:inline-flex; gap:12px; align-items:center; }
 .filter-label { color: var(--qit-shadow); font-weight:700; font-size:19px; margin-right:6px; }
-
-/* base select styling */
 .qit-select {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -872,8 +1122,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   position: relative;
   outline: none;
 }
-
-/* hover and focus visual lift */
 .qit-select:hover,
 .qit-select:focus {
   transform: translateY(-3px);
@@ -881,8 +1129,6 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   box-shadow: 0 18px 40px rgba(8,10,12,0.5), 0 0 24px rgba(207,160,67,0.06);
   color: var(--qit-dark);
 }
-
-/* custom arrow (drawn with gradients so no extra HTML) */
 .qit-select {
   background-color:
     linear-gradient(45deg, transparent 50%, var(--qit-dark) 50%),
@@ -895,16 +1141,12 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   background-repeat: no-repeat;
   background-size: 8px 8px, 8px 8px, 100% 100%;
 }
-
-/* subtle focus ring for keyboard users */
 .qit-select:focus {
   box-shadow:
     0 18px 40px rgba(8,10,12,0.55),
     0 0 18px rgba(207,160,67,0.08),
     0 0 0 3px rgba(207,160,67,0.06);
 }
-
-/* option styling (limited browser support) */
 .qit-select option {
   color: #111;
   background: #fff;
@@ -912,16 +1154,378 @@ button:focus, a:focus, input:focus, textarea:focus{ outline:3px solid rgba(189,1
   border-radius: 20px;
   padding: 10px;
 }
-
-/* small fade/slide on focus (applies to the closed select element) */
 @keyframes qitFadeUp {
   from { opacity: 0; transform: translateY(4px) scale(.997); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .qit-select:focus { animation: qitFadeUp .22s ease both; }
-
-/* responsive */
 @media (max-width:720px) {
   .qit-select { min-width: 160px; padding-right:36px; border-radius:10px; }
   .filter-label { font-size:13px; }
 }
+
+/* ---------- OVERRIDE / MODIFIED SECTION: implement T1-T19 ---------- */
+/* This section intentionally appended to override default rules where needed.
+   Implements:
+   - T1 analyze/UI polish (exposed by style changes)
+   - T2 Export visual -> CTA (remove caret)
+   - T3 Navbar -> 4px gold divider
+   - T4 Dropdown animation -> slow/staggered
+   - T5 Inputs -> modern inset shadow + focus
+   - T6 Animated rainbow cards (float + bounce)
+   - T7 Sidebar micro-interactions + hover colors
+   - T8 Table slow reveal, row hover, elegant scroll indicator
+   - T9 Subtle floating particle pseudo-element for role boxes
+   - T10 Navbar buttons unique colors + down/hover animation
+   - T11 Table manual horizontal scroll (no auto scroll)
+   - T13 Slower hover animation site-wide
+   - T14 Animated contact details sliding
+   - T15 Colored table rows/headers
+   - T16 Wizard icons for contact/doc rows
+   - T17 Alerts with emoji and colored popups
+   - T19 Puts everything together referencing classes/ids used in verfi.php
+*/
+
+/* local override variables */
+:root{
+  --mod-gold: var(--gold);
+  --mod-gold-2: var(--gold-dark);
+  --mod-blue: #2daee0;
+  --mod-accent-ease: cubic-bezier(.16,.84,.24,1);
+  --mod-duration-slow: .56s;
+  --mod-duration-med: .36s;
+  --mod-duration-long: .9s;
+}
+
+/* ===== TASK 2: Export visual CTA — remove caret and force CTA style ===== */
+/* Remove caret for export CTAs (user asked: remove caret/symbol but keep semantics) */
+.gold-export::after,
+.sidebar-export::after,
+#bulkExportWrap .small-btn::after,
+#bulkExportWrap button::after,
+#topExport::after,
+#bulkExportWrap .small-btn::before,
+#bulkExportWrap button::before {
+  display: none !important;
+  content: none !important;
+}
+
+/* Force CTA look */
+#bulkExportWrap .small-btn,
+#bulkExportWrap button,
+.gold-export,
+#topExport {
+  background: linear-gradient(190deg, var(--mod-gold), #fff) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: 0 18px 48px rgba(165,130,74,0.14) !important;
+  padding: 10px 14px !important;
+  height: 50px !important;
+  border-radius: 16px !important;
+  font-weight: 800 !important;
+  transition: transform var(--mod-duration-med) var(--mod-accent-ease), box-shadow var(--mod-duration-med) var(--mod-accent-ease), filter .18s ease !important;
+}
+#bulkExportWrap .small-btn:hover,
+#bulkExportWrap button:hover,
+.gold-export:hover,
+#topExport:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 34px 80px rgba(165,130,74,0.18) !important;
+}
+
+/* ===== TASK 3: Navbar polish — add 4px gold horizontal divider ===== */
+/* Add a robust 4px gold horizontal divider under page heading / header region */
+.k-page-head { position: relative; padding-bottom: 18px; }
+.k-page-head::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: 12px;
+  background: linear-gradient(90deg, var(--mod-gold), var(--mod-gold-2));
+  border-radius: 3px;
+  box-shadow: 0 6px 20px rgba(165,130,74,0.06);
+}
+
+/* ===== TASK 4: Dropdown animation — slower, smooth + staggered items ===== */
+/* slow drop-in for menu */
+.custom-dropdown .cd-menu {
+  animation: cdDropInSlow .6s var(--mod-accent-ease) both;
+  box-shadow: 0 32px 80px rgba(10,20,30,0.08);
+}
+@keyframes cdDropInSlow {
+  from { opacity:0; transform: translateY(-12px) scale(.985); filter: blur(2px); }
+  to   { opacity:1; transform: translateY(0) scale(1); filter:none; }
+}
+/* stagger items in the menu for a nice feel */
+.custom-dropdown .cd-item{
+  opacity:0;
+  transform: translateY(8px);
+  animation: cdItemIn .44s cubic-bezier(.2,.9,.2,1) both;
+}
+@keyframes cdItemIn {
+  from { opacity:0; transform: translateY(8px); }
+  to { opacity:1; transform:none; }
+}
+/* delays for first 10 items */
+.custom-dropdown .cd-item:nth-child(1){ animation-delay: .06s; }
+.custom-dropdown .cd-item:nth-child(2){ animation-delay: .12s; }
+.custom-dropdown .cd-item:nth-child(3){ animation-delay: .18s; }
+.custom-dropdown .cd-item:nth-child(4){ animation-delay: .24s; }
+.custom-dropdown .cd-item:nth-child(5){ animation-delay: .30s; }
+.custom-dropdown .cd-item:nth-child(6){ animation-delay: .36s; }
+.custom-dropdown .cd-item:nth-child(7){ animation-delay: .42s; }
+.custom-dropdown .cd-item:nth-child(8){ animation-delay: .48s; }
+.custom-dropdown .cd-item:nth-child(9){ animation-delay: .54s; }
+.custom-dropdown .cd-item:nth-child(10){ animation-delay:.60s; }
+
+/* On open, lift the toggle a bit for physicality */
+.custom-dropdown.open .cd-toggle { transform: translateY(-2px) ; box-shadow: 0 18px 44px rgba(12,18,28,0.06); }
+
+/* ===== TASK 5: Inputs — modern, rounded, subtle inset shadow, placeholder -> float feel ===== */
+.input-compact {
+  padding:10px 12px;
+  border-radius:12px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: linear-gradient(180deg,#ffffff,#fbfbfb);
+  box-shadow: inset 0 2px 8px rgba(15,23,42,0.03), 0 8px 20px rgba(12,18,28,0.04);
+  transition: box-shadow .28s var(--mod-accent-ease), transform .18s var(--mod-accent-ease), border-color .18s var(--mod-accent-ease);
+  font-size:14px;
+  outline: none;
+}
+.input-compact::placeholder { color: rgba(15,23,42,0.28); }
+.input-compact:focus {
+  border-color: rgba(45,174,224,0.9);
+  box-shadow: inset 0 4px 12px rgba(15,23,42,0.04), 0 20px 44px rgba(45,174,224,0.08);
+  transform: translateY(-2px);
+}
+
+/* small "floating label" visual using pseudo (works if your inputs have placeholder) */
+.input-compact:focus::placeholder { color: transparent; transition: color .18s; }
+
+/* Tighter width for forms (reduce large spacing) */
+.mail-row input, .mail-row .input-compact { padding:8px 10px; border-radius:10px; }
+
+/* ===== TASK 6: Animated cards — floating/levitation + rainbow color variants + subtle bounce ===== */
+.status-row { gap:14px; }
+.status-card {
+  padding: 14px !important;
+  border-radius: 14px !important;
+  min-width:150px;
+  overflow:visible;
+  transition: transform var(--mod-duration-med) var(--mod-accent-ease), box-shadow var(--mod-duration-med) var(--mod-accent-ease), opacity .28s;
+  will-change: transform, box-shadow;
+  transform-origin:center;
+  background: linear-gradient(180deg,#fff,#fbfbfb);
+  border: 1px solid rgba(15,23,42,0.04);
+}
+/* rainbow look across 6 used cards (safe default selectors) */
+.status-row .status-card:nth-child(1){ background: linear-gradient(180deg,#E6FBF2,#DFF7EE); border-left: 6px solid #10b981; }
+.status-row .status-card:nth-child(2){ background: linear-gradient(180deg,#FFF7EB,#FFF3E6); border-left: 6px solid #f59e0b; }
+.status-row .status-card:nth-child(3){ background: linear-gradient(180deg,#F1F8FF,#EAF5FF); border-left: 6px solid #06b6d4; }
+.status-row .status-card:nth-child(4){ background: linear-gradient(180deg,#FFF1F0,#FFECEB); border-left: 6px solid #ef4444; }
+.status-row .status-card:nth-child(5){ background: linear-gradient(180deg,#F7F7FF,#EEF2FF); border-left: 6px solid #6366f1; }
+.status-row .status-card:nth-child(6){ background: linear-gradient(180deg,#FFF8F0,#FFF5F2); border-left: 6px solid #f97316; }
+
+/* floating animation */
+@keyframes floatUp {
+  0% { transform: translateY(6px); box-shadow: 0 8px 18px rgba(0,0,0,0.04); opacity:0; }
+  60% { transform: translateY(-6px); opacity:1; }
+  100% { transform: translateY(0); opacity:1; }
+}
+.status-card { animation: floatUp var(--mod-duration-med) var(--mod-accent-ease) both; }
+.status-row .status-card:nth-child(1){ animation-delay:.06s }
+.status-row .status-card:nth-child(2){ animation-delay:.12s }
+.status-row .status-card:nth-child(3){ animation-delay:.18s }
+.status-row .status-card:nth-child(4){ animation-delay:.24s }
+.status-row .status-card:nth-child(5){ animation-delay:.30s }
+.status-row .status-card:nth-child(6){ animation-delay:.36s }
+
+/* subtle hover bounce */
+.status-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 40px 80px rgba(2,8,23,0.12); }
+
+/* add multi-colour inner accent chip */
+.status-card .chip {
+  position:absolute; right:14px; top:14px; font-weight:700; padding:6px 10px; border-radius:999px; font-size:13px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.2));
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* ===== TASK 7: Sidebar hover micro-interactions and hover colours ===== */
+.sidebar-nav a {
+  transition: transform var(--mod-duration-med) var(--mod-accent-ease), box-shadow var(--mod-duration-med) var(--mod-accent-ease), background .24s;
+  position:relative;
+}
+.sidebar-nav a:hover {
+  transform: translateX(8px);
+  box-shadow: 0 18px 44px rgba(6,12,24,0.06);
+  background: linear-gradient(90deg, rgba(45,174,224,0.06), rgba(189,154,104,0.03));
+  color: #06202a;
+}
+.sidebar-nav a .nav-icon { opacity:0.98; transform: translateX(-2px) scale(1.02); transition: transform .28s; }
+.sidebar-nav a:hover .nav-icon { transform: translateX(0) scale(1.08); }
+
+/* touch-friendly: increase hit area */
+.sidebar-nav a { padding:12px 10px; }
+
+/* ===== TASK 8: Table - slow subtle animated reveal & nicer row hover, elegant scroll indicator ===== */
+/* Make table container manually scrollable (disable auto-translate) */
+.table-wrap {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding:8px !important;
+}
+
+/* Remove JS-driven auto transform by overriding transforms */
+.table-scroll-inner, .table-scroll-inner * { transform:none !important; transition:none !important; animation:none !important; }
+
+/* Row reveal animation */
+@keyframes rowReveal { 0% { opacity:0; transform: translateY(8px); } 100% { opacity:1; transform:none; } }
+.data-table.excel-like tbody tr { animation: rowReveal .6s ease both; }
+.data-table.excel-like tbody tr:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.04); background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(15,23,42,0.02)); }
+
+/* sticky header polish */
+.data-table thead th { background: linear-gradient(180deg,#fff,#fafafa); box-shadow: 0 6px 20px rgba(0,0,0,0.03); z-index:10; }
+
+/* visible scroll indicator — show by default; if you have JS you can sync the left position of .scroll-thumb */
+.scroll-indicator { display:block !important; left:12px; right:auto; width:160px; height:7px; bottom:12px; background: rgba(0,0,0,0.06); border-radius:6px; z-index:90; }
+.scroll-indicator .scroll-thumb { width:48px; background: linear-gradient(90deg, rgba(189,154,104,1), rgba(165,130,74,1)); box-shadow:0 6px 18px rgba(0,0,0,0.12); transition:left .12s linear; }
+
+/* colored row indicator for selected row */
+.data-table tr.selected { background: linear-gradient(90deg, rgba(45,174,224,0.06), rgba(189,154,104,0.03)); }
+
+/* ===== TASK 9: Subtle floating particles inside role boxes (pure CSS pseudo-elements) ===== */
+.dash-colored::after {
+  content: "";
+  position: absolute;
+  inset: -12% -10% auto auto;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.22), rgba(255,255,255,0) 35%),
+              radial-gradient(circle at 80% 80%, rgba(255,255,255,0.06), rgba(255,255,255,0) 40%);
+  opacity: 0.12;
+  transform: translateZ(0);
+  animation: particleFloat 6s linear infinite;
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+@keyframes particleFloat {
+  0% { transform: translateY(0) scale(1); opacity: .12; }
+  50% { transform: translateY(-8px) scale(1.02); opacity:.18; }
+  100% { transform: translateY(0) scale(1); opacity:.12; }
+}
+
+/* ===== TASK 10: Navbar buttons neat single lined with unique colours and unique hover down animation ===== */
+/* Target main nav buttons within header-search and bulk export area */
+.header-search .small-btn, .header-search a, .header-search button, #bulkExportWrap .small-btn {
+  border-radius: 10px; padding:8px 12px; border: 1px solid rgba(15,23,42,0.06);
+  background: linear-gradient(180deg,#fff,#fbfbfb);
+  transition: transform .42s var(--mod-accent-ease), box-shadow .42s var(--mod-accent-ease), background .36s;
+  display:inline-flex; align-items:center; gap:8px; font-weight:700;
+}
+
+/* Give unique hues by known IDs/classes (safe selectors based on verfi.php) */
+#topExport { background: linear-gradient(90deg,#eff6ff,#eaf8ff); color:#0b63a6; border-color: rgba(47,128,237,0.08); }
+#bulkExportWrap .small-btn { background: linear-gradient(90deg,#fff8f1,#fff6ea); color:#8a5b1f; border-color: rgba(165,130,74,0.08); }
+.header-search button#topSearchBtn { background: linear-gradient(90deg,#e6f6ff,#dff6ff); color:#04527a; border-color: rgba(3,105,161,0.06); }
+
+/* unique hover/down animation — push downward on click (distinct feel) */
+.header-search .small-btn:active,
+.header-search button:active,
+#bulkExportWrap .small-btn:active { transform: translateY(3px) scale(.998); box-shadow: 0 6px 18px rgba(0,0,0,0.06); transition: transform .12s ease; }
+
+/* ===== TASK 11: Table can't be auto-scrolled L->R — enforce manual only (CSS safe override) ===== */
+.table-scroll-inner { transition: none !important; transform: none !important; }
+
+/* ===== TASK 13: Slower hover animations & slow landing page animation ===== */
+* { transition-timing-function: var(--mod-accent-ease) !important; }
+.k-container { animation: pageEntrance var(--mod-duration-long) var(--mod-accent-ease) both; }
+@keyframes pageEntrance { from{opacity:0; transform: translateY(10px);} to{opacity:1; transform:none;} }
+
+/* slow hover for interactive items */
+a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hover { transition-duration: .48s !important; }
+
+/* ===== TASK 14: Animate contact/docs: slide right-to-left line-by-line; reduce padding ===== */
+#opDetailPanel { padding: 12px !important; }
+#opDetailPanel .op-row { overflow: hidden; padding:8px 6px; align-items:flex-start; border-bottom:1px solid rgba(15,23,42,0.04); }
+#opDetailPanel .op-row .v { transform: translateX(12px); opacity: 0; transition: transform .48s var(--mod-accent-ease), opacity .48s var(--mod-accent-ease); color: #0b1220; }
+#opDetailPanel .stage.active .op-row .v, #opDetailPanel.visible .op-row .v { transform: translateX(0); opacity:1; }
+
+/* differentiate each contact line color */
+#opDetailPanel .op-row:nth-child(odd) .v { color: #0b63a6; }
+#opDetailPanel .op-row:nth-child(even) .v { color: #a35212; }
+
+/* allow toggled dropdown effect per line when clicked (pure CSS style target) */
+.op-row .v.collapsed { max-height: 22px; overflow:hidden; transition:max-height .36s ease; }
+.op-row .v.expanded { max-height: 420px; transition:max-height .56s ease; }
+
+/* reduce panel font sizes */
+#opDetailPanel { font-size: 14px; line-height:1.35; }
+
+/* ===== TASK 15: Colored table — style headers/rows to be more vivid and readable ===== */
+.data-table thead th { background: linear-gradient(180deg,#fffdfb,#fbfaf8); color: #444; border-bottom: 3px solid rgba(189,154,104,0.08); font-weight:800; }
+.data-table tbody tr:nth-child(odd) { background: rgba(250,247,240,0.45); }
+.data-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.4); }
+.data-table td.status-pending { background: linear-gradient(90deg, rgba(255,243,205,0.5), transparent); border-left: 4px solid #f59e0b; }
+.data-table td.status-accepted { background: linear-gradient(90deg, rgba(217,249,235,0.6), transparent); border-left: 4px solid #10b981; }
+.data-table td.status-work { background: linear-gradient(90deg, rgba(232,244,255,0.6), transparent); border-left: 4px solid #06b6d4; }
+
+/* ===== TASK 16: Wizard with icon for basic contact/docs — CSS-only numbers / icons via pseudo ===== */
+#opDetailPanel { counter-reset: wizard-step; }
+#opDetailPanel .op-row .k::before {
+  counter-increment: wizard-step;
+  content: counter(wizard-step);
+  display:inline-block;
+  width:28px;height:28px;border-radius:6px;margin-right:10px;
+  background: linear-gradient(90deg,var(--mod-gold),var(--mod-gold-2));
+  color:#fff; font-weight:800; text-align:center; line-height:28px;
+  box-shadow: 0 8px 20px rgba(165,130,74,0.12);
+}
+
+/* ===== TASK 17: Alerts — colored popup with emoji (CSS-only) ===== */
+.qit-alert {
+  position: fixed;
+  right: 18px;
+  top: 92px;
+  min-width: 260px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight:700;
+  box-shadow: 0 18px 48px rgba(6,12,24,0.14);
+  z-index: 2200;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.qit-alert::before { content: "⚡"; font-size:18px; margin-right:6px; }
+.qit-alert-success { background: linear-gradient(90deg,#ecfdf5,#ddfbee); color:#065f46; border:1px solid rgba(16,185,129,0.10); }
+.qit-alert-warning { background: linear-gradient(90deg,#fff7ed,#fff6ea); color:#92400e; border:1px solid rgba(245,158,11,0.08); }
+.qit-alert-error { background: linear-gradient(90deg,#fff1f2,#fff5f5); color:#7f1d1d; border:1px solid rgba(220,38,38,0.08); }
+
+/* small slide/appearance */
+@keyframes alertIn { from { transform: translateY(-12px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.qit-alert { animation: alertIn .36s var(--mod-accent-ease) both; }
+
+/* ===== TASK 18: site-wide slow hover, subtle bounce, and landing animation already added above ===== */
+
+/* ===== TASK 19: final safety tweaks & helpful dev notes ===== */
+/* Ensure Export caret removed (defensive) */
+.gold-export::after, .gold-export::before, .sidebar-export::after, .sidebar-export::before,
+#topExport::after, #topExport::before, #bulkExportWrap .small-btn::after, #bulkExportWrap button::after {
+  display:none !important; content:none !important;
+}
+
+/* Ensure clock black border is softened (user asked to remove harsh black border) */
+.status-left .clock-card { border: 6px solid rgba(0,0,0,0.06) !important; }
+
+/* Reduce large paddings across heavy elements to keep layout tighter as requested */
+.k-card, .table-wrap, .status-card, .op-row, #opDetailPanel { padding: 10px !important; }
+
+/* Optional: small helper to animate export CTA (set attribute aria-live="animate" on element to pulse) */
+@keyframes exportPulse { 0%{ box-shadow: 0 12px 24px rgba(165,130,74,0.07)} 50%{ box-shadow: 0 26px 60px rgba(165,130,74,0.14); transform: translateY(-2px)} 100%{ box-shadow: 0 12px 24px rgba(165,130,74,0.07)} }
+#bulkExportWrap .small-btn[aria-live="animate"] { animation: exportPulse 4s ease-in-out infinite; }
+
+/* Accessibility & focus polish */
+button:focus, .small-btn:focus, .cd-item:focus { outline: 3px solid rgba(189,154,104,0.12); outline-offset: 3px; }
+
+/* End of override section */

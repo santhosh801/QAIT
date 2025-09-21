@@ -212,8 +212,13 @@ if (isset($_GET['export']) && $_GET['export'] === '1') {
 $employeeMailCount      = (int)$mysqli->query("SELECT COUNT(*) AS total FROM employees")->fetch_assoc()['total'] ?? 0;
 $operatorPendingCount   = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status='pending'")->fetch_assoc()['total'] ?? 0;
 $operatorFilledCount    = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status='accepted'")->fetch_assoc()['total'] ?? 0;
-$operatorRejectedCount  = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status='non'")->fetch_assoc()['total'] ?? 0;
-$operatorWorkingCount   = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE work_status='working'")->fetch_assoc()['total'] ?? 0;
+// Broaden rejected/non count to include common variants
+$operatorRejectedCount = (int)$mysqli
+  ->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status IN ('non','rejected','non_working')")->fetch_assoc()['total'] ?? 0;
+
+// Count operator as working if work_status='working' OR status indicates accepted/verified
+$operatorWorkingCount = (int)$mysqli
+  ->query("SELECT COUNT(*) AS total FROM operatordoc WHERE work_status='working' OR status IN ('accepted','verified','em_verified','ph_verified')")->fetch_assoc()['total'] ?? 0;
 $operatorNotWorkingCount= (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE work_status='not working'")->fetch_assoc()['total'] ?? 0;
 
 $total_result = $mysqli->query("SELECT COUNT(*) as total FROM operatordoc $where")->fetch_assoc();
@@ -236,76 +241,9 @@ $result = $mysqli->query($sql_main);
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
-  <style>
-    /* tiny styles for new doc UI */
-    .op-attachments .doc-row { display:flex; gap:12px; align-items:flex-start; padding:8px 0; border-bottom:1px solid rgba(15,23,42,0.03); }
-    .op-attachments .doc-row .k { width:180px; font-weight:600; color:var(--muted); flex:0 0 180px; }
-    .op-attachments .doc-row .v { flex:1; display:flex; flex-direction:column; gap:8px; }
 
-    /* doc-actions: grid keeps buttons tidy and responsive */
-    .op-attachments .doc-actions {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      align-items: center;
-      margin-top:6px;
-    }
-    @media (max-width: 720px) {
-      .op-attachments .doc-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    .doc-reject-reason { display:none; margin-top:6px; gap:6px; align-items:center; }
-    .doc-reject-reason .reason-input { width:100%; max-width:420px; }
-
-    .small-btn { padding: 8px 10px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.08); background: #fff; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; gap:6px; white-space: nowrap; transition: transform .06s ease, box-shadow .06s ease; }
-    .small-btn:active { transform: translateY(1px); }
-    .small-btn:disabled { opacity:0.5; cursor:not-allowed; }
-
-    .small-btn.btn-accept { background:#e6ffef; border-color:#b7f3c7; }
-    .small-btn.btn-reject { background:#fff2f2; border-color:#ffcccc; }
-    .small-btn.btn-upload { background:#f5f8ff; border-color:#dbe9ff; cursor:pointer; }
-    .small-btn.btn-download { background:#f7f7ff; border-color:#e2e2ff; }
-
-    /* actions bar in panel (Accept/Working/Edit/Save/Review) */
-    .op-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .op-actions .small-btn { min-width:120px; }
-
-    /* resubmission modal overlay */
-    .resubmit-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.48); display:flex; align-items:center; justify-content:center; z-index:99999; }
-    .resubmit-modal { background:#fff; padding:18px; border-radius:12px; width:720px; max-width:96%; box-shadow:0 24px 48px rgba(12,20,50,0.18); }
-    .resubmit-modal h3 { margin:0 0 12px 0; font-size:18px; }
-    .resubmit-list { display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:340px; overflow:auto; padding:6px; border:1px dashed #eee; border-radius:8px; margin-bottom:12px; }
-    .resubmit-footer { display:flex; gap:8px; justify-content:space-between; align-items:center; margin-top:12px; }
-
-    /* work button row next to work status in table */
-    .btn-row { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
-    .btn-row .small-btn { min-width:100px; padding:6px 10px; font-size:13px; }
-
-    /* table actions cell: make buttons align & wrap */
-    .col-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .col-actions .small-btn { min-width:90px; }
-
-    .file-link { color: #2b6cb0; text-decoration: underline; }
-
-    .op-row { display:flex; gap:12px; padding:6px 0; }
-    .op-row .k { width:180px; font-weight:700; color:#425066; }
-    .op-row .v { flex:1; word-break:break-word; }
-
-    /* basic responsive table tweaks */
-    .data-table td, .data-table th { padding:6px 8px; border-bottom:1px solid rgba(0,0,0,0.04); vertical-align:middle; }
-    .nowrap { white-space:nowrap; }
-
-    /* bank filter UI styles */
-    .filter-bar { display:flex; gap:10px; align-items:center; margin-left:18px; }
-    .filter-bar select { height:40px; padding:8px 12px; border-radius:4px; border:none; background:#ffeba7; color:#102770; font-weight:500; box-shadow:0 12px 35px rgba(255,235,167,.15); }
-    .filter-bar .btn { height:40px; padding:8px 12px; border-radius:4px; border:none; cursor:pointer; }
-
-    /* minimal styles for export controls */
-    .form-select { padding:6px 8px; font-size:13px; border-radius:4px; }
-    #bulkExportWrap, #bulkExportWrapFrag { display:inline-flex; gap:8px; align-items:center; }
-    .row-export .form-select { padding:6px; }
-  </style>
 </head>
+
 <body>
   <header class="qit-header">
     <div class="container">
@@ -315,51 +253,40 @@ $result = $mysqli->query($sql_main);
         <span class="small-it"> IT</span></div>
       </div>
 
-      <div class="header-search" style="display:flex;align-items:center;gap:8px;">
+     <div class="header-search" style="display:flex;align-items:center;gap:20px; width:55%; margin-left:250px;">
         <input id="topSearch" type="search" placeholder="Search operator..." value="<?= htmlspecialchars($search) ?>">
-        <button id="topSearchBtn">Search</button>
+        <button id="topSearchBtn" class="gold-btn">Search</button>
 
-      <div class="filter-bar">
-  <label for="bankFilter" class="filter-label">Bank:</label>
-  <select id="bankFilter" name="bank" class="qit-select">
-    <option value="" class="sas" <?= $bank === '' ? 'selected' : '' ?>>All Banks</option>
-    <option value="Karur Vysya Bank" <?= $bank === 'Karur Vysya Bank' ? 'selected' : '' ?>>Karur Vysya Bank</option>
-    <option value="City Union Bank" <?= $bank === 'City Union Bank' ? 'selected' : '' ?>>City Union Bank</option>
-    <option value="Tamilnad Mercantile Bank" <?= $bank === 'Tamilnad Mercantile Bank' ? 'selected' : '' ?>>Tamilnad Mercantile Bank</option>
-    <option value="Indian Bank" <?= $bank === 'Indian Bank' ? 'selected' : '' ?>>Indian Bank</option>
-    <option value="Karnataka Bank" <?= $bank === 'Karnataka Bank' ? 'selected' : '' ?>>Karnataka Bank</option>
-    <option value="Equitas Small Finance Bank" <?= $bank === 'Equitas Small Finance Bank' ? 'selected' : '' ?>>Equitas Small Finance Bank</option>
-    <option value="Union Bank Of India" <?= $bank === 'Union Bank Of India' ? 'selected' : '' ?>>Union Bank Of India</option>
-  </select>
-</div>
+        <div class="filter-bar" style="display:flex;align-items:center;gap:10px;">
+          <label for="bankFilter" class="filter-label">Bank:</label>
+          <select id="bankFilter" name="bank" class="qit-select">
+            <option value="" class="sas" <?= $bank === '' ? 'selected' : '' ?>>All Banks</option>
+            <option value="Karur Vysya Bank" <?= $bank === 'Karur Vysya Bank' ? 'selected' : '' ?>>Karur Vysya Bank</option>
+            <option value="City Union Bank" <?= $bank === 'City Union Bank' ? 'selected' : '' ?>>City Union Bank</option>
+            <option value="Tamilnad Mercantile Bank" <?= $bank === 'Tamilnad Mercantile Bank' ? 'selected' : '' ?>>Tamilnad Mercantile Bank</option>
+            <option value="Indian Bank" <?= $bank === 'Indian Bank' ? 'selected' : '' ?>>Indian Bank</option>
+            <option value="Karnataka Bank" <?= $bank === 'Karnataka Bank' ? 'selected' : '' ?>>Karnataka Bank</option>
+            <option value="Equitas Small Finance Bank" <?= $bank === 'Equitas Small Finance Bank' ? 'selected' : '' ?>>Equitas Small Finance Bank</option>
+            <option value="Union Bank Of India" <?= $bank === 'Union Bank Of India' ? 'selected' : '' ?>>Union Bank Of India</option>
+          </select>
+        </div>
 
+        <a id="topExport" class="sidebar-export gold-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
 
-        <a id="topExport" class="sidebar-export" href="em_verfi.php?export=1<?= $search ? '&search='.urlencode($search) : '' ?><?= $filter ? '&filter='.urlencode($filter) : '' ?><?= $bank ? '&bank='.urlencode($bank) : '' ?>">Export CSV</a>
 
         <!-- BULK EXPORT (TOP-RIGHT) -->
         <div id="bulkExportWrap" style="display:inline-block; margin-left:12px; vertical-align:middle;">
           <select id="bulkExportSelect" class="form-select" style="min-width:220px;">
             <?= $docOptionsHtml ?>
           </select>
-          <button id="bulkExportBtn" type="button" class="small-btn" style="margin-left:8px;">Export Dos</button>
+          <button id="bulkExportBtn" type="button" class="small-btn gold-export">Export Docs</button>
         </div>
       </div>
 
-      <nav class="qit-nav">
-        <ul>
-          <li><a href="#" onclick="showSection('operatorStatusSection')">Home</a></li>
-          <li><a href="#" onclick="showSection('operatorOverviewSection')">Overview</a></li>
-        </ul>
-      </nav>
+      
     </div>
   </header>
-<!-- BULK EXPORT (TOP) -->
-<div id="bulkExportWrap" style="display:inline-flex; margin-left:12px; vertical-align:middle; align-items:center; gap:8px;">
-  <select id="bulkExportSelect" class="form-select" style="min-width:20px;">
-    <?= $docOptionsHtml ?>
-  </select>
-  <button id="bulkExportBtn" type="button" class="small-btndddf">Export Docs</button>
-</div>
+
 
   <div class="k-shell">
     <aside id="resizableSidebar">
@@ -384,9 +311,7 @@ $result = $mysqli->query($sql_main);
       </div>
 
       <!-- circular emoji collapse/expand button -->
-      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
-
-      <div id="sidebarDragHandle" title="Drag to resize"></div>
+      
     </aside>
 
     <main>
@@ -394,6 +319,7 @@ $result = $mysqli->query($sql_main);
         <div class="k-page-head">
           <div class="k-page-title"><h1 class="gold-title">KYC Dashboard</h1><div class="k-subtitle">&nbsp;</div></div>
         </div>
+<button class="small-btn btn-download" data-doc="${k}" ${!url ? 'disabled' : ''}>Download</button>
 
         <!-- Status cards -->
         <section id="operatorStatusSection" class="k-section">
@@ -470,6 +396,47 @@ $result = $mysqli->query($sql_main);
             </form>
           </div>
         </section>
+<!-- Paste inside your header .logo element -->
+<!-- MAIN LOGO (inline SVG) -->
+<span class="qit-logo" aria-hidden="true">
+  <svg width="120" height="36" viewBox="0 0 320 96" xmlns="http://www.w3.org/2000/svg" role="img">
+    <!-- squares grid -->
+    <g transform="translate(12,12)">
+      <rect x="0" y="0" width="18" height="18" rx="4" fill="#3b82f6"/>
+      <rect x="22" y="0" width="18" height="18" rx="4" fill="#6c63ff"/>
+      <rect x="0" y="22" width="18" height="18" rx="4" fill="#10b981"/>
+      <rect x="22" y="22" width="18" height="18" rx="4" fill="#f59e0b"/>
+    </g>
+
+    <!-- text -->
+    <g transform="translate(72,22)">
+      <text x="0" y="6" font-family="Vidaloka, serif" font-size="34" fill="var(--gold)" font-weight="700">Q</text>
+      <text x="38" y="24" font-family:"Inter", sans-serif; font-size="18" fill="var(--black)" font-weight="700">IT</text>
+    </g>
+  </svg>
+</span>
+
+<!-- ICONS: small set (inline) - copy these into header or wherever you need them -->
+<!-- Search Icon -->
+<svg class="icon icon-search" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="11" cy="11" r="6"></circle>
+  <path d="m21 21-4.35-4.35"></path>
+</svg>
+
+<!-- Export Icon -->
+<svg class="icon icon-export" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+  <polyline points="7 10 12 5 17 10"/>
+  <line x1="12" y1="5" x2="12" y2="19"/>
+</svg>
+
+<!-- Accept / Reject small badges -->
+<svg class="icon icon-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M20 6L9 17l-5-5"></path>
+</svg>
+<svg class="icon icon-x" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M18 6L6 18M6 6l12 12"></path>
+</svg>
 
         <!-- Server-rendered main table (initial fallback) -->
         <section id="employeeTable" class="k-section">
@@ -1527,6 +1494,7 @@ window.LABEL_MAP = labelMap;
         <div class="doc-actions">
           <button class="small-btn btn-accept"  data-doc="${k}">Accept</button>
           <button class="small-btn btn-reject"  data-doc="${k}">Reject</button>
+          
           <label class="small-btn btn-upload"  style="cursor:pointer;">Replace<input type="file" accept=".pdf,image/*" style="display:none" data-doc="${k}"></label>
           <button class="small-btn btn-download" data-doc="${k}" ${!url ? 'disabled' : ''}>Download</button>
         </div> 
@@ -1749,7 +1717,7 @@ function uploadDoc(opId, docKey, fileInputEl) {
   fd.append('doc_key', docKey);
   fd.append('file', f);
   $.ajax({
-    url: 'upload_doc.php',
+    url: 'upload_docs.php',
     method: 'POST',
     data: fd,
     processData: false,
@@ -1996,6 +1964,203 @@ if (bulkBtn) {
     window.location.href = 'export_all.php?' + params.toString();
   });
 }
+
+/* ===== Custom dropdown builder
+   Converts <select class="qit-select"> and <select.form-select> into animated dropdowns.
+   Keeps original select in DOM (hidden) and syncs value.
+*/
+
+(function(){
+  'use strict';
+
+  // query selects to convert (bank + bulk export + per-row selects)
+  const selectorList = ['select.qit-select', 'select.form-select'];
+
+  function createDropdownFromSelect(sel) {
+    if (!sel || sel.dataset.cdDone === '1') return;
+    sel.dataset.cdDone = '1';
+
+    // wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'custom-dropdown';
+    // create visible toggle
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'cd-toggle';
+    toggle.setAttribute('aria-haspopup','listbox');
+    toggle.setAttribute('aria-expanded','false');
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'cd-label';
+    labelSpan.textContent = (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].text) || 'Select…';
+
+    const caret = document.createElement('span');
+    caret.className = 'cd-caret';
+
+    toggle.appendChild(labelSpan);
+    toggle.appendChild(caret);
+
+    // menu
+    const menu = document.createElement('div');
+    menu.className = 'cd-menu';
+    menu.setAttribute('role','listbox');
+    menu.setAttribute('tabindex','-1');
+
+    // Build items from options
+    Array.from(sel.options).forEach((opt, idx) => {
+      const item = document.createElement('div');
+      item.className = 'cd-item';
+      item.setAttribute('role','option');
+      item.dataset.value = opt.value;
+      item.tabIndex = 0;
+      item.innerHTML = '<span class="text">' + opt.text + '</span>';
+      // if you want metadata (e.g. value) show to right
+      // const meta = document.createElement('span'); meta.className = 'meta'; meta.textContent = opt.value; item.appendChild(meta);
+      if (opt.disabled) item.setAttribute('aria-disabled','true');
+      if (opt.selected) {
+        item.setAttribute('aria-selected','true');
+        item.classList.add('selected');
+      } else {
+        item.setAttribute('aria-selected','false');
+      }
+      menu.appendChild(item);
+    });
+
+    // Insert wrapper before the select, then move select inside wrapper
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(toggle);
+    wrap.appendChild(menu);
+    wrap.appendChild(sel); // original select kept, but it's visually hidden by CSS earlier
+
+    // hide original visually but keep in DOM (already handled by CSS override if you pasted earlier)
+    sel.style.position = 'absolute';
+    sel.style.opacity = '0';
+    sel.style.pointerEvents = 'none';
+
+    // state helpers
+    function open() {
+      wrap.classList.add('open');
+      toggle.setAttribute('aria-expanded','true');
+      menu.focus();
+      // animate children with slight stagger
+      const items = menu.querySelectorAll('.cd-item');
+      items.forEach((it, i) => {
+        it.style.transitionDelay = (i*14) + 'ms';
+      });
+      document.addEventListener('click', docClick);
+    }
+    function close() {
+      wrap.classList.remove('open');
+      toggle.setAttribute('aria-expanded','false');
+      document.removeEventListener('click', docClick);
+      // clear focused class
+      menu.querySelectorAll('.cd-item').forEach(i => i.classList.remove('focused'));
+    }
+
+    function docClick(e){
+      if (!wrap.contains(e.target)) close();
+    }
+
+    // toggle click
+    toggle.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (wrap.classList.contains('open')) close(); else open();
+    });
+
+    // item click
+    menu.addEventListener('click', function(e){
+      const it = e.target.closest('.cd-item');
+      if (!it) return;
+      if (it.getAttribute('aria-disabled') === 'true') return;
+      selectItem(it);
+      close();
+    });
+
+    // keyboard support
+    let focusIndex = -1;
+    menu.addEventListener('keydown', function(e){
+      const items = Array.from(menu.querySelectorAll('.cd-item'));
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        focusIndex = Math.min(items.length - 1, Math.max(0, focusIndex + 1));
+        updateFocus(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        focusIndex = Math.max(0, focusIndex - 1);
+        updateFocus(items);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (focusIndex >= 0 && items[focusIndex]) {
+          selectItem(items[focusIndex]);
+          close();
+        }
+      } else if (e.key === 'Escape') {
+        close();
+        toggle.focus();
+      }
+    });
+
+    function updateFocus(items) {
+      items.forEach((it, idx) => {
+        it.classList.toggle('focused', idx === focusIndex);
+        if (idx === focusIndex) it.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    function selectItem(it) {
+      const v = it.dataset.value;
+      // set visual label
+      labelSpan.textContent = it.querySelector('.text').textContent;
+      // update aria-selected states
+      menu.querySelectorAll('.cd-item').forEach(x => x.setAttribute('aria-selected','false'));
+      it.setAttribute('aria-selected','true');
+      // update original select value and trigger change
+      sel.value = v;
+      const ev = new Event('change', { bubbles:true });
+      sel.dispatchEvent(ev);
+    }
+
+    // sync if original select changed programmatically elsewhere
+    sel.addEventListener('change', function(){
+      const cur = sel.value;
+      const itm = menu.querySelector('.cd-item[data-value="'+CSS.escape(cur)+'"]');
+      if (itm) {
+        labelSpan.textContent = itm.querySelector('.text').textContent;
+        menu.querySelectorAll('.cd-item').forEach(x => x.setAttribute('aria-selected','false'));
+        itm.setAttribute('aria-selected','true');
+      }
+    });
+
+    // pre-select index on open for keyboard nav
+    menu.addEventListener('mouseover', function(e){
+      const it = e.target.closest('.cd-item');
+      if (!it) return;
+      const items = Array.from(menu.querySelectorAll('.cd-item'));
+      focusIndex = items.indexOf(it);
+      updateFocus(items);
+    });
+
+    // clicking the original disabled select (in some browsers) should open our UI
+    sel.addEventListener('focus', function(){ open(); });
+
+  } // createDropdownFromSelect
+
+  // initialize all matching selects
+  function initAll() {
+    const nodes = document.querySelectorAll(selectorList.join(','));
+    nodes.forEach(s => createDropdownFromSelect(s));
+  }
+
+  // run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else initAll();
+
+  // expose for debugging
+  window._cd_init = initAll;
+
+})();
+
 
 </script>
 

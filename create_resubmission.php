@@ -36,14 +36,15 @@ $allowedDocKeys = [
 ];
 
 // helper token
-function genToken($len = 32) { return bin2hex(random_bytes($len)); }
+function genToken($len = 16) { return bin2hex(random_bytes($len)); }
 
-// parse inputs
+// parse inputs robustly
 $opId = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 $docs = [];
 if (isset($_POST['docs'])) {
-    if (is_array($_POST['docs'])) $docs = array_values($_POST['docs']);
-    else {
+    if (is_array($_POST['docs'])) {
+        $docs = array_values($_POST['docs']);
+    } else {
         $tmp = json_decode((string)$_POST['docs'], true);
         if (is_array($tmp)) $docs = array_values($tmp);
         else $docs = array_filter(array_map('trim', explode(',', (string)$_POST['docs'])));
@@ -91,7 +92,7 @@ $mysqli->query("CREATE TABLE IF NOT EXISTS `resubmission_requests` (
 // generate token (unique)
 $tries = 0; $token = ''; $exists = false;
 do {
-    $token = genToken(32);
+    $token = genToken(20);
     $q = $mysqli->prepare("SELECT 1 FROM resubmission_requests WHERE token = ? LIMIT 1");
     if (!$q) break;
     $q->bind_param('s', $token);
@@ -117,7 +118,7 @@ $inserted_id = $ins->insert_id; $ins->close();
 
 // build URL
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'];
+$host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
 $dir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\'); $dir = $dir === '/' ? '' : $dir;
 $resubmit_url = $scheme . '://' . $host . $dir . '/duplicateoperator.php?token=' . urlencode($token);
 

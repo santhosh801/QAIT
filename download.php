@@ -1,261 +1,215 @@
 <?php
-/**
- * download.php
- * Secure file download endpoint (full modified version)
- *
- * Usage: download.php?id=<operator_row_id>&doc_key=<whitelisted_doc_key>
- *
- * Behavior:
- * - Requires employee session ($_SESSION['employee_email'])
- * - Whitelists document keys to avoid arbitrary file access
- * - Fetches operator_full_name, operator_id, branch_name and the requested file path
- * - Maps doc_key to a standardized label used in the downloaded filename
- * - Streams local files or proxies remote files via cURL (if available)
- *
- * NOTE: Adjust DB credentials and table/column names if your schema differs.
- */
+// download_doc.php
+// Streams a single operator document as PDF if possible (Imagick), or original file otherwise.
+// GET: id=INT, doc or doc_key = column name (e.g., aadhar_file)
+//
+// This version auto-detects common "uploads" roots (XAMPP / production) and allows
+// any file beneath those. Paths are normalized for Windows (case-insensitive, backslash-safe).
 
+ini_set('display_errors', 0);
+error_reporting(E_ALL & ~E_NOTICE);
 session_start();
 
-/* ---------------------------
-   1) AUTHENTICATION
-   --------------------------- */
-if (!isset($_SESSION['employee_email'])) {
-    header('HTTP/1.1 403 Forbidden');
-    echo "Forbidden";
+header('X-Download-Endpoint: v3');
+
+function http_fail($code, $msg) {
+    http_response_code($code);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success'=>false,'message'=>$msg]);
     exit;
 }
 
-/* ---------------------------
-   2) INPUT VALIDATION
-   --------------------------- */
-if (!isset($_GET['id']) || !isset($_GET['doc_key'])) {
-    header('HTTP/1.1 400 Bad Request');
-    echo "Missing parameters";
-    exit;
-}
+if (!isset($_GET['id'])) http_fail(400,'Missing parameter: id');
+$opId = (int)$_GET['id'];
+if ($opId <= 0) http_fail(400,'Invalid id');
 
-$id = (int) $_GET['id'];
-$doc_key = preg_replace('/[^a-z0-9_]/i', '', $_GET['doc_key']); // allow only safe chars
+$docKey = '';
+if (!empty($_GET['doc'])) $docKey = (string)$_GET['doc'];
+if (!empty($_GET['doc_key'])) $docKey = (string)$_GET['doc_key'];
+$docKey = preg_replace('/[^a-z0-9_\-]/i','', $docKey);
+if ($docKey === '') http_fail(400,'Missing parameter: doc/doc_key');
 
-/* ---------------------------
-   3) WHITELIST / LABEL MAP
-   --------------------------- */
-$allowed = [
-    'aadhar_file','pan_file','voter_file','ration_file','gps_selfie_file',
-    'consent_file','police_verification_file','edu_10th_file','edu_12th_file','edu_college_file'
+// Allowed keys - adjust if your schema has more/less
+$ALLOWED_KEYS = [
+  'aadhar_file','pan_file','voter_file','ration_file','consent_file','gps_selfie_file',
+  'police_verification_file','permanent_address_proof_file','parent_aadhar_file',
+  'nseit_cert_file','self_declaration_file','non_disclosure_file','edu_10th_file',
+  'edu_12th_file','edu_college_file','agreement_file','bank_passbook_file','photo_file'
 ];
-
-if (!in_array($doc_key, $allowed, true)) {
-    header('HTTP/1.1 400 Bad Request');
-    echo "Invalid document key";
-    exit;
+if (!in_array($docKey, $ALLOWED_KEYS, true)) {
+    http_fail(400, 'Invalid document key');
 }
 
-// Map DB doc_key => fixed label for filename
-$docLabelMap = [
-    'aadhar_file'             => 'aadhardoc',
-    'pan_file'                => 'pandoc',
-    'voter_file'              => 'voterdoc',
-    'ration_file'             => 'rationdoc',
-    'gps_selfie_file'         => 'gpsselfiedoc',
-    'consent_file'            => 'consentdoc',
-    'police_verification_file'=> 'policeverdoc',
-    'edu_10th_file'           => 'edu10thdoc',
-    'edu_12th_file'           => 'edu12thdoc',
-    'edu_college_file'        => 'educollegedoc'
-];
+// DB connect
+$mysqli = new mysqli('localhost','root','','qmit_system');
+if ($mysqli->connect_error) http_fail(500, 'DB connect error: '.$mysqli->connect_error);
+$mysqli->set_charset('utf8mb4');
 
-$label = isset($docLabelMap[$doc_key]) ? $docLabelMap[$doc_key] : $doc_key;
-
-/* ---------------------------
-   4) DB CONNECTION (adjust creds)
-   --------------------------- */
-$mysqli = new mysqli("localhost", "root", "", "qmit_system");
-if ($mysqli->connect_error) {
-    header('HTTP/1.1 500 Internal Server Error');
-    echo "DB error";
-    exit;
+// Helper: column exists
+function column_exists($mysqli, $col) {
+    $col = $mysqli->real_escape_string($col);
+    $sql = "SHOW COLUMNS FROM `operatordoc` LIKE '$col'";
+    if (!$res = $mysqli->query($sql)) return false;
+    $ok = ($res->num_rows > 0);
+    $res->close();
+    return $ok;
+}
+if (!column_exists($mysqli, $docKey)) {
+    http_fail(400, "Column '$docKey' not found in operatordoc");
 }
 
-/* ---------------------------
-   5) FETCH OPERATOR ROW (branch + id + file url)
-   --------------------------- */
-// Make sure the column names exist in your table. If branch is in another table, use JOIN.
-$query = "SELECT operator_full_name, operator_id, branch_name, {$doc_key} AS file_url FROM operatordoc WHERE id = ? LIMIT 1";
-$stmt = $mysqli->prepare($query);
-if (!$stmt) {
-    header('HTTP/1.1 500 Internal Server Error');
-    echo "DB prepare failed";
-    exit;
-}
-$stmt->bind_param('i', $id);
-$stmt->execute();
+// Build select
+$selectParts = ["`$docKey` AS stored_path", "operator_full_name"];
+$hasBranch = column_exists($mysqli, 'branch');
+if ($hasBranch) $selectParts[] = "branch";
+
+$sql = "SELECT ".implode(", ", $selectParts)." FROM operatordoc WHERE id = ? LIMIT 1";
+$stmt = $mysqli->prepare($sql);
+if (!$stmt) http_fail(500, 'DB prepare failed: '.$mysqli->error);
+$stmt->bind_param('i', $opId);
+if (!$stmt->execute()) { $err = $stmt->error ?: $mysqli->error; $stmt->close(); http_fail(500, 'DB execute failed: '.$err); }
 $res = $stmt->get_result();
-$row = $res ? $res->fetch_assoc() : null;
+if (!$res || $res->num_rows === 0) { $stmt->close(); http_fail(404, 'Operator not found'); }
+$row = $res->fetch_assoc();
 $stmt->close();
 
-if (!$row || empty($row['file_url'])) {
-    header('HTTP/1.1 404 Not Found');
-    echo "File not found";
+$stored = trim((string)($row['stored_path'] ?? ''));
+$opname_raw = trim((string)($row['operator_full_name'] ?? 'operator'));
+$branch_raw = $hasBranch ? trim((string)($row['branch'] ?? '')) : '';
+
+if ($stored === '') http_fail(404, 'No file uploaded for this document');
+
+// Resolve candidate paths
+$stored_rel = ltrim($stored, "/\\");
+$candidates = [
+    __DIR__ . '/' . $stored_rel,
+    $_SERVER['DOCUMENT_ROOT'] . '/' . $stored_rel,
+    __DIR__ . '/uploads/operatordoc/' . basename($stored_rel),
+    __DIR__ . '/uploads/' . $stored_rel,
+    $_SERVER['DOCUMENT_ROOT'] . '/QAIT/uploads/' . basename($stored_rel),
+    $_SERVER['DOCUMENT_ROOT'] . '/QAIT/uploads/' . $stored_rel,
+    $_SERVER['DOCUMENT_ROOT'] . '/uploads/' . $stored_rel,
+    // last-resort: try basename under uploads
+    __DIR__ . '/uploads/' . basename($stored_rel),
+];
+
+$local_path = null;
+foreach ($candidates as $p) {
+    if (is_file($p)) { $local_path = $p; break; }
+}
+if ($local_path === null) {
+    // try raw stored value if absolute path was stored in DB
+    if (is_file($stored)) $local_path = $stored;
+}
+if ($local_path === null) http_fail(404, 'Stored file not found on disk (checked candidates)');
+
+// Normalize paths for comparison (lowercase + forward slashes)
+function norm_path($p) {
+    $r = realpath($p);
+    if ($r === false) return false;
+    $r = str_replace('\\','/',$r);
+    $r = preg_replace('#/+#','/',$r);
+    return strtolower($r);
+}
+$real = norm_path($local_path);
+if ($real === false) http_fail(404, 'Failed to resolve file realpath');
+
+// Build list of allowed roots (auto-detect common upload roots)
+$possible_roots = [];
+
+// prefer QAIT/uploads if present
+if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+    $possible_roots[] = norm_path($_SERVER['DOCUMENT_ROOT'] . '/QAIT/uploads/operatordoc');
+    $possible_roots[] = norm_path($_SERVER['DOCUMENT_ROOT'] . '/QAIT/uploads');
+    $possible_roots[] = norm_path($_SERVER['DOCUMENT_ROOT'] . '/uploads/operatordoc');
+    $possible_roots[] = norm_path($_SERVER['DOCUMENT_ROOT'] . '/uploads');
+}
+
+// relative to script
+$possible_roots[] = norm_path(__DIR__ . '/uploads/operatordoc');
+$possible_roots[] = norm_path(__DIR__ . '/uploads');
+$possible_roots[] = norm_path(__DIR__ . '/../uploads');
+$possible_roots[] = norm_path(__DIR__ . '/..'); // allow one level up (be careful in prod)
+
+// filter false values and dedupe
+$allowed_roots = [];
+foreach ($possible_roots as $r) {
+    if ($r && !in_array($r, $allowed_roots, true)) $allowed_roots[] = $r;
+}
+
+// Final security check: allow if real path starts with any allowed root.
+// Also allow if the stored path itself contains '/uploads/' (looser fallback)
+$ok = false;
+foreach ($allowed_roots as $root) {
+    if (!$root) continue;
+    if (strpos($real, $root) === 0) { $ok = true; break; }
+}
+// Looser fallback: if stored_rel contains 'uploads/' consider allowed (for legacy paths)
+if (!$ok && stripos($stored_rel, 'uploads/') !== false) $ok = true;
+
+if (!$ok) {
+    // helpful debug in JSON to let you fix server paths if needed
+    http_fail(403, 'Access to this file is not allowed (real: '.$real.', allowed_roots: '.json_encode($allowed_roots).')');
+}
+
+// Build clean download name: Operator[_Branch]_DocKey
+function san_name($s) {
+    $s = (string)$s;
+    $s = preg_replace('/[^\pL\pN\-_]+/u', '_', $s);
+    $s = preg_replace('/__+/', '_', $s);
+    $s = trim($s, '_-');
+    return strtolower($s ?: 'file');
+}
+$opname = san_name($opname_raw);
+$branch = $branch_raw ? '_'.san_name($branch_raw) : '';
+$doc_label = san_name($docKey);
+$downloadBase = $opname.$branch.'_'.$doc_label;
+
+// Determine mime/ext
+$ext = strtolower(pathinfo($local_path, PATHINFO_EXTENSION));
+$mime = function_exists('mime_content_type') ? (mime_content_type($local_path) ?: 'application/octet-stream') : 'application/octet-stream';
+
+// If already PDF → stream directly
+if ($ext === 'pdf') {
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="'.$downloadBase.'.pdf"');
+    header('Content-Length: '.filesize($local_path));
+    $fp = fopen($local_path, 'rb');
+    if ($fp) { while (!feof($fp)) { echo fread($fp, 8192); flush(); } fclose($fp); }
     exit;
 }
 
-$fileUrl = $row['file_url'];
-$operatorFullName = $row['operator_full_name'] ?? 'operator';
-$operatorId = $row['operator_id'] ?? $id;
-$branchName = $row['branch_name'] ?? 'branch';
-
-/* ---------------------------
-   6) FILENAME SANITIZATION UTIL
-   --------------------------- */
-function safe_filename_component($s) {
-    $s = trim((string)$s);
-    // replace spaces with underscores
-    $s = preg_replace('/\s+/', '_', $s);
-    // allow letters, numbers, underscore, dash and dot (unicode letters allowed)
-    $s = preg_replace('/[^\p{L}\p{N}\._\-]/u', '', $s);
-    // collapse consecutive underscores/dashes
-    $s = preg_replace('/[_\-]{2,}/', '_', $s);
-    // limit length
-    if (mb_strlen($s) > 80) $s = mb_substr($s, 0, 80);
-    return $s ?: 'val';
-}
-
-/* ---------------------------
-   7) BUILD FINAL FILENAME
-   Format: <OperatorName>_<BranchName>_<Label>_<OperatorID>.<ext>
-   --------------------------- */
-$origPath = parse_url($fileUrl, PHP_URL_PATH);
-$origFilename = $origPath ? basename($origPath) : '';
-$origFilename = $origFilename ?: 'document';
-$ext = pathinfo($origFilename, PATHINFO_EXTENSION);
-$ext = $ext ? strtolower($ext) : '';
-
-$safeName = safe_filename_component($operatorFullName);
-$safeBranch = safe_filename_component($branchName);
-$safeLabel = safe_filename_component($label);
-
-$finalBase = "{$safeName}_{$safeBranch}_{$safeLabel}";
-$finalName = $finalBase . ($operatorId ? "_{$operatorId}" : "");
-$finalNameWithExt = $ext ? ($finalName . '.' . $ext) : $finalName;
-
-/* ---------------------------
-   8) RESOLVE LOCAL PATH OR REMOTE
-   --------------------------- */
-$localPath = null;
-$parsed = parse_url($fileUrl);
-if (!isset($parsed['scheme'])) {
-    // try common locations
-    $candidate = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . '/' . ltrim($fileUrl, '/');
-    if (is_file($candidate)) $localPath = $candidate;
-    $candidate2 = __DIR__ . '/' . ltrim($fileUrl, '/');
-    if (!$localPath && is_file($candidate2)) $localPath = $candidate2;
-} else {
-    // remote URL (http/https)
-    $localPath = null;
-}
-
-/* ---------------------------
-   9) STREAM LOCAL FILE (preferred)
-   --------------------------- */
-if ($localPath && is_file($localPath) && is_readable($localPath)) {
-    $fsize = filesize($localPath);
-    $ctype = mime_content_type($localPath) ?: 'application/octet-stream';
-
-    // security: avoid content sniffing and force download
-    header('X-Content-Type-Options: nosniff');
-    header('Content-Description: File Transfer');
-    header('Content-Type: ' . $ctype);
-    header('Content-Disposition: attachment; filename="' . $finalNameWithExt . '"');
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Pragma: public');
-    header('Content-Length: ' . $fsize);
-
-    flush();
-    $chunkSize = 8192;
-    $handle = fopen($localPath, 'rb');
-    if ($handle === false) {
-        header('HTTP/1.1 500 Internal Server Error');
-        echo "Cannot open file";
-        exit;
-    }
-    while (!feof($handle)) {
-        echo fread($handle, $chunkSize);
-        flush();
-    }
-    fclose($handle);
-    exit;
-}
-
-/* ---------------------------
-   10) PROXY REMOTE FILE (if URL)
-   --------------------------- */
-if (isset($parsed['scheme']) && in_array($parsed['scheme'], ['http','https'])) {
-    // Prefer curl streaming
-    if (function_exists('curl_init')) {
-        // First attempt to fetch headers (to detect content-type/length)
-        $ch = curl_init($fileUrl);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        $h = curl_exec($ch);
-        $ctype = 'application/octet-stream';
-        $fsize = null;
-        if ($h !== false) {
-            if (preg_match('/Content-Type:\s*([^\s;]+)/i', $h, $m)) $ctype = trim($m[1]);
-            if (preg_match('/Content-Length:\s*(\d+)/i', $h, $m2)) $fsize = intval($m2[1]);
+// If Imagick available and file is an image → convert → PDF
+$image_mimes = ['image/jpeg','image/png','image/jpg','image/gif','image/webp','image/tiff'];
+if (class_exists('Imagick') && in_array($mime, $image_mimes, true)) {
+    try {
+        $im = new Imagick();
+        $im->readImage($local_path);
+        foreach ($im as $frame) {
+            if ($frame->getImageAlphaChannel()) {
+                $frame = $frame->mergeImageLayers(\Imagick::LAYERMETHOD_FLATTEN);
+            }
         }
-        curl_close($ch);
+        $im->setImageFormat('pdf');
+        $pdf_blob = $im->getImagesBlob();
+        $im->clear();
+        $im->destroy();
 
-        // Stream actual body
-        $ch = curl_init($fileUrl);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_FAILONERROR, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 0); // allow long downloads
-        // safer: disable CURLOPT_BUFFERSIZE change if server doesn't like it
-        // set headers for client
-        header('X-Content-Type-Options: nosniff');
-        header('Content-Description: File Transfer');
-        header('Content-Type: ' . $ctype);
-        header('Content-Disposition: attachment; filename="' . $finalNameWithExt . '"');
-        header('Pragma: public');
-        header('Expires: 0');
-        if ($fsize !== null) header('Content-Length: ' . $fsize);
-
-        // stream callback
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function($ch, $data) {
-            echo $data;
-            flush();
-            return strlen($data);
-        });
-
-        curl_exec($ch);
-        $err = curl_error($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($err || $httpCode >= 400) {
-            header('HTTP/1.1 502 Bad Gateway');
-            echo "Unable to fetch remote file";
-        }
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="'.$downloadBase.'.pdf"');
+        header('Content-Length: '.strlen($pdf_blob));
+        echo $pdf_blob;
         exit;
-    } else {
-        // fallback: redirect (browser will take remote filename — not ideal)
-        header('Location: ' . $fileUrl);
-        exit;
+    } catch (Exception $e) {
+        // fallthrough to fallback
     }
 }
 
-/* ---------------------------
-   11) IF REACH HERE: NOT FOUND
-   --------------------------- */
-header('HTTP/1.1 404 Not Found');
-echo "File not available";
+// Fallback: stream original file
+$orig = basename($local_path);
+header('Content-Type: '.$mime);
+header('Content-Disposition: attachment; filename="'.$downloadBase.'_'.$orig.'"');
+header('Content-Length: '.filesize($local_path));
+$fp = fopen($local_path, 'rb');
+if ($fp) { while (!feof($fp)) { echo fread($fp, 8192); flush(); } fclose($fp); }
 exit;
-?>

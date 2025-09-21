@@ -171,6 +171,35 @@ if ($zip->open($zipPath, ZipArchive::CREATE)!==TRUE){ rrmdir($workDir); http_res
 foreach ($collected as $f) if (file_exists($f['path'])) $zip->addFile($f['path'],$f['name']);
 $zip->close();
 
+// Exports a single operator's single document (or all docs). Very simple stub.
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$doc = isset($_GET['doc']) ? $_GET['doc'] : '';
+if (!$id || !$doc) {
+    header('HTTP/1.1 400 Bad Request'); echo "Missing id or doc param"; exit;
+}
+require_once 'db_connect.php'; // optional shared DB file
+$mysqli = new mysqli("localhost","root","","qmit_system");
+$res = $mysqli->query("SELECT * FROM operatordoc WHERE id = " . intval($id));
+$row = $res ? $res->fetch_assoc() : null;
+if (!$row) { header('HTTP/1.1 404 Not Found'); echo "Operator not found"; exit; }
+if ($doc === 'all') {
+    // For demo, return a CSV for this operator
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename=operator_'.$id.'_all.csv');
+    $out = fopen('php://output','w');
+    fputcsv($out, array_keys($row));
+    fputcsv($out, array_values($row));
+    fclose($out);
+    exit;
+}
+$path = $row[$doc] ?? '';
+if (!$path || !file_exists($path)) { header('HTTP/1.1 404 Not Found'); echo "Document not found"; exit; }
+$mime = mime_content_type($path);
+header('Content-Type: ' . $mime);
+header('Content-Disposition: attachment; filename="'.basename($path).'"');
+readfile($path);
+
+
 $za = new ZipArchive();
 if ($za->open($zipPath) !== TRUE){ rrmdir($workDir); http_response_code(500); echo "Server error: invalid zip created"; exit; }
 $za->close();
