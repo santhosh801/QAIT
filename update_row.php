@@ -1,155 +1,160 @@
 <?php
-// update_row.php (improved)
-// Accepts POST of editable fields and updates operatordoc row.
-// - Uses 'bank_name' column (validated against allowed list).
-// - Only whitelisted columns may be changed.
+// update_row.php
+// Accepts JSON or form POST with operator 'id' and fields to update.
+// Returns JSON { success: bool, message: string, updated_fields: {...} }
 
 header('Content-Type: application/json; charset=utf-8');
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // set to 1 only during dev
-
+ini_set('display_errors', 0);
 session_start();
-if (!isset($_SESSION['employee_email'])) {
-    http_response_code(403);
-    echo json_encode(['success'=>false,'message'=>'Unauthorized']);
+
+// Optional auth check - uncomment if required
+// if (!isset($_SESSION['employee_email'])) {
+//     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+//     exit;
+//}
+
+// DB connection - adjust to your DB credentials
+$DB_HOST = 'localhost';
+$DB_USER = 'root';
+$DB_PASS = '';
+$DB_NAME = 'qmit_system'; // Change if different
+
+$mysqli = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+if ($mysqli->connect_errno) {
+    echo json_encode(['success' => false, 'message' => 'DB connect error: ' . $mysqli->connect_error]);
     exit;
 }
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success'=>false,'message'=>'Invalid method']);
-    exit;
-}
-
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-if (!$id) { echo json_encode(['success'=>false,'message'=>'Missing id']); exit; }
-
-$mysqli = new mysqli("localhost","root","","qmit_system");
-if ($mysqli->connect_error) { echo json_encode(['success'=>false,'message'=>'DB error: '.$mysqli->connect_error]); exit; }
 $mysqli->set_charset('utf8mb4');
 
-// Allowlist: only update these columns
-$allowlist = [
-    'id',
-    'operator_id',
-    'operator_full_name',
-    'email',
-    'branch_name',
-    'joining_date',
-    'operator_contact_no',
-    'father_name',
-    'dob',
-    'gender',
-    'aadhar_number',
-    'pan_number',
-    'voter_id_no',
-    'ration_card',
-    'nseit_number',
-    'nseit_date',
-    'current_hno_street',
-    'current_village_town',
-    'current_pincode',
-    'current_postoffice',
-    'current_district',
-    'current_state',
-    'permanent_hno_street',
-    'permanent_village_town',
-    'permanent_pincode',
-    'permanent_postoffice',
-    'permanent_district',
-    'permanent_state',
-    'bank_name',          // <-- now using 'bank_name' column
-    'status',
-    'work_status',
-    'review_notes',
-    'rejection_summary',
-    'created_at',
-    'last_modified_at'
-];
-
-// Build fields and params
-$fields = [];
-$params = [];
-$types = '';
-$maxLengths = [
-    'review_notes' => 4000, // example limit — tune to your schema (TEXT/MEDIUMTEXT)
-    'operator_full_name' => 255,
-    'email' => 255,
-    // add limits for other fields as you prefer
-];
-
-// Allowed banks - same list as registration form; validate updates to 'bank_name'
-$allowedBanks = [
-  'Karur Vysya Bank',
-  'City Union Bank',
-  'Tamilnad Mercantile Bank',
-  'Indian Bank',
-  'Karnataka Bank',
-  'Equitas Small Finance Bank',
-  'Union Bank Of India'
-];
-
-foreach ($_POST as $k => $v) {
-    if ($k === 'id') continue;
-    if (!in_array($k, $allowlist, true)) continue;
-
-    // normalize value (keep non-strings as-is)
-    $val = is_string($v) ? trim($v) : $v;
-
-    // If updating bank_name, handle validation:
-    // - allow empty string to clear bank_name
-    // - otherwise require exact match from allowedBanks
-    if ($k === 'bank_name') {
-        if ($val === '') {
-            // allow clearing bank_name
-            $val = '';
-        } else {
-            if (!in_array($val, $allowedBanks, true)) {
-                // invalid bank value — skip update for this field
-                continue;
-            }
-        }
-    }
-
-    // enforce a sensible max length if configured
-    if (isset($maxLengths[$k]) && is_string($val) && mb_strlen($val, 'UTF-8') > $maxLengths[$k]) {
-        $val = mb_substr($val, 0, $maxLengths[$k], 'UTF-8');
-    }
-
-    $fields[] = "`$k` = ?";
-    $params[] = $val;
-    $types .= 's';
+// Read input (JSON preferred, fallback to POST)
+$input = json_decode(file_get_contents('php://input'), true);
+if (!$input || !is_array($input)) {
+    $input = $_POST;
 }
+if (!is_array($input)) $input = [];
 
-if (empty($fields)) {
-    echo json_encode(['success'=>false,'message'=>'No editable fields provided']);
+// accept either 'id' or 'operator_id' as the primary key
+$id = 0;
+if (isset($input['id'])) $id = (int)$input['id'];
+elseif (isset($input['operator_id'])) $id = (int)$input['operator_id'];
+
+if (!$id) {
+    echo json_encode(['success' => false, 'message' => 'Missing operator id (id or operator_id)']);
     exit;
 }
 
-$sql = "UPDATE operatordoc SET " . implode(", ", $fields) . " WHERE id = ?";
-$params[] = $id;
-$types .= 'i';
+// Whitelist of allowed fields (keys expected from client => actual DB column)
+$allowed = [
+    'mobile' => 'operator_contact_no',
+    'operator_contact_no' => 'operator_contact_no',
+    'email' => 'email',
+    'aadhaar' => 'aadhar_number',
+    'aadhar_number' => 'aadhar_number',
+    'work_status' => 'work_status',
+    'status' => 'status',
+    'operator_full_name' => 'operator_full_name',
+    // add additional mappings as needed
+];
+
+// optional per-field max lengths
+$maxLengths = [
+    'operator_contact_no' => 40,
+    'email' => 200,
+    'aadhar_number' => 64,
+    'operator_full_name' => 255,
+    'work_status' => 64,
+    'status' => 64,
+];
+
+// collect params to update
+$fields = [];
+$params = [];
+$types = ''; // bind types for prepared statement
+
+foreach ($allowed as $clientKey => $dbCol) {
+    if (array_key_exists($clientKey, $input)) {
+        $val = $input[$clientKey];
+        // trim if string
+        if (is_string($val)) $val = trim($val);
+        // apply max length
+        if (isset($maxLengths[$dbCol]) && is_string($val) && mb_strlen($val, 'UTF-8') > $maxLengths[$dbCol]) {
+            $val = mb_substr($val, 0, $maxLengths[$dbCol], 'UTF-8');
+        }
+        $fields[] = "`$dbCol` = ?";
+        $params[] = $val;
+        $types .= 's';
+    }
+}
+
+if (count($fields) === 0) {
+    echo json_encode(['success' => false, 'message' => 'No updatable fields provided']);
+    exit;
+}
+
+// build SQL
+$setSql = implode(', ', $fields);
+$sql = "UPDATE `operatordoc` SET {$setSql} WHERE `id` = ? LIMIT 1";
 
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) {
-    echo json_encode(['success'=>false,'message'=>'Prepare failed: '.$mysqli->error,'sql'=>$sql]);
+    echo json_encode(['success' => false, 'message' => 'Prepare failed: ' . $mysqli->error]);
     exit;
 }
 
-// bind_param needs references in call_user_func_array
-$bindNames = [];
-$bindNames[] = $types;
+// bind params, include id as integer at end
+$types .= 'i';
+$params[] = $id;
+
+// mysqli bind requires references
+$bind_names[] = $types;
 for ($i = 0; $i < count($params); $i++) {
-    // ensure parameters are variables (not temporary values)
-    $bindNames[] = &$params[$i];
+    $bind_names[] = & $params[$i];
 }
-call_user_func_array([$stmt, 'bind_param'], $bindNames);
+call_user_func_array([$stmt, 'bind_param'], $bind_names);
 
 $execOk = $stmt->execute();
-if ($execOk) {
-    $affected = $stmt->affected_rows;
-    echo json_encode(['success'=>true,'message'=>'Row updated','affected_rows'=>$affected]);
-} else {
-    echo json_encode(['success'=>false,'message'=>'Execute failed: '.$stmt->error]);
+if ($execOk === false) {
+    echo json_encode(['success' => false, 'message' => 'Execute failed: ' . $stmt->error]);
+    exit;
 }
+
+// Fetch updated fields from DB to return canonical values
+$colsToReturn = [];
+foreach ($fields as $fld) {
+    // $fld is like `col` = ?
+    if (preg_match('/`([^`]+)`/', $fld, $m)) {
+        $colsToReturn[] = $m[1];
+    }
+}
+if (count($colsToReturn) === 0) {
+    // fallback
+    $colsToReturn = ['operator_contact_no','email','aadhar_number','work_status','status'];
+}
+
+$colsEscaped = array_map(function($c) use ($mysqli) {
+    return "`" . $mysqli->real_escape_string($c) . "`";
+}, $colsToReturn);
+$colsSql = implode(',', $colsEscaped);
+
+$selSql = "SELECT {$colsSql} FROM `operatordoc` WHERE `id` = ? LIMIT 1";
+$selStmt = $mysqli->prepare($selSql);
+if ($selStmt) {
+    $selStmt->bind_param('i', $id);
+    $selStmt->execute();
+    $res = $selStmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+    $selStmt->close();
+} else {
+    $row = null;
+}
+
 $stmt->close();
 $mysqli->close();
+
+echo json_encode([
+    'success' => true,
+    'message' => 'Row updated',
+    'updated_fields' => $row
+]);
+exit;

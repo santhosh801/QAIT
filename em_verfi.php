@@ -48,7 +48,7 @@
   // -----------------------------
   // params
   // -----------------------------
-  $limit  = 10;
+  $limit  = 5;
   $page   = isset($_GET['page']) ? max(1,(int)$_GET['page']) : 1;
   $search = isset($_GET['search']) ? $mysqli->real_escape_string($_GET['search']) : '';
   $offset = ($page - 1) * $limit;
@@ -110,6 +110,10 @@
           </div>
         </div>
 
+
+
+
+
         <div class="table-wrap auto-scroll-wrap">
           <div class="table-scroll-inner">
             <table class="data-table excel-like">
@@ -169,15 +173,29 @@
                 ?>
               </tbody>
             </table>
-          </div><!-- .table-scroll-inner -->
-          <div class="scroll-indicator" aria-hidden="true"><div class="scroll-thumb"></div></div>
-        </div><!-- .table-wrap -->
+     
+<!-- Server rendered pagination (preserve search/filter/bank) -->
+<div class="fragment-pagination">
+  <?php
+  // Build base query string preserving search/filter/bank
+  $baseQs = [];
+  if ($search) $baseQs[] = 'search=' . urlencode($search);
+  if ($filter) $baseQs[] = 'filter=' . urlencode($filter);
+  if ($bank)   $baseQs[] = 'bank='   . urlencode($bank);
+  $base = $baseQs ? ('?' . implode('&', $baseQs) . '&') : '?';
+  for ($p = 1; $p <= $total_pages; $p++):
+    $active = $p === $page ? ' aria-current="page" class="page-active"' : '';
+  ?>
+    <a href="<?= htmlspecialchars($base) ?>page=<?= $p ?>" class="overview-page-server" data-page="<?= $p ?>"<?= $active ?>><?= $p ?></a>
+  <?php endfor; ?>
+</div>
 
-        <div class="fragment-pagination">
-          <?php for ($p = 1; $p <= $total_pages; $p++): ?>
-            <a href="#" class="overview-page" data-page="<?= $p ?>"><?= $p ?></a>
-          <?php endfor; ?>
-        </div>
+       <div class="fragment-pagination">
+  <?php for ($p = 1; $p <= $total_pages; $p++): ?>
+    <a href="#" class="overview-page" data-page="<?= $p ?>" data-filter="<?= htmlspecialchars($filter, ENT_QUOTES) ?>" data-current-page="<?= (int)$page ?>"><?= $p ?></a>
+  <?php endfor; ?>
+</div>
+
       </div>
       <script>/* fragment injected */</script>
       <?php
@@ -440,6 +458,7 @@ $operatorWorkingCount = (int)$mysqli
     <path d="M18 6L6 18M6 6l12 12"></path>
   </svg>
 
+
           <!-- Server-rendered main table (initial fallback) -->
           <section id="employeeTable" class="k-section">
             <div class="table-wrap auto-scroll-wrap">
@@ -498,20 +517,21 @@ $operatorWorkingCount = (int)$mysqli
                   </tbody>
                 </table>
               </div>
-              <div class="scroll-indicator" aria-hidden="true"><div class="scroll-thumb"></div></div>
+            
             </div>
           </section>
 
           <footer class="k-footer">
-            <span>2025©</span> <span>KeenThemes Inc.</span>
+            <span>2025 © SINCE</span> <span>QAIT SCHEMA</span>
             <div class="spacer"></div>
-            <a href="#">Docs</a><a href="#">Purchase</a><a href="#">FAQ</a><a href="#">Support</a><a href="#">License</a>
+            <a href="#">Docs</a><a href="#"></a><a href="#">FAQ</a><a href="#">Support</a><a href="#">License</a>
           </footer>
         </div>
       </main>
     </div>
 
     <script>
+      
       // Helper: read selected bank from header select if present
       function getSelectedBank() {
         const el = document.getElementById('bankFilter');
@@ -833,6 +853,7 @@ $operatorWorkingCount = (int)$mysqli
               exportEl.href = 'em_verfi.php?' + p.toString();
             }
             initAutoScrollAll();
+             initTopScrollbars(); 
             // bind row export buttons after fragment load
             if (typeof bindRowExports === 'function') bindRowExports();
           },
@@ -980,8 +1001,7 @@ $operatorWorkingCount = (int)$mysqli
           const now = new Date(); const s = now.toISOString().slice(0,10); dateInput.value = s; dateDisplay.textContent = s;
         }
 
-        // auto-scroll tables
-        initAutoScrollAll();
+   
 
         // resizable sidebar + toggle
         makeSidebarResizable();
@@ -1328,7 +1348,7 @@ $operatorWorkingCount = (int)$mysqli
         ['Operator ID','operator_id'],
         ['Full name','operator_full_name'],
         ['Email','email'],
-        []
+      
         ['Branch','branch_name'],
         ['Joining','joining_date'],
         ['Aadhaar','aadhar_number'],
@@ -1337,7 +1357,17 @@ $operatorWorkingCount = (int)$mysqli
     ];
     basicRows.forEach(([k,key])=>{
       const row = document.createElement('div'); row.className='op-row';
-      row.innerHTML = `<div class="k">${k}</div><div class="v">${escapeHTML(data[key]||'—')}</div>`;
+      // --- REPLACEMENT START ---
+row.dataset.field = key;
+const rawVal = (data[key] !== undefined && data[key] !== null) ? data[key] : '';
+const displayVal = escapeHTML(rawVal !== '' ? rawVal : '—');
+const inputVal = (rawVal === null || rawVal === undefined) ? '' : rawVal;
+row.innerHTML = '<div class="k">' + k + '</div>' +
+  '<div class="v">' +
+    '<span class="view">' + displayVal + '</span>' +
+    '<input class="panel-input" data-field="' + key + '" id="panel-' + key + '" value="' + escapeHTML(String(inputVal)) + '" readonly style="display:none;width:100%;" />' +
+  '</div>';
+// --- REPLACEMENT END ---
       basic.appendChild(row);
     });
 
@@ -1358,7 +1388,17 @@ $operatorWorkingCount = (int)$mysqli
     ];
     contactRows.forEach(([k,key])=>{
       const row = document.createElement('div'); row.className='op-row';
-      row.innerHTML = `<div class="k">${k}</div><div class="v">${escapeHTML(data[key]||'—')}</div>`;
+      // --- REPLACEMENT START ---
+row.dataset.field = key;
+const rawVal = (data[key] !== undefined && data[key] !== null) ? data[key] : '';
+const displayVal = escapeHTML(rawVal !== '' ? rawVal : '—');
+const inputVal = (rawVal === null || rawVal === undefined) ? '' : rawVal;
+row.innerHTML = '<div class="k">' + k + '</div>' +
+  '<div class="v">' +
+    '<span class="view">' + displayVal + '</span>' +
+    '<input class="panel-input" data-field="' + key + '" id="panel-' + key + '" value="' + escapeHTML(String(inputVal)) + '" readonly style="display:none;width:100%;" />' +
+  '</div>';
+// --- REPLACEMENT END ---
       contact.appendChild(row);
     });
 
@@ -1407,8 +1447,9 @@ $operatorWorkingCount = (int)$mysqli
     actions.appendChild(mkBtn('Request Resubmission', function(){ openResubmitModal(safeId); }, 'small-btn'));
 
     // Edit / Save Row
-    actions.appendChild(mkBtn('Edit Row', `makeRowEditable(${safeId})`));
-    actions.appendChild(mkBtn('Save Row', `saveRow(${safeId})`));
+ actions.appendChild(mkBtn('Edit Row', function(){ panelMakeEditable(safeId); }, 'small-btn'));
+actions.appendChild(mkBtn('Save Row', function(){ panelSaveRow(safeId); }, 'small-btn'));
+
 
     // Save Review (will POST from panel textarea)
     const saveRevBtn = mkBtn('Save Review', `panelSaveReview(${safeId})`);
@@ -1433,7 +1474,17 @@ $operatorWorkingCount = (int)$mysqli
     ];
     rows3.forEach(([k,key])=>{
       const row = document.createElement('div'); row.className='op-row';
-      row.innerHTML = `<div class="k">${k}</div><div class="v">${escapeHTML(data[key]||'—')}</div>`;
+      // --- REPLACEMENT START ---
+row.dataset.field = key;
+const rawVal = (data[key] !== undefined && data[key] !== null) ? data[key] : '';
+const displayVal = escapeHTML(rawVal !== '' ? rawVal : '—');
+const inputVal = (rawVal === null || rawVal === undefined) ? '' : rawVal;
+row.innerHTML = '<div class="k">' + k + '</div>' +
+  '<div class="v">' +
+    '<span class="view">' + displayVal + '</span>' +
+    '<input class="panel-input" data-field="' + key + '" id="panel-' + key + '" value="' + escapeHTML(String(inputVal)) + '" readonly style="display:none;width:100%;" />' +
+  '</div>';
+// --- REPLACEMENT END ---
       docs.appendChild(row);
     });
 
@@ -2186,9 +2237,150 @@ function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, function(m){ret
     window._cd_init = initAll;
 
   })();
+/* ===== Pagination click wiring (fragment & server links) ===== */
+document.addEventListener('click', function(e){
+  // AJAX fragment page click
+  const frag = e.target.closest && e.target.closest('.overview-page');
+  if (frag) {
+    e.preventDefault();
+    const page = parseInt(frag.dataset.page || frag.getAttribute('data-page') || '1', 10) || 1;
+    const filter = frag.dataset.filter || '';
+    loadOverview(filter, page);
+    return;
+  }
+
+  // Server-rendered pagination (links that reload page)
+  const srv = e.target.closest && e.target.closest('.overview-page-server');
+  if (srv) {
+    // allow normal link navigation (works because href has page + preserved params)
+    // but intercept to loadOverview via AJAX if overview panel already open
+    const page = parseInt(srv.dataset.page || '1', 10) || 1;
+    const overviewVisible = !document.getElementById('operatorOverviewSection').classList.contains('hidden');
+    if (overviewVisible) {
+      e.preventDefault();
+      // preserve currently active filter from URL
+      const urlp = new URLSearchParams(window.location.search);
+      const filter = urlp.get('filter') || '';
+      loadOverview(filter, page);
+    }
+    return;
+  }
+}, false);
 
 
-  </script>
+(function(){
+  // keep references to previous implementations (if any)
+  const oldMakeRowEditable = window.makeRowEditable;
+  const oldSaveRow = window.saveRow;
 
-  </body>
+  function panelMakeEditable(opId) {
+    const panel = document.getElementById('opDetailPanel');
+    if (!panel || String(panel.dataset.opId) !== String(opId)) {
+      // Panel not open for this operator - attempt to open it if there's a function
+      try { if (typeof renderOperatorIntoPanel === 'function') renderOperatorIntoPanel(opId); } catch(e){}
+      return;
+    }
+    panel.querySelectorAll('.op-row').forEach(row=>{
+      const key = row.dataset.field || '';
+      const v = row.querySelector('.v');
+      if (!v) return;
+      let inp = v.querySelector('input.panel-input, textarea.panel-input, select.panel-input');
+      const span = v.querySelector('.view');
+      const curText = span ? span.textContent.trim() : v.textContent.trim();
+      if (!inp) {
+        // create input by default (text)
+        inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'panel-input';
+        inp.dataset.field = key;
+        inp.value = (curText === '—' ? '' : curText);
+        inp.style.display = 'block';
+        inp.style.width = '100%';
+        v.appendChild(inp);
+      } else {
+        inp.style.display = 'block';
+      }
+      if (span) span.style.display = 'none';
+      inp.readOnly = false;
+    });
+    panel.dataset.editing = '1';
+    try { toast('Panel editable — change values then Save Row'); } catch(e) { console.log('Panel editable'); }
+  }
+
+  function panelSaveRow(opId) {
+    const panel = document.getElementById('opDetailPanel');
+    if (!panel || String(panel.dataset.opId) !== String(opId)) {
+      if (typeof oldSaveRow === 'function') return oldSaveRow(opId);
+      return;
+    }
+    const payload = { id: opId };
+    // collect inputs
+    panel.querySelectorAll('input.panel-input, textarea.panel-input, select.panel-input').forEach(inp=>{
+      const f = inp.dataset.field || inp.name || inp.id.replace(/^panel-/, '');
+      if (!f) return;
+      payload[f] = inp.value;
+    });
+
+    // send to server (uses jQuery existing in the page)
+    $.post('update_row.php', payload, function(res){
+      if (res && res.success) {
+        const updated = res.updated_fields || payload;
+        // update table cells
+        Object.keys(updated).forEach(k=>{
+          if (k === 'id' || k === 'operator_id') return;
+          const td = document.getElementById('cell-' + k + '-' + opId);
+          if (td) td.textContent = updated[k];
+          else {
+            const td2 = document.querySelector('td[data-field="' + k + '"][data-id="' + opId + '"]');
+            if (td2) td2.textContent = updated[k];
+          }
+        });
+
+        // reflect values back to panel view and hide inputs
+        panel.querySelectorAll('.op-row').forEach(row=>{
+          const v = row.querySelector('.v');
+          if (!v) return;
+          const inp = v.querySelector('input.panel-input, textarea.panel-input, select.panel-input');
+          const span = v.querySelector('.view');
+          if (inp) {
+            const newVal = (updated && updated[row.dataset.field]) ? updated[row.dataset.field] : inp.value;
+            if (span) span.textContent = newVal || '—';
+            inp.style.display = 'none';
+            inp.readOnly = true;
+          }
+          if (span) span.style.display = 'block';
+        });
+
+        panel.dataset.editing = '';
+        try { toast(res.message || 'Saved'); } catch(e) { alert(res.message || 'Saved'); }
+      } else {
+        try { toast('Save failed: ' + (res && res.message ? res.message : 'unknown')); } catch(e) { alert('Save failed'); }
+      }
+    }, 'json').fail(function(){ try { toast('Save request failed'); } catch(e) { alert('Save request failed'); } });
+
+  }
+
+  // expose helpers
+  window.panelMakeEditable = panelMakeEditable;
+  window.panelSaveRow = panelSaveRow;
+
+  // override existing global functions to prefer panel editing when panel is open
+  window.makeRowEditable = function(id) {
+    const panel = document.getElementById('opDetailPanel');
+    if (panel && String(panel.dataset.opId) === String(id)) {
+      return panelMakeEditable(id);
+    }
+    if (typeof oldMakeRowEditable === 'function') return oldMakeRowEditable(id);
+  };
+  window.saveRow = function(id) {
+    const panel = document.getElementById('opDetailPanel');
+    if (panel && String(panel.dataset.opId) === String(id)) {
+      return panelSaveRow(id);
+    }
+    if (typeof oldSaveRow === 'function') return oldSaveRow(id);
+  };
+
+})();
+
+</script>  </body>
   </html>

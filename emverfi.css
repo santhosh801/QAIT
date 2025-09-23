@@ -216,7 +216,7 @@ body{
   from { opacity:0; transform: translateY(-6px) scale(.98); }
   to { opacity:1; transform: translateY(0) scale(1); }
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* items */
 .custom-dropdown .cd-item {
   padding:10px 12px;
@@ -940,194 +940,7 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 .data-table.excel-like tbody tr { cursor: pointer; transition: background .12s ease, transform .08s ease; }
 .data-table.excel-like tbody tr:hover { background: rgba(15,23,42,0.03); transform: translateY(-1px); }
 
-/* Slide-in right detail panel (default / small screens) */
-#opDetailPanel {
-  position: fixed;
-  right: 18px;
-  top: 120px; /* below header */
-  width: 300px;
-  max-width: calc(100% - 48px);
-  max-height: calc(100vh - 100px);
-  overflow: auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 24px 60px rgba(6,12,24,0.16);
-  border: 1px solid rgba(15,23,42,0.06);
-  z-index: 1400;
-  transform: translateX(14px) scale(.995);
-  opacity: 0;
-  transition: right .18s ease;
-  padding: 18px;
-  display: none;
-  font-family: var(--mono);
-  --panel-font-size: clamp(15px, 1.2vw + 12px, 18px);
-  font-size: 20px;
-  line-height: 1.42;
-}
 
-/* small-screen slide-in animation keyframe */
-@keyframes panelFadeInRight {
-  0% { opacity: 0; transform: translateX(20px) scale(.995); }
-  100% { opacity: 1; transform: translateX(0) scale(1); }
-}
-
-/* visible state (used by your JS: add/remove .visible) */
-#opDetailPanel.visible {
-  display: block;
-}
-
-/* header inside panel */
-#opDetailPanel .hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-#opDetailPanel .hdr .title { font-weight:500; color:var(--gold); font-size: 20px; }
-#opDetailPanel .hdr .close { background:transparent;border:0;font-weight:700;cursor:pointer;padding:8px;border-radius:6px;color:var(--muted); }
-#opDetailPanel .hdr .close:hover{ background:rgba(0,0,0,0.03); color:var(--black); }
-
-/* tabs */
-#opDetailPanel .tabs { display:flex; gap:18px; margin-bottom:12px; padding: 20px; }
-#opDetailPanel .tabs button { padding:20px 20px; border-radius:8px; border:2px solid rgba(15,23,42,0.04); background:#fff; cursor:pointer; font-weight:500; color:#374151;
-   font-size: 0.98em; }
-#opDetailPanel .tabs button.active { background: linear-gradient(90deg,#bd9a68,#a5834d); color:#fff; border-color:transparent; transform:translateY(-2px); }
-
-/* content area + separators */
-#opDetailPanel .stage { display:none; }
-#opDetailPanel .stage.active { display:block; }
-.op-row { display:flex; gap:12px; margin: 8px 0; padding: 10px 0; align-items:flex-start; }
-.op-row + .op-row { border-top: 2px solid rgba(0, 0, 0, 0.242); }
-.op-row .k { width:40%; font-size: 0.48em; color:var(--muted); }
-.op-row .v { width:60%; font-weight:700; font-size: 10px; color:var(--black); word-break:break-word; }
-
-/* subtle small divider utility (if you prefer hr) */
-#opDetailPanel hr.soft {
-  border: 0;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(15,23,42,0.02), rgba(15,23,42,0.06));
-  margin: 12px 0;
-  border-radius: 2px;
-}
-
-/* small file link styling */
-.op-attachments a { display:inline-block; margin-right:6px; padding:6px 10px; border-radius:8px; border:1px solid rgba(15,23,42,0.06); text-decoration:none; font-weight:700; color:#0f172a; background:#fbfbfb; }
-
-/* hover card (small tooltip) */
-#opRowPreview {
-  position: fixed;
-  pointer-events: none;
-  z-index:1500;
-  min-width:240px;
-  max-width:120px;
-  background:#fff;
-  border-radius:10px;
-  padding:12px;
-  box-shadow: 0 12px 30px rgba(6,12,24,0.14);
-  border:1px solid rgba(15,23,42,0.06);
-  display:none;
-  font-size:20px;
-}
-#opRowPreview .line { color:var(--muted); margin-bottom:6px; }
-#opRowPreview .b { font-weight:800; color:var(--black); }
-
-/* Large-screen: centered modal with 10px viewport padding */
-@media (min-width: 1200px) {
-  #opDetailPanel {
-    left: 10px;
-    right: 10px;
-    top: 10px;
-    bottom: 10px;
-    width: auto;
-    max-width: 800px;
-    max-height: calc(100vh - 20px);
-    margin: auto;
-    inset: 10px;
-    border-radius: 14px;
-    padding: 20x;
-    box-shadow: 0 40px 90px rgba(6,12,24,0.18);
-    transform: translateY(18px) scale(.98);
-    opacity: 0;
-    display: none;
-    --panel-font-size: clamp(16px, 0.9vw + 13px, 20px);
-    font-size: var(--panel-font-size);
-    line-height: 1.46;
-  }
-
-  @keyframes panelFadeInUp {
-    0% { opacity:0; transform: translateY(20px) scale(.985); }
-    100% { opacity:1; transform: translateY(0) scale(1); }
-  }
-
-  #opDetailPanel.visible {
-    display: block;
-    animation: panelFadeInUp .40s cubic-bezier(.16,.84,.24,1) both;
-    box-shadow: 0 48px 110px rgba(6,12,24,0.22);
-    border: 2px solid rgba(255,255,255,0.02);
-    outline: 1px solid rgba(15,23,42,0.03);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
-  }
-
-  #opDetailPanel .hdr .title { font-size: clamp(20px, 2.6vw + 18px, 26px); }
-  .op-row .k { font-size: 2.02em; }
-  .op-row .v { font-size: 1.06em; }
-  #opRowPreview { z-index: 1600; }
-}
-
-/* small-screen responsive override */
-@media (max-width: 1199px) {
-  #opDetailPanel {
-    right: 12px;
-    left: auto;
-    width: 420px;
-    max-width: calc(100% - 24px);
-    top: 92px;
-    padding: 14px;
-    transform: translateX(14px) scale(.995);
-    opacity: 0;
-    display: none;
-  }
-
-  #opDetailPanel.visible {
-    display: block;
-    animation: panelFadeInRight .28s cubic-bezier(.2,.9,.2,1) both;
-  }
-}
-
-/* Compact + Softer Theme Overrides */
-#opDetailPanel {
-  --panel-font-size: clamp(20px, 2vw + 10px, 16px) !important;
-  font-size: var(--panel-font-size) !important;
-  line-height: 1.00 !important;
-  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%) !important;
-  border: 2px solid rgba(15,23,42,0.05) !important;
-  box-shadow: 0 18px 50px rgba(6,12,24,0.14) !important;
-}
-
-/* Header + title */
-#opDetailPanel .hdr .title {
-  font-size: clamp(20px) !important;
-  font-weight: 900 !important;
-  color: #ab9410af !important; /* softer gold */
-}
-
-/* Row keys + values */
-.op-row .k {
-  font-size: 0.92em !important;
-  color: var(--muted) !important;
-}
-.op-row .v {
-  font-size: 1.02em !important;
-  font-weight: 600 !important;
-  color: #111827 !important; /* softer than pure black */
-}
-
-/* Tabs */
-#opDetailPanel .tabs button {
-  font-size: 1.08em !important;
-  padding: 12px 16px !important;
-  border: 1px solid rgba(15,23,42,0.08) !important;
-}
-#opDetailPanel .tabs button.active {
-  background: linear-gradient(90deg,#c7a86a,#9f7e42) !important;
-  color: #fff !important;
-  transform: translateY(-2px);
-}
 .op-attachments .doc-row { display:flex; justify-content:space-between; align-items:flex-start; padding:16px 0; margin-top: 2px;}
 .op-attachments .doc-row .doc-actions { display:inline-flex; gap:16px; margin-left:1px; }
 .doc-reject-reason .input-compact { width:90%; }
@@ -1433,8 +1246,8 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 #bulkExportWrap button:hover,
 .gold-export:hover,
 #topExport:hover {
-  transform: translateY(-4px) scale(1.02) !important;
-  box-shadow: 0 34px 80px rgba(165,130,74,0.18) !important;
+  transform: translateY(-11px) scale(1.02) !important;
+  box-shadow: 0 34px 80px rgba(165,130,74,  0.18) !important;
 }
 
 /* ===== TASK 3: Navbar polish — add 4px gold horizontal divider ===== */
@@ -1536,6 +1349,15 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
   animation: cdItemInSmart 1.1s cubic-bezier(.25,.85,.25,1) both;
 }
 
+/* top mirrored horizontal scrollbar above tables */
+.table-top-scroll::-webkit-scrollbar{ height:10px; }
+.table-top-scroll::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.18); border-radius:6px; }
+.table-top-scroll{ -webkit-overflow-scrolling: touch; }
+.fragment-pagination{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+.fragment-pagination a{ padding:6px 10px; background:#fff; border-radius:6px; text-decoration:none; color:var(--muted); border:1px solid rgba(0,0,0,0.04); }
+.fragment-pagination a.page-active, .fragment-pagination a[aria-current="page"]{ background:var(--gold); color:#fff; font-weight:700; border-color:rgba(0,0,0,0.06); }
+
+
 /* Stretch stagger: give each item more breathing space */
 .custom-dropdown .cd-item:nth-child(1){ animation-delay: .12s; }
 .custom-dropdown .cd-item:nth-child(2){ animation-delay: .24s; }
@@ -1618,42 +1440,52 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 }
 
 /* ===== TASK 7: Sidebar hover micro-interactions and hover colours ===== */
-.sidebar-nav a {
-  transition: transform var(--mod-duration-med) var(--mod-accent-ease), box-shadow var(--mod-duration-med) var(--mod-accent-ease), background .24s;
-  position:relative;
-}
+
 
 /* === Sidebar Text Fade-In (refined) === */
 
 /* Subtle fade + slide in */
+/* Smooth sidebar fade + slide */
 @keyframes sidebarTextFade {
-  0% {
+  from {
     opacity: 0;
-    transform: translateX(-61px);
+    transform: translateX(-12px);
   }
-  100% {
+  to {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
 .sidebar-nav a {
-  color: #000; /* text always visible */
-  opacity: 0;  /* will fade in */
-  animation: sidebarTextFade 2.6s var(--mod-accent-ease) forwards;
+  color: #000;
+  opacity: 0;
+  transform: translateX(-82px);
+  animation: sidebarTextFade 1.5s ease forwards;
 }
 
-/* Stagger for smoother landing (prevents lag) */
-.sidebar-nav a:nth-child(1) { animation-delay: 0.2s; }
-.sidebar-nav a:nth-child(2) { animation-delay: 0.4s; }
-.sidebar-nav a:nth-child(3) { animation-delay: 0.6s; }
-.sidebar-nav a:nth-child(4) { animation-delay: 0.8s; }
-.sidebar-nav a:nth-child(5) { animation-delay: 1.0s; }
+/* Sequential delays in the order you want */
+/* Sequential delays in your mirrored order, medium-slow */
+.sidebar-nav a:nth-of-type(1) { animation-delay: 0.4s; }  /* Operator Status */
+.sidebar-nav a:nth-of-type(2) { animation-delay: 0.8s; }  /* OP DATA (All) */
+.sidebar-nav a:nth-of-type(3) { animation-delay: 1.2s; }  /* Working */
+.sidebar-nav a:nth-of-type(4) { animation-delay: 1.7s; }  /* Pending */
+.sidebar-nav a:nth-of-type(5) { animation-delay: 1.2s; }  /* Accepted */
+.sidebar-nav a:nth-of-type(6) { animation-delay: 0.8s; }  /* Not Working */
+.sidebar-nav a:nth-of-type(7) { animation-delay: 0.4s; }  /* Operator Mailing */
+  /* Operator Mailing */
+
 /* add more nth-child delays if needed */
 
 /* Hover state stays intact */
 .sidebar-nav a:hover {
-  color: #0b1f27c4 !important;
+  color: #fffffff3 !important;background: #ffffff;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #2c3e50, #fdfeff);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #2c3e50, #f0f4f7); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+
+
+  
 }
 
 /* ===== TASK 8: Table - slow subtle animated reveal & nicer row hover, elegant scroll indicator ===== */
@@ -1733,23 +1565,194 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 
 /* slow hover for interactive items */
 a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hover { transition-duration: .48s !important; }
+/* Slide-in right detail panel (default / small screens) */
+#opDetailPanel {
+  position: fixed;
+  right: 18px;
+  top: 120px; /* below header */
+  width: 300px;
+  max-width: calc(100% - 48px);
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(6,12,24,0.16);
+  border: 1px solid rgba(15,23,42,0.06);
+  z-index: 1400;
+  transform: translateX(14px) scale(.995);
+  opacity: 0;
+  transition: right .18s ease;
+  padding: 18px;
+  display: none;
+  font-family: var(--mono);
+  --panel-font-size: clamp(15px, 1.2vw + 12px, 18px);
+  font-size: 20px;
+  line-height: 1.42;
+}
 
-/* ===== TASK 14: Animate contact/docs: slide right-to-left line-by-line; reduce padding ===== */
-#opDetailPanel { padding: 12px !important; }
-#opDetailPanel .op-row { overflow: hidden; padding:8px 6px; align-items:flex-start; border-bottom:1px solid rgba(15,23,42,0.04); }
-#opDetailPanel .op-row .v { transform: translateX(12px); opacity: 0; transition: transform .48s var(--mod-accent-ease), opacity .48s var(--mod-accent-ease); color: #0b1220; }
-#opDetailPanel .stage.active .op-row .v, #opDetailPanel.visible .op-row .v { transform: translateX(0); opacity:1; }
+/* small-screen slide-in animation keyframe */
+@keyframes panelFadeInRight {
+  0% { opacity: 0; transform: translateX(20px) scale(.995); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
 
-/* differentiate each contact line color */
-#opDetailPanel .op-row:nth-child(odd) .v { color: #0b63a6; }
-#opDetailPanel .op-row:nth-child(even) .v { color: #a35212; }
+/* visible state (used by your JS: add/remove .visible) */
+#opDetailPanel.visible {
+  display: block;
+}
 
-/* allow toggled dropdown effect per line when clicked (pure CSS style target) */
-.op-row .v.collapsed { max-height: 22px; overflow:hidden; transition:max-height .36s ease; }
-.op-row .v.expanded { max-height: 420px; transition:max-height .56s ease; }
+/* header inside panel */
+#opDetailPanel .hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+#opDetailPanel .hdr .title { font-weight:500; color:var(--gold); font-size: 20px; }
+#opDetailPanel .hdr .close { background:transparent;border:0;font-weight:700;cursor:pointer;padding:8px;border-radius:6px;color:var(--muted); }
+#opDetailPanel .hdr .close:hover{ background:rgba(0,0,0,0.03); color:var(--black); }
 
-/* reduce panel font sizes */
-#opDetailPanel { font-size: 14px; line-height:1.35; }
+/* tabs */
+#opDetailPanel .tabs { display:flex; gap:18px; margin-bottom:12px; padding: 20px; }
+#opDetailPanel .tabs button { padding:20px 20px; border-radius:8px; border:2px solid rgba(15,23,42,0.04); background:#fff; cursor:pointer; font-weight:500; color:#374151;
+   font-size: 0.98em; }
+#opDetailPanel .tabs button.active { background: linear-gradient(90deg,#bd9a68,#a5834d); color:#fff; border-color:transparent; transform:translateY(-2px); }
+
+/* content area + separators */
+#opDetailPanel .stage { display:none; }
+#opDetailPanel .stage.active { display:block; }
+.op-row { display:flex; gap:12px; margin: 8px 0; padding: 10px 0; align-items:flex-start; }
+.op-row + .op-row { border-top: 2px solid rgba(0, 0, 0, 0.242); }
+.op-row .k { width:40%; font-size: 0.48em; color:var(--muted); }
+.op-row .v { width:60%; font-weight:700; font-size: 10px; color:var(--black); word-break:break-word; }
+
+/* subtle small divider utility (if you prefer hr) */
+#opDetailPanel hr.soft {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(15,23,42,0.02), rgba(15,23,42,0.06));
+  margin: 12px 0;
+  border-radius: 2px;
+}
+
+/* small file link styling */
+.op-attachments a { display:inline-block; margin-right:6px; padding:6px 10px; border-radius:8px; border:1px solid rgba(15,23,42,0.06); text-decoration:none; font-weight:700; color:#0f172a; background:#fbfbfb; }
+
+/* hover card (small tooltip) */
+#opRowPreview {
+  position: fixed;
+  pointer-events: none;
+  z-index:1500;
+  min-width:240px;
+  max-width:120px;
+  background:#fff;
+  border-radius:10px;
+  padding:12px;
+  box-shadow: 0 12px 30px rgba(6,12,24,0.14);
+  border:1px solid rgba(15,23,42,0.06);
+  display:none;
+  font-size:20px;
+}
+#opRowPreview .line { color:var(--muted); margin-bottom:6px; }
+#opRowPreview .b { font-weight:800; color:var(--black); }
+
+/* Large-screen: centered modal with 10px viewport padding */
+@media (min-width: 1200px) {
+  #opDetailPanel {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    bottom: 10px;
+    width: auto;
+    max-width: 800px;
+    max-height: calc(100vh - 20px);
+    margin: auto;
+    inset: 10px;
+    border-radius: 14px;
+    padding: 20x;
+    box-shadow: 0 40px 90px rgba(6,12,24,0.18);
+    transform: translateY(18px) scale(.98);
+    opacity: 0;
+    display: none;
+    --panel-font-size: clamp(16px, 0.9vw + 13px, 20px);
+    font-size: var(--panel-font-size);
+    line-height: 1.46;
+  }
+
+  @keyframes panelFadeInUp {
+    0% { opacity:0; transform: translateY(20px) scale(.985); }
+    100% { opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  #opDetailPanel.visible {
+    display: block;
+    animation: panelFadeInUp .40s cubic-bezier(.16,.84,.24,1) both;
+    box-shadow: 0 48px 110px rgba(6,12,24,0.22);
+    border: 2px solid rgba(255,255,255,0.02);
+    outline: 1px solid rgba(15,23,42,0.03);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+  }
+
+  #opDetailPanel .hdr .title { font-size: clamp(20px, 2.6vw + 18px, 26px); }
+  .op-row .k { font-size: 2.02em; }
+  .op-row .v { font-size: 1.06em; }
+  #opRowPreview { z-index: 1600; }
+}
+
+/* small-screen responsive override */
+@media (max-width: 1199px) {
+  #opDetailPanel {
+    right: 12px;
+    left: auto;
+    width: 420px;
+    max-width: calc(100% - 24px);
+    top: 92px;
+    padding: 14px;
+    transform: translateX(14px) scale(.995);
+    opacity: 0;
+    display: none;
+  }
+
+  #opDetailPanel.visible {
+    display: block;
+    animation: panelFadeInRight .28s cubic-bezier(.2,.9,.2,1) both;
+  }
+}
+
+/* Compact + Softer Theme Overrides */
+#opDetailPanel {
+  --panel-font-size: clamp(20px, 2vw + 10px, 16px) !important;
+  font-size: var(--panel-font-size) !important;
+  line-height: 1.00 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%) !important;
+  border: 2px solid rgba(15,23,42,0.05) !important;
+  box-shadow: 0 18px 50px rgba(6,12,24,0.14) !important;
+}
+
+/* Header + title */
+#opDetailPanel .hdr .title {
+  font-size: clamp(20px) !important;
+  font-weight: 900 !important;
+  color: #ab9410af !important; /* softer gold */
+}
+
+/* Row keys + values */
+.op-row .k {
+  font-size: 0.92em !important;
+  color: var(--muted) !important;
+}
+.op-row .v {
+  font-size: 1.02em !important;
+  font-weight: 600 !important;
+  color: #111827 !important; /* softer than pure black */
+}
+
+/* Tabs */
+#opDetailPanel .tabs button {
+  font-size: 1.08em !important;
+  padding: 12px 16px !important;
+  border: 1px solid rgba(15,23,42,0.08) !important;
+}
+#opDetailPanel .tabs button.active {
+  background: linear-gradient(90deg,#c7a86a,#9f7e42) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
 
 /* ===== TASK 15: Colored table — style headers/rows to be more vivid and readable ===== */
 .data-table thead th { background: linear-gradient(180deg,#fffdfb,#fbfaf8); color: #444; border-bottom: 3px solid rgba(189,154,104,0.08); font-weight:800; }
@@ -1759,18 +1762,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 .data-table td.status-accepted { background: linear-gradient(90deg, rgba(217,249,235,0.6), transparent); border-left: 4px solid #10b981; }
 .data-table td.status-work { background: linear-gradient(90deg, rgba(232,244,255,0.6), transparent); border-left: 4px solid #06b6d4; }
 
-/* ===== TASK 16: Wizard with icon for basic contact/docs — CSS-only numbers / icons via pseudo ===== */
-#opDetailPanel { counter-reset: wizard-step; }
-#opDetailPanel .op-row .k::before {
-  counter-increment: wizard-step;
-  content: counter(wizard-step);
-  display:inline-block;
-  width:28px;height:28px;border-radius:6px;margin-right:10px;
-  background: linear-gradient(90deg,var(--mod-gold),var(--mod-gold-2));
-  color:#fff; font-weight:800; text-align:center; line-height:28px;
-  box-shadow: 0 8px 20px rgba(165,130,74,0.12);
-}
-
+/* ===== TASK 16: Wizard with icon for basic contact/docs — CSS-only numbers / icons via pse
 /* ===== TASK 17: Alerts — colored popup with emoji (CSS-only) ===== */
 .qit-alert {
   position: fixed;
@@ -1808,7 +1800,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 .status-left .clock-card { border: 6px solid rgba(0,0,0,0.06) !important; }
 
 /* Reduce large paddings across heavy elements to keep layout tighter as requested */
-.k-card, .table-wrap, .status-card, .op-row, #opDetailPanel { padding: 10px !important; }
+.k-card, .table-wrap, .status-card, .op-row, #opDetailPanel { padding: 5px !important; }
 
 /* Optional: small helper to animate export CTA (set attribute aria-live="animate" on element to pulse) */
 @keyframes exportPulse { 0%{ box-shadow: 0 12px 24px rgba(165,130,74,0.07)} 50%{ box-shadow: 0 26px 60px rgba(165,130,74,0.14); transform: translateY(-2px)} 100%{ box-shadow: 0 12px 24px rgba(165,130,74,0.07)} }
