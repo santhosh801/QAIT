@@ -1574,7 +1574,6 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   max-width: calc(100% - 48px);
   max-height: calc(100vh - 100px);
   overflow: auto;
-  background: #fff;
   border-radius: 12px;
   box-shadow: 0 24px 60px rgba(6,12,24,0.16);
   border: 1px solid rgba(15,23,42,0.06);
@@ -1584,7 +1583,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   transition: right .18s ease;
   padding: 18px;
   display: none;
-  font-family: var(--mono);
+  font-family: Georgia, 'Times New Roman', Times, serif;
   --panel-font-size: clamp(15px, 1.2vw + 12px, 18px);
   font-size: 20px;
   line-height: 1.42;
@@ -1663,6 +1662,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
     max-height: calc(100vh - 20px);
     margin: auto;
     inset: 10px;
+    
     border-radius: 14px;
     padding: 20x;
     box-shadow: 0 40px 90px rgba(6,12,24,0.18);
