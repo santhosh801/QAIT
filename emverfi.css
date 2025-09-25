@@ -1570,23 +1570,20 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   position: fixed;
   right: 18px;
   top: 120px; /* below header */
-  width: 300px;
-  max-width: calc(100% - 48px);
-  max-height: calc(100vh - 100px);
+  width: 250px;
+ 
+ height: 550px;
   overflow: auto;
   border-radius: 12px;
-  box-shadow: 0 24px 60px rgba(6,12,24,0.16);
-  border: 1px solid rgba(15,23,42,0.06);
+box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px;  border: 1px solid rgba(15,23,42,0.06);
   z-index: 1400;
   transform: translateX(14px) scale(.995);
   opacity: 0;
   transition: right .18s ease;
-  padding: 18px;
+  padding: 10px;
   display: none;
   font-family: Georgia, 'Times New Roman', Times, serif;
-  --panel-font-size: clamp(15px, 1.2vw + 12px, 18px);
-  font-size: 20px;
-  line-height: 1.42;
+ 
 }
 
 /* small-screen slide-in animation keyframe */
@@ -1602,15 +1599,10 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 
 /* header inside panel */
 #opDetailPanel .hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-#opDetailPanel .hdr .title { font-weight:500; color:var(--gold); font-size: 20px; }
+#opDetailPanel .hdr .title { font-weight:200; color:var(--gold); font-size: 20px; }
 #opDetailPanel .hdr .close { background:transparent;border:0;font-weight:700;cursor:pointer;padding:8px;border-radius:6px;color:var(--muted); }
 #opDetailPanel .hdr .close:hover{ background:rgba(0,0,0,0.03); color:var(--black); }
 
-/* tabs */
-#opDetailPanel .tabs { display:flex; gap:18px; margin-bottom:12px; padding: 20px; }
-#opDetailPanel .tabs button { padding:20px 20px; border-radius:8px; border:2px solid rgba(15,23,42,0.04); background:#fff; cursor:pointer; font-weight:500; color:#374151;
-   font-size: 0.98em; }
-#opDetailPanel .tabs button.active { background: linear-gradient(90deg,#bd9a68,#a5834d); color:#fff; border-color:transparent; transform:translateY(-2px); }
 
 /* content area + separators */
 #opDetailPanel .stage { display:none; }
@@ -1671,7 +1663,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
     display: none;
     --panel-font-size: clamp(16px, 0.9vw + 13px, 20px);
     font-size: var(--panel-font-size);
-    line-height: 1.46;
+   
   }
 
   @keyframes panelFadeInUp {
@@ -1688,9 +1680,9 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
     background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
   }
 
-  #opDetailPanel .hdr .title { font-size: clamp(20px, 2.6vw + 18px, 26px); }
-  .op-row .k { font-size: 2.02em; }
-  .op-row .v { font-size: 1.06em; }
+  #opDetailPanel .hdr .title { font-size: clamp(50px, 2.6vw + 18px, 26px);  margin-left:10px; margin-top: 20px;}
+  .op-row .k { font-size: 1.02em; }
+  .op-row .v { font-size: 0.50em; }
   #opRowPreview { z-index: 1600; }
 }
 
@@ -1702,6 +1694,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
     width: 420px;
     max-width: calc(100% - 24px);
     top: 92px;
+   
     padding: 14px;
     transform: translateX(14px) scale(.995);
     opacity: 0;
@@ -1717,42 +1710,203 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 /* Compact + Softer Theme Overrides */
 #opDetailPanel {
   --panel-font-size: clamp(20px, 2vw + 10px, 16px) !important;
-  font-size: var(--panel-font-size) !important;
-  line-height: 1.00 !important;
+
   background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%) !important;
   border: 2px solid rgba(15,23,42,0.05) !important;
   box-shadow: 0 18px 50px rgba(6,12,24,0.14) !important;
 }
 
 /* Header + title */
+
 #opDetailPanel .hdr .title {
-  font-size: clamp(20px) !important;
-  font-weight: 900 !important;
-  color: #ab9410af !important; /* softer gold */
+  font-size: clamp(20px, 3vw, 32px) !important;
+  font-weight: 250 !important;  line-height: 0.81 !important;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  color: #222 !important;
+  position: relative;
+  display: inline-block;
+  gap: 6px;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+/* top-half effect */
+#opDetailPanel .hdr .title::before {
+  content: attr(data-top);
+  display: block;
+  overflow: hidden;
+  color: #767676;
+  border-bottom: 2px solid #000;
+  
+  animation: showTopText 2s forwards;
+  animation-delay: 0.1s;
+}
+
+/* bottom-half effect */
+#opDetailPanel .hdr .title::after {
+  content: attr(data-bottom);
+  display: block;
+  overflow: hidden;
+  transform: translate3d(0,-100%,0);
+  animation: showBottomText 0.5s forwards;
+  animation-delay: 1.75s;
+}
+
+/* keyframes */
+@keyframes showTopText {
+  0%   { transform: translate3d(0,100%,0); }
+  
+  100% { transform: translate3d(0,0,0); }
+}
+@keyframes showBottomText {
+  0%   { transform: translate3d(0,-100%,0); }
+  100% { transform: translate3d(0,0,0); }
 }
 
 /* Row keys + values */
-.op-row .k {
-  font-size: 0.92em !important;
-  color: var(--muted) !important;
-}
-.op-row .v {
-  font-size: 1.02em !important;
-  font-weight: 600 !important;
-  color: #111827 !important; /* softer than pure black */
+/* --- Slow left-fade animation --- */
+@keyframes slowFadeInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* Tabs */
+/* Apply to keys (labels) */
+.op-row .k {margin-top: 10px;
+  font-size: 1.32em !important;
+  font-weight: 300 !important;
+  color: var(--muted) !important;
+    line-height: 1.00 !important;
+    
+    
+  opacity: 0;
+  animation: slowFadeInLeft 2.0s cubic-bezier(.16,.84,.44,1) forwards;animation-delay: 0.55s;
+}
+
+/* Apply to values */
+@keyframes slowFadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(40px); /* start from right */
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-8px); /* slight overshoot */
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.op-row .v {
+  margin-top: 20px;
+  font-size: 0.79em !important;
+  font-weight: 100 !important;
+  color: #000000 !important; /* softer than pure black */  line-height: 1.00 !important;
+  opacity: 0;text-align: left;
+  animation: slowFadeInRight 2.0s cubic-bezier(.16,.84,.44,1) forwards;
+    animation-delay: 0.55s; /* stagger after .k */
+}
+
+
+/* ---------- Theme override: push/neumorphic style tabs ---------- */
 #opDetailPanel .tabs button {
-  font-size: 1.08em !important;
-  padding: 12px 16px !important;
-  border: 1px solid rgba(15,23,42,0.08) !important;
+  position: relative;
+  border-radius: 999vw;
+  background: #fff;
+  border: none !important;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font-weight: 200;
+  margin-top: 20px;
+  margin-bottom: 20px;margin-left: 20px;
+  font-size: 0.98em !important;
+  color: #374151;
+  padding: 14px 26px !important;
+  line-height: 0.;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 450ms ease, box-shadow 1300ms ease;
+  box-shadow:
+    -0.15em -0.15em 0.15em -0.075em rgba(5, 5, 5, 0.15),
+     0.0375em 0.0375em 0.0675em rgba(5, 5, 5, 0.1);
+  overflow: hidden;
+  isolation: isolate;
 }
+
+/* subtle glossy overlay */
+#opDetailPanel .tabs button::after {
+  content: "";
+  position: absolute;
+  inset: -0.15em;
+  border-radius: inherit;
+  background: linear-gradient(-135deg,
+      rgba(5, 5, 5, 0.15),
+      transparent 20%,
+      transparent 100%);
+  opacity: 1;
+  color: #000;
+  filter: blur(1.1125em);
+  mix-blend-mode: multiply;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* text gradient like the demo */
+#opDetailPanel .tabs button span,
+#opDetailPanel .tabs button {
+  background-clip: text;
+  -webkit-background-clip: text;  display: inline-block;
+  opacity: 0; /* start hidden */
+  animation: letterFadeIn 4.6s forwards;
+  color: transparent;
+  background-image: linear-gradient(135deg, #191919, #4b4b4b);
+  text-shadow: rgba(0, 0, 0, 0.08) 0 0 0.08em;
+}
+#o
+/* hover state – pressed/glossy */
+#opDetailPanel .tabs button:hover {
+  transform: translateX(-5px);
+  box-shadow:
+    0.1em 0.15em 0.05em rgba(5, 5, 5, 0.3) inset,
+    -0.025em -0.03em 0.05em rgba(5, 5, 5, 0.2) inset,
+    0.25em 0.25em 0.2em rgba(5, 5, 5, 0.2) inset,
+    0 0 0.05em 0.25em inset rgba(255, 255, 255, 0.2);
+}
+
+/* active state (your gradient stays, with push effect) */
 #opDetailPanel .tabs button.active {
-  background: linear-gradient(90deg,#c7a86a,#9f7e42) !important;
+  background: linear-gradient(90deg,#bd9a68,#a5834d) !important;
   color: #fff !important;
-  transform: translateY(-2px);
+  transform: translateY(-5px) scale(0.975);
+ box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
 }
+
+/* active text: solid white instead of gradient */
+#opDetailPanel .tabs button.active span,
+#opDetailPanel .tabs button.active {
+  background: none;
+  color: #fff !important;
+  -webkit-background-clip: border-box;
+  text-shadow: none;
+}
+@keyframes letterFadeIn {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+v
+/* Tabs */
+ 
 
 /* ===== TASK 15: Colored table — style headers/rows to be more vivid and readable ===== */
 .data-table thead th { background: linear-gradient(180deg,#fffdfb,#fbfaf8); color: #444; border-bottom: 3px solid rgba(189,154,104,0.08); font-weight:800; }

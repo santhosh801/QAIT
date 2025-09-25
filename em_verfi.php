@@ -254,6 +254,7 @@ $operatorWorkingCount = (int)$mysqli
     <meta charset="utf-8" />
     <title>Employee KYC Portal</title>
     <link rel="stylesheet" href="emverfi.css?v=<?=file_exists('emverfi.css') ? filemtime('emverfi.css') : time()?>" type="text/css">
+    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/feather-icons"></script>
 
@@ -1277,7 +1278,7 @@ $operatorWorkingCount = (int)$mysqli
       panel.id = 'opDetailPanel';
       panel.innerHTML = `
         <div class="hdr">
-          <div class="title">Operator details</div>
+            <div class="title" data-top="Op's Data" data-bottom=""></div>
           <div>
             <button class="close" aria-label="Close">✕</button>
           </div>
@@ -1294,6 +1295,19 @@ $operatorWorkingCount = (int)$mysqli
         </div>
       `;
       document.body.appendChild(panel);
+// optional helper — toggles container state when a button with data-stage is clicked
+document.querySelectorAll('#opDetailPanel .accordion-btn, #opDetailPanel .tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=> {
+    const panel = document.getElementById('opDetailPanel') || document.querySelector('.operator-panel');
+    if (!panel) return;
+    // clear any existing show- classes
+    panel.classList.remove('show-basic','show-contact','show-docs');
+    const stage = btn.dataset.stage || btn.getAttribute('data-stage');
+    if (stage === 'basic') panel.classList.add('show-basic');
+    if (stage === 'contact') panel.classList.add('show-contact');
+    if (stage === 'docs') panel.classList.add('show-docs');
+  });
+});
 
       // Preview hover tooltip
       const preview = document.createElement('div');
@@ -1341,6 +1355,7 @@ $operatorWorkingCount = (int)$mysqli
 
     panel.querySelector('.title').textContent = data.operator_full_name || `Operator ${opId || ''}`;
 
+    
     // BASIC stage
     const basic = panel.querySelector('.stage[data-stage="basic"]');
     basic.innerHTML = '';
@@ -1357,6 +1372,8 @@ $operatorWorkingCount = (int)$mysqli
     ];
     basicRows.forEach(([k,key])=>{
       const row = document.createElement('div'); row.className='op-row';
+
+
       // --- REPLACEMENT START ---
 row.dataset.field = key;
 const rawVal = (data[key] !== undefined && data[key] !== null) ? data[key] : '';
