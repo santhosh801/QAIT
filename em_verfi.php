@@ -533,7 +533,7 @@ $operatorWorkingCount = (int)$mysqli
 
     <script>
       
-      // Helper: read selected bank from header select if present
+      // Helper: readbankheader select if present
       function getSelectedBank() {
         const el = document.getElementById('bankFilter');
         return el ? el.value.trim() : '';
@@ -2398,6 +2398,30 @@ document.addEventListener('click', function(e){
   };
 
 })();
+// Create the backdrop once
+let backdrop = document.getElementById("opBackdrop");
+if (!backdrop) {
+  backdrop = document.createElement("div");
+  backdrop.id = "opBackdrop";
+  document.body.appendChild(backdrop);
+}
+
+// Watch for panel toggle
+const panel = document.getElementById("opDetailPanel");
+
+function syncBackdrop() {
+  if (panel.classList.contains("visible")) {
+    backdrop.classList.add("show");
+  } else {
+    backdrop.classList.remove("show");
+  }
+}
+
+// Initial check
+syncBackdrop();
+
+// MutationObserver to auto-sync
+new MutationObserver(() => syncBackdrop()).observe(panel, { attributes: true });
 
 </script>  </body>
   </html>

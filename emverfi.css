@@ -1807,6 +1807,30 @@ box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px;  border: 1px solid rgba(15,
     transform: translateX(0);
   }
 }
+#opBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(5px);   /* keep blur always applied */
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  will-change: opacity;
+   /* force GPU acceleration */
+}
+
+#opBackdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#opDetailPanel {
+  position: fixed;
+  z-index: 2900;
+  will-change: transform;
+}
 
 .op-row .v {
   margin-top: 20px;
