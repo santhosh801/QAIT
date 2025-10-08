@@ -107,7 +107,6 @@ $label_map = [
   <div class="wrap">
     <h1>Re-submit documents — <?= htmlspecialchars($op['operator_full_name'] ?: $op['operator_id']) ?></h1>
     <p class="muted">This link was created by <?= htmlspecialchars($reqRow['created_by'] ?? 'the verification team') ?> and expires on <strong><?= htmlspecialchars($reqRow['expires_at'] ?? 'N/A') ?></strong>.</p>
-
     <h3 style="margin-top:12px">Documents to re-submit</h3>
     <ul class="req">
       <?php

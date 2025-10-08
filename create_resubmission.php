@@ -50,13 +50,13 @@ if (isset($_POST['docs'])) {
         else $docs = array_filter(array_map('trim', explode(',', (string)$_POST['docs'])));
     }
 }
-$expires_days = isset($_POST['expires_days']) ? (int)$_POST['expires_days'] : 7;
+$expires_days = isset($_POST['expires_days']) ? (int)$_POST['expires_days'] : 2;
 $email_now = isset($_POST['email_now']) && ($_POST['email_now'] === '1' || $_POST['email_now'] === 'true' || $_POST['email_now'] === true);
 
 // basic validation
 if ($opId <= 0) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'Invalid operator id']); exit; }
 if (empty($docs) || !is_array($docs)) { http_response_code(400); echo json_encode(['success'=>false,'message'=>'No documents selected']); exit; }
-if ($expires_days < 1) $expires_days = 7;
+if ($expires_days < 1) $expires_days = 2;
 
 // normalize & filter docs to allowed keys
 $docs = array_values(array_filter(array_map('trim', $docs), function($d) use ($allowedDocKeys){ return in_array($d, $allowedDocKeys, true); }));

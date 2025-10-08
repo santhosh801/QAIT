@@ -185,7 +185,7 @@ function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli,
 
     $dest = rtrim($UPLOAD_BASE, '/\\') . '/' . $filename;
     if (!move_uploaded_file($tmpPath, $dest)) { $result['msg']='Failed to move file'; return $result; }
-
+    
     $webPath = 'uploads/operatordoc/' . $folder = basename($UPLOAD_BASE) . '/' . $filename;
     $result['stored'] = $webPath;
 

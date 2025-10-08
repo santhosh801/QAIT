@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 function get_db() {
     static $mysqli = null;
     if ($mysqli === null) {
-        $mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
+        $mysqli = new mysqli('localhost', 'root', '', '');
         if ($mysqli->connect_error) {
             http_response_code(500);
             echo "DB connection failed: " . htmlspecialchars($mysqli->connect_error);
@@ -377,10 +377,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     call_user_func_array([$stmt, 'bind_param'], $bind_names);
 
-    if ($stmt->execute()) {
-        echo '<script>alert("Operator registered successfully!");window.location="operator_view.php";</script>';
-        exit;
-    } else {
+  if ($stmt->execute()) {
+    // create operator upload folder (same convention as upload_docs.php)
+    $inserted_id = $stmt->insert_id;
+    // use operator name + branch for folder naming (fallback safe values)
+    $op_name_safe = preg_replace('/[^a-z0-9\-_]+/i','_', strtolower($data['operator_full_name'] ?? 'operator_'.$inserted_id));
+    $branch_safe  = preg_replace('/[^a-z0-9\-_]+/i','_', strtolower($data['branch_name'] ?? 'branch'));
+    $folder_name = $op_name_safe . '_' . $branch_safe . '_resumbiteed';
+    $upload_root = __DIR__ . '/uploads/operatordoc';
+    if (!is_dir($upload_root)) @mkdir($upload_root, 0755, true);
+    $upload_base = rtrim($upload_root, '/\\') . '/' . $folder_name;
+    if (!is_dir($upload_base)) @mkdir($upload_base, 0755, true);
+
+    // Optionally write an index.html or a placeholder to prevent listing
+    @file_put_contents($upload_base . '/.placeholder', "Operator ID: {$inserted_id}\nCreated: " . date('c'));
+
+    // redirect back with success
+    echo '<script>alert("Operator registered successfully!");window.location="operator_view.php";</script>';
+    exit;
+}
+ else {
         echo "Error inserting: " . htmlspecialchars($stmt->error);
         exit;
     }
