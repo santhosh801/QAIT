@@ -835,6 +835,26 @@ document.querySelectorAll('#opDetailPanel .accordion-btn, #opDetailPanel .tabs b
     if (stage === 'docs') panel.classList.add('show-docs');
   });
 });
+function loadOverview(filter = '', page = 1) {
+  $.get('em_verfi.php', { ajax: 1, filter: filter, page: page }, function (res) {
+    $('#overviewTablePlaceholder').html(res);
+  });
+}
+
+$(document).on('click', '[data-section="operatorOverviewSection"]', function (e) {
+  e.preventDefault();
+  const filter = $(this).attr('data-filter') || '';
+  loadOverview(filter, 1);
+});
+
+$(document).on('click', '.overview-page-server', function (e) {
+  e.preventDefault();
+  const page = $(this).data('page');
+  const filter = $(this).attr('data-filter') || '';
+  loadOverview(filter, page);
+});
+
+loadOverview('', 1);
 
       // Preview hover tooltip
       const preview = document.createElement('div');

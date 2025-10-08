@@ -55,36 +55,26 @@ if (isset($_GET['bank_name'])) {
 } elseif (isset($_GET['bank'])) {
     $bank = $mysqli->real_escape_string($_GET['bank']);
 }
-
+$filter = isset($_GET['filter']) ? $mysqli->real_escape_string($_GET['filter']) : '';
+$whereClauses = [];
 if ($search !== '') {
     $s = $mysqli->real_escape_string($search);
-    $whereParts[] = "(operator_full_name LIKE '%$s%' OR email LIKE '%$s%' OR operator_id LIKE '%$s%')";
+    $whereClauses[] = "(operator_full_name LIKE '%$s%' OR email LIKE '%$s%' OR operator_id LIKE '%$s%')";
 }
-$filter = trim($_GET['filter'] ?? $filter ?? ''); // preserve previous logic if set earlier
-$whereParts = [];
 if ($filter !== '') {
-    $f = strtolower(trim($filter));
-    if ($f === 'working') {
-        // treat "working" as either explicit work_status OR accepted/em_verified states
-        $whereParts[] = "(work_status = 'working' OR status IN ('accepted','em_verified','ph_verified'))";
-    } elseif ($f === 'not working' || $f === 'notworking' || $f === 'nonworking') {
-        $whereParts[] = "(work_status = 'not working' OR status IN ('rejected','inactive'))";
-    } elseif (in_array($f, ['pending','accepted','rejected','verified'], true)) {
-        // direct mapping to status
-        $whereParts[] = "status = '" . $mysqli->real_escape_string($f) . "'";
-    } else {
-        // fallback: treat as general search key on operator_id/operator_full_name
-        $esc = $mysqli->real_escape_string($f);
-        $whereParts[] = "(operator_id LIKE '%$esc%' OR operator_full_name LIKE '%$esc%')";
+    if (in_array($filter, ['pending','accepted','rejected'])) {
+        $whereClauses[] = "status = '" . $mysqli->real_escape_string($filter) . "'";
+    } elseif (in_array($filter, ['working','not working'])) {
+        $whereClauses[] = "work_status = '" . $mysqli->real_escape_string($filter) . "'";
     }
 }
-
-$where = $whereParts ? ('WHERE ' . implode(' AND ', $whereParts)) : '';
 // New: apply bank filter if provided (exact match) — use DB column bank_name
 if ($bank !== '') {
     $whereClauses[] = "bank_name = '" . $mysqli->real_escape_string($bank) . "'";
 }
 $where = !empty($whereClauses) ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+
 // -----------------------------
 // AJAX fragment endpoint (table only)
 // -----------------------------
@@ -511,6 +501,5 @@ $result = $mysqli->query($sql_main);
   };
   </script>
   <script src="js/em_verfi.js"></script>
-
 </body>
 </html>
