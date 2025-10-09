@@ -162,20 +162,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             </tbody>
           </table>
 <!-- Server rendered pagination (preserve search/filter/bank) -->
-<div class="fragment-pagination">
-<?php
-// Build base query string preserving search/filter/bank
-$baseQs = [];
-if ($search) $baseQs[] = 'search=' . urlencode($search);
-if ($filter) $baseQs[] = 'filter=' . urlencode($filter);
-if ($bank)   $baseQs[] = 'bank='   . urlencode($bank);
-$base = $baseQs ? ('?' . implode('&', $baseQs) . '&') : '?';
-for ($p = 1; $p <= $total_pages; $p++):
-  $active = $p === $page ? ' aria-current="page" class="page-active"' : '';
-?>
-  <a href="<?= htmlspecialchars($base) ?>page=<?= $p ?>" class="overview-page-server" data-page="<?= $p ?>"<?= $active ?>><?= $p ?></a>
-<?php endfor; ?>
-</div>
+
      <div class="fragment-pagination">
 <?php for ($p = 1; $p <= $total_pages; $p++): ?>
   <a href="#" class="overview-page" data-page="<?= $p ?>" data-filter="<?= htmlspecialchars($filter, ENT_QUOTES) ?>" data-current-page="<?= (int)$page ?>"><?= $p ?></a>

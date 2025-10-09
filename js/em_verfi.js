@@ -835,26 +835,83 @@ document.querySelectorAll('#opDetailPanel .accordion-btn, #opDetailPanel .tabs b
     if (stage === 'docs') panel.classList.add('show-docs');
   });
 });
+// ---------- Pagination + filter state (single source of truth) ----------
+let currentFilter = '';
+let currentPage = 1;
+
+/**
+ * loadOverview(filter, page)
+ * - Always uses currentFilter/currentPage state so pagination retains the active filter.
+ * - Sends ajax=1 plus filter + page (and preserves search/bank from UI if present).
+ */
 function loadOverview(filter = '', page = 1) {
-  $.get('em_verfi.php', { ajax: 1, filter: filter, page: page }, function (res) {
+  // if caller supplied empty string intentionally, treat as "no filter"
+  currentFilter = (typeof filter === 'string') ? filter : currentFilter;
+  currentPage = (typeof page === 'number' && page > 0) ? page : currentPage;
+
+  const params = new URLSearchParams();
+  params.set('ajax', '1');
+  if (currentFilter) params.set('filter', currentFilter);
+  params.set('page', String(currentPage));
+
+  // preserve top search and bank filter (if present in UI)
+  const topSearchEl = document.getElementById('topSearch');
+  const bankEl = document.getElementById('bankFilter');
+  if (topSearchEl && topSearchEl.value.trim()) params.set('search', topSearchEl.value.trim());
+  if (bankEl && bankEl.value.trim()) params.set('bank', bankEl.value.trim());
+
+  // debug line (remove once confirmed working)
+  console.log('[loadOverview] requesting:', params.toString());
+
+  $.get('em_verfi.php', params.toString(), function (res) {
     $('#overviewTablePlaceholder').html(res);
+    // Optional: re-bind any fragment-only handlers here if needed (row export, etc)
+    if (typeof bindRowExports === 'function') bindRowExports();
+  }, 'html').fail(function(xhr, status, err) {
+    console.error('Overview load failed', status, err, xhr && xhr.responseText);
   });
 }
 
+// Sidebar filter clicks (Working / Pending / All etc.)
 $(document).on('click', '[data-section="operatorOverviewSection"]', function (e) {
   e.preventDefault();
   const filter = $(this).attr('data-filter') || '';
+  // always load page 1 when changing filter
   loadOverview(filter, 1);
+  // mark active link visually
+  $('[data-section="operatorOverviewSection"]').removeClass('is-active');
+  $(this).addClass('is-active');
 });
 
-$(document).on('click', '.overview-page-server', function (e) {
-  e.preventDefault();
-  const page = $(this).data('page');
-  const filter = $(this).attr('data-filter') || '';
-  loadOverview(filter, page);
-});
+// Single pagination handler (works for AJAX fragment links and server fallback)
+document.addEventListener('click', function(e) {
+  const frag = e.target.closest && e.target.closest('.overview-page');
+  if (frag) {
+    e.preventDefault();
+    const page = parseInt(frag.dataset.page || frag.getAttribute('data-page') || '1', 10) || 1;
+    // use the currentFilter state rather than reading filter from the link
+    loadOverview(currentFilter, page);
+    return;
+  }
 
+  // server-rendered pagination links (if overview panel open, intercept and load via AJAX)
+  const srv = e.target.closest && e.target.closest('.overview-page-server');
+  if (srv) {
+    const page = parseInt(srv.dataset.page || srv.getAttribute('data-page') || '1', 10) || 1;
+    const overviewVisibleEl = document.getElementById('operatorOverviewSection');
+    const overviewVisible = overviewVisibleEl && !overviewVisibleEl.classList.contains('hidden');
+    if (overviewVisible) {
+      e.preventDefault();
+      loadOverview(currentFilter, page);
+    }
+    // else allow normal link navigation (reload)
+    return;
+  }
+}, false);
+
+// initial load (show all)
 loadOverview('', 1);
+
 
       // Preview hover tooltip
       const preview = document.createElement('div');
@@ -1798,7 +1855,7 @@ function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, function(m){ret
     window._cd_init = initAll;
 
   })();
-/* ===== Pagination click wiring (fragment & server links) ===== */
+
 document.addEventListener('click', function(e){
   // AJAX fragment page click
   const frag = e.target.closest && e.target.closest('.overview-page');

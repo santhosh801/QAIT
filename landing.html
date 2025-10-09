@@ -47,14 +47,95 @@
         <a href="operator_view.php" class="btn" role="button">Start Operator
           Registration</a> </div>
       <div class="hero-img">
-        <img src="lan.jpeg" alt="KYC Portal Illustration">
+        <img src="lan.jpg" alt="KYC Portal Illustration">
       </div>
     </section>
+    <!-- ABOUT BLOCK — paste this where you want About Us -->
+<section id="about" class="about-block" aria-labelledby="about-title">
+ <div class="about-top">
+  <!-- left group: large, med, small -->
+  <div class="about-balls about-balls-left" aria-hidden="true">
+    <span class="ab-dot large"></span>
+    <span class="ab-dot med"></span>
+    <span class="ab-dot small"></span>
+  </div>
+
+  <!-- centered label -->
+  <div class="about-tag">
+    <span class="about-label">ABOUT US</span>
+  </div>
+
+  <!-- right group: small, med, large (mirrored order) -->
+  <div class="about-balls about-balls-right" aria-hidden="true">
+    <span class="ab-dot small"></span>
+    <span class="ab-dot med"></span>
+    <span class="ab-dot large"></span>
+  </div>
+</div>
+
+
+  <div class="about-grid">
+    <!-- LEFT: book-style images -->
+    <!-- ABOUT - Left: single-image slider (paste in place of the two images) -->
+<div class="about-left">
+  <div class="about-slider" aria-roledescription="carousel" data-interval="5000" data-autoplay="true">
+    <div class="about-slider__viewport">
+      <div class="about-slider__slides">
+        <div class="about-slider__slide is-active" aria-hidden="false">
+          <img src="digital-render-file-folder-with-documents-isolated-transparent-background_979495-160800.png" alt="about slide 1" alt="fancy overlay" class="transparent-slide">
+        </div>
+        <div class="about-slider__slide" aria-hidden="true">
+          <img src="massive-stack-papers-documents-files_191095-79383.png" alt="about slide 2" class="transparent-slide">
+        </div>
+        <div class="about-slider__slide" aria-hidden="true">
+          <img src="laptop-with-word-word-it_1153744-209689-removebg-preview.png" alt="about slide 3" class="transparent-slide">
+        </div>
+      </div>
+    </div>
+
+    <!-- controls / dots -->
+    <div class="about-slider__controls" role="tablist" aria-label="Slide controls">
+      <button class="about-slider__dot is-active" data-index="0" aria-label="Show slide 1"></button>
+      <button class="about-slider__dot" data-index="1" aria-label="Show slide 2"></button>
+      <button class="about-slider__dot" data-index="2" aria-label="Show slide 3"></button>
+    </div>
+  </div>
+</div>
+
+
+    <!-- RIGHT: text & rotator -->
+    <div class="about-content">
+      <h2 id="about-title" class="about-title gold">Exclusive Technology To Provide IT Solutions And Services</h2>
+      <p class="about-desc">
+        Partnering with Qamar Infotech ensures peace of mind — secure, auditable KYC flows, automated document handling,
+        and consistent regulatory compliance across branches. Our platform scales with your operations while keeping auditability tight.
+      </p>
+
+      <div class="about-rotator" aria-live="polite">
+        <div class="rot-item active">
+          <blockquote>“Encrypted storage and role-based dashboards made life simple for our team.”</blockquote>
+          <div class="rot-meta"><strong>Julian Bray</strong><span>CEO, khurum@ithub</span><span class="rot-rating">4.5*</span></div>
+        </div>
+
+        <div class="rot-item">
+          <blockquote>“Faster verification and  fewer manual errors, and better audit trails.”</blockquote>
+          <div class="rot-meta"><strong>Priya Kumar</strong><span>Head of Ops</span><span class="rot-rating">4.7*</span></div>
+        </div>
+
+        <div class="rot-item">
+          <blockquote>“Role-based access and encrypted storage gave us compliance peace-of-mind.”</blockquote>
+          <div class="rot-meta"><strong>A. Rehman</strong><span>Compliance Lead</span><span class="rot-rating">4.6*</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
     <!-- STEPS -->
     <section class="container">
       <div class="wrap">
         <!-- Put the plain text you want into the heading; JS below will wrap characters automatically -->
-        <h2 class="shiny-text" id="howItWorks">How it Works</h2>
+<h2 id="howItWorks" class="title-divider">HOWITWORKS</h2>
       </div> <div class="steps">
         <div class="flip">
           <div class="front">
@@ -389,6 +470,303 @@
     }, 90);
   }
 })();
-  </script>
+
+/* About-block small controller: on-scroll open book, start rotator, toggle balls color */
+(function(){
+  const about = document.querySelector('.about-block');
+  if(!about) return;
+
+  const rotItems = about.querySelectorAll('.rot-item');
+  let ri = 0, rotTimer = null;
+
+  // IntersectionObserver to add .in when visible
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        about.classList.add('in');
+
+        // open book-wrap (supports multiple .book-wrap)
+        about.querySelectorAll('.book-wrap').forEach(bw=>bw.classList.add('open'));
+
+        // start rotator (slow 5s)
+        if(!rotTimer){
+          rotTimer = setInterval(()=>{
+            rotItems[ri].classList.remove('active');
+            ri = (ri+1) % rotItems.length;
+            rotItems[ri].classList.add('active');
+          }, 3000);
+        }
+
+        // start balls color toggle (gold -> black -> gold)
+        if(!about._ballTimer){
+          about._ballTimer = setInterval(()=>{
+            about.classList.toggle('balls-alt');
+          }, 5200);
+        }
+      } else {
+        about.classList.remove('in');
+        // close book
+        about.querySelectorAll('.book-wrap').forEach(bw=>bw.classList.remove('open'));
+        // stop rotator
+        if(rotTimer){ clearInterval(rotTimer); rotTimer = null; }
+        // stop balls toggler
+        if(about._ballTimer){ clearInterval(about._ballTimer); about._ballTimer = null; about.classList.remove('balls-alt'); }
+      }
+    });
+  }, {threshold:0.25});
+
+  obs.observe(about);
+})();
+
+// ABOUT - Left: single-image slider
+(function () {
+  const sliders = document.querySelectorAll('.about-slider');
+
+  sliders.forEach(slider => {
+    const viewport = slider.querySelector('.about-slider__viewport');
+    const slidesWrap = slider.querySelector('.about-slider__slides');
+    const slides = Array.from(slidesWrap.children);
+    const dots = Array.from(slider.querySelectorAll('.about-slider__dot'));
+    const interval = Number(slider.dataset.interval || 300); // hold time per slide (ms)
+    const autoplay = slider.dataset.autoplay === 'true';
+    const slideTransitionMs = 1200; // slide animation duration (ms) — tweakable
+    let idx = slides.findIndex(s => s.classList.contains('is-active'));
+    if (idx < 0) idx = 0;
+    let timer = null;
+    let isPaused = false;
+
+    // --- SETUP: make slidesWrap width and each slide width dynamic ---
+    const total = slides.length || 1;
+    slidesWrap.style.width = (total * 100) + '%';
+    slides.forEach(slide => {
+      slide.style.minWidth = (100 / total) + '%';
+      slide.style.boxSizing = 'border-box';
+    });
+
+    // ensure CSS transition duration matches desired slideTransitionMs
+    slidesWrap.style.transition = 'transform ' + (slideTransitionMs / 1200) + 's cubic-bezier(.22,.9,.3,1)';
+
+    // Helper: go to slide index (0..total-1)
+    function goTo(i) {
+      if (i < 0) i = total - 1;
+      if (i >= total) i = 0;
+      idx = i;
+
+      // translate using percent
+      const x = - (100 * idx) / total;
+      slidesWrap.style.transform = 'translateX(' + x + '%)';
+
+      slides.forEach((s, si) => {
+        s.classList.toggle('is-active', si === idx);
+        s.setAttribute('aria-hidden', si === idx ? 'false' : 'true');
+      });
+
+      dots.forEach((d, di) => d.classList.toggle('is-active', di === idx));
+    }
+
+    // Auto loop
+    function start() {
+      if (!autoplay || total <= 1) return;
+      stop();
+      timer = setInterval(() => {
+        if (!isPaused) goTo((idx + 1) % total);
+      }, interval + slideTransitionMs); // hold + time to animate
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    // dot clicks
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        goTo(i);
+        if (autoplay) { stop(); start(); } // restart timing
+      });
+      dot.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dot.click(); }
+      });
+    });
+
+    // pause/resume on hover/focus
+    slider.addEventListener('mouseenter', () => { isPaused = true; });
+    slider.addEventListener('mouseleave', () => { isPaused = false; });
+    slider.addEventListener('focusin', () => { isPaused = true; });
+    slider.addEventListener('focusout', () => { isPaused = false; });
+
+    // initialize
+    goTo(idx);
+    start();
+
+    // expose for debugging
+    slider._aboutSlider = { goTo, start, stop, get idx() { return idx; } };
+  });
+})();
+
+(function(){
+  // Lightweight scroll-direction animator for .about-content
+  const about = document.querySelector('.about-content');
+  if (!about) return;
+
+  // config
+  const CENTER_ZONE = 0.45; // fraction of viewport height: how centered the element must be to animate "in"
+  const OFFSCREEN_THRESHOLD = 0.9; // fraction to consider it scrolled past
+  let lastY = window.scrollY;
+  let ticking = false;
+
+  // helper: is element near center of viewport?
+  function isCentered(el) {
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const centerTop = vh * (0.5 - CENTER_ZONE/2);
+    const centerBottom = vh * (0.5 + CENTER_ZONE/2);
+    // check if top of element falls into the center zone OR element midpoint is in zone
+    const mid = r.top + r.height/2;
+    return mid >= centerTop && mid <= centerBottom;
+  }
+
+  // helper: is element mostly out (below) viewport? used to hide when scrolled past
+  function isPast(el) {
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    return (r.top > vh * OFFSCREEN_THRESHOLD) || (r.bottom < 0);
+  }
+
+  function onScroll() {
+    if (ticking) return;
+    window.requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      lastY = y;
+      const direction = delta > 0 ? 'down' : (delta < 0 ? 'up' : 'none');
+
+      // If about element is centered, set scroll-in state
+      if (isCentered(about)) {
+        about.classList.add('scroll-in');
+        about.classList.remove('scroll-down','scroll-up');
+        // small timeout to keep it stable visually
+        setTimeout(()=> {
+          // keep as is
+        }, 300);
+      } else {
+        // not centered: decide based on scroll direction
+        about.classList.remove('scroll-in');
+        if (direction === 'down') {
+          // scrolling down -> push the block up and fade
+          about.classList.add('scroll-down');
+          about.classList.remove('scroll-up');
+        } else if (direction === 'up') {
+          // scrolling up -> bring it down a bit (enter)
+          about.classList.add('scroll-up');
+          about.classList.remove('scroll-down');
+        }
+        // if element is completely offscreen below or above, reduce visibility
+        if (isPast(about)) {
+          // quickly nudge further out (optional)
+          about.classList.add('scroll-down');
+          about.classList.remove('scroll-up','scroll-in');
+        }
+      }
+
+      ticking = false;
+    });
+    ticking = true;
+  }
+
+  // init: set initial class depending on whether centered
+  if (isCentered(about)) {
+    about.classList.add('scroll-in');
+  } else {
+    about.classList.add('scroll-up'); // start in 'entered' state
+  }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+
+  // optional: smooth entrance on first load after small delay
+  window.addEventListener('load', ()=> {
+    setTimeout(()=> {
+      onScroll();
+    }, 180);
+  });
+})();
+document.addEventListener("DOMContentLoaded", () => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible"); // fade in
+      } else {
+        entry.target.classList.remove("visible"); // fade out on scroll out
+      }
+    });
+  }, { threshold: 0.3 }); // triggers when 20% of section is visible
+
+  const about = document.querySelector('.about-content');
+  if (about) observer.observe(about);
+});document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("howItWorks");
+  if (!el) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) el.classList.add("visible");
+      else el.classList.remove("visible");
+    });
+  }, { threshold: 0.25 });
+  observer.observe(el);
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  const section = document.querySelector('.security-section');
+  if (!section) return;
+  const badges = section.querySelector('.badges');
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        section.classList.add('visible');
+        badges.classList.add('visible');
+      } else {
+        section.classList.remove('visible');
+        badges.classList.remove('visible');
+      }
+    });
+  }, { threshold: 0.8 });
+
+  io.observe(section);
+});
+
+(function(){
+  const section = document.querySelector('.features-section');
+  if (!section) return;
+
+  const left = section.querySelector('.features-left');
+  const items = Array.from(section.querySelectorAll('.features-right .feature-item'));
+
+  // IntersectionObserver to toggle .visible when section crosses viewport
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // add visible: triggers slide-in (right -> left) and fades in left column
+        section.classList.add('visible');
+      } else {
+        // remove visible: triggers slide-out (back to right) and hides left column
+        section.classList.remove('visible');
+      }
+    });
+  }, { threshold: 0.18 });
+
+  io.observe(section);
+
+  // Optional: ensure initial state correct (in case already on-screen)
+  window.addEventListener('load', () => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top < (window.innerHeight * 0.8) && rect.bottom > (window.innerHeight * 0.2)) {
+      section.classList.add('visible');
+    }
+  });
+})();
+</script>
+
+
+
   </body>
 </html>

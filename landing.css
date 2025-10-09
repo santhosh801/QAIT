@@ -154,81 +154,53 @@ html { scroll-behavior:smooth; }
 @keyframes fadeInUp{ from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
 /* ---------- Shiny Text / Steps (Vidaloka headings) ---------- */
-.wrap {
-  text-align: center;
-  padding: 20px;
-}
 
-/* Shiny heading container - uses Vidaloka for the heading */
-.shiny-text {
-  display:inline-block;
+/* Line-behind title with animated lines from both sides */
+.title-divider {
+  position: relative;
+  display: table;                /* centers text cleanly */
+  margin-top: 30px;
+  margin-bottom: 30px;
+  padding: 0 10px;
   font-family: "Vidaloka", serif;
   font-weight: 500;
+  font-size: clamp(24px, 5vw, 44px);
   text-transform: uppercase;
-  letter-spacing: .06em;
-  font-size: clamp(28px, 6vw, 88px); /* responsive */
-  color: var(--black);
-  line-height: 1;
-  margin-top: 20px;
-  padding: 0;
-  /* gradient that will be clipped to text */
-  background: linear-gradient(90deg, rgba(226, 145, 33, 0.917), rgba(241, 0, 0, 0.945), rgba(189,154,104,0.18));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: #bd9a68;
-  /* keep stacking context so children translate correctly */
-  position: relative;
-  display: inline-block;
+  color: #0a0f1c;                /* dark navy like your theme */
+  letter-spacing: 0.45em;
+  overflow: hidden;
 }
 
-/* Each letter */
-.shiny-text .key {
-  display: inline-block;
-  transform-origin: center;
-  /* narrow negative spacing to create the "tight" look */
-  margin-right: -0.09em;
-  transition: transform .3s;
+/* decorative lines */
+.title-divider::before,
+.title-divider::after {
+  content: "";
+  display: table-cell;
+  position: relative; margin-top: 30px;
+  margin-bottom: 30px;
+  top: 0.5em;
+  width: 45%;
+  border-top: 7px solid #b78f5a; /* gold tone, adjust to your var(--gold) */
+  transform: scaleX(0);
+  opacity: 0;
+  transition: transform 1.5s cubic-bezier(.2,.8,.25,1), opacity 1s;
 }
 
-/* size tweak for large screens (if you want the huge look like your .key) */
-.shiny-text .key { font-size: inherit; }
+/* symmetrical spacing */
+.title-divider::before { right: 1.5%; transform-origin: left center; }
+.title-divider::after  { left: 1.5%;  transform-origin: right center; }
 
-/* Press-down keyframes (copied and adapted from your list) */
-@keyframes pressDown1 { 30%,40%,100%{ transform: translateY(0);} 35%{ transform: translateY(10px);} }
-@keyframes pressDown2 { 70%,80%,100%{ transform: translateY(0);} 75%{ transform: translateY(10px);} }
-@keyframes pressDown3 { 30%,40%,100%{ transform: translateY(0);} 35%{ transform: translateY(10px);} }
-@keyframes pressDown4 { 40%,50%,100%{ transform: translateY(0);} 45%{ transform: translateY(10px);} }
-@keyframes pressDown5 { 20%,30%,100%{ transform: translateY(0);} 25%{ transform: translateY(10px);} }
-@keyframes pressDown6 { 60%,70%,100%{ transform: translateY(0);} 65%{ transform: translateY(10px);} }
-@keyframes pressDown7 { 10%,20%,100%{ transform: translateY(0);} 15%{ transform: translateY(10px);} }
-@keyframes pressDown8 { 35%,45%,100%{ transform: translateY(0);} 40%{ transform: translateY(10px);} }
-
-/* Assign those animations to nth children (keeps your original timing variety) */
-.shiny-text .key:nth-child(1)  { animation: pressDown1 2s infinite; }
-.shiny-text .key:nth-child(2)  { animation: pressDown2 3s infinite; }
-.shiny-text .key:nth-child(3)  { animation: pressDown3 4s infinite; }
-.shiny-text .key:nth-child(4)  { animation: pressDown4 2.5s infinite; }
-.shiny-text .key:nth-child(5)  { animation: pressDown5 2.5s infinite; }
-.shiny-text .key:nth-child(6)  { animation: pressDown6 3.5s infinite; }
-.shiny-text .key:nth-child(7)  { animation: pressDown7 2.2s infinite; }
-.shiny-text .key:nth-child(8)  { animation: pressDown8 3.2s infinite; }
-/* for letters beyond 8, rotate the pattern so longer headings still animate */
-.shiny-text .key:nth-child(9)  { animation: pressDown1 2s infinite; }
-.shiny-text .key:nth-child(10) { animation: pressDown2 3s infinite; }
-.shiny-text .key:nth-child(11) { animation: pressDown3 4s infinite; }
-.shiny-text .key:nth-child(12) { animation: pressDown4 2.5s infinite; }
-.shiny-text .key:nth-child(13) { animation: pressDown5 2.5s infinite; }
-.shiny-text .key:nth-child(14) { animation: pressDown6 3.5s infinite; }
-.shiny-text .key:nth-child(15) { animation: pressDown7 2.2s infinite; }
-.shiny-text .key:nth-child(16) { animation: pressDown8 3.2s infinite; }
-
-/* slight transform easing so the letters feel tactile */
-.shiny-text .key { will-change: transform; transition-timing-function: cubic-bezier(.2,.9,.2,1); }
-
-/* small responsive adjustments */
-@media (max-width:720px){
-  .shiny-text { font-size: clamp(24px, 10vw, 52px); }
+/* when visible, lines animate smoothly from edges to center */
+.title-divider.visible::before,
+.title-divider.visible::after {
+  transform: scaleX(1);
+  opacity: 1;
 }
+
+
+/* Optional: keep lines visible permanently after first reveal
+   (remove JS unobserve if you want repeat animation) */
+
 
 /* ---------- Flip cards — gold-shadow, neat padding, entrance + hover animations ---------- */
 /* Uses CSS variables: --gold, --card, --black, --ring, --shadow (fallbacks provided) */
@@ -241,7 +213,8 @@ html { scroll-behavior:smooth; }
   justify-content:space-around;
   flex-wrap:wrap;
   gap:20px;                /* neater spacing between cards */
-  margin-top:20px;
+  margin-top:80px;
+  margin-bottom: 40px;
   align-items:flex-start;
 }
 
@@ -365,25 +338,138 @@ html { scroll-behavior:smooth; }
 }
 
 /* ---------- Security / badges ---------- */
-.security-section{ text-align:center; padding:10px 10px; }
-.security-title{ font-size:70px; font-weight:700; margin-bottom:40px; color:var(--gold); font-family:"Vidaloka",serif; }
-.security-subtitle{ font-size:30px; font-weight:300; margin-bottom:40px; color:var(--muted); }
+/* ---------- Security / badges (scroll fade-in/out, responsive) ---------- */
+.security-section {
+  text-align: center;
+  padding: 36px 18px;
+  overflow: visible;
+}
 
-.badges{ display:flex; justify-content:center; gap:40px; flex-wrap:wrap; }
-.badge{
-  background: rgba(0,0,0,0.02); border-radius:22px; padding:20px; width:180px; height:200px;
-  display:flex; flex-direction:column; align-items:center; transition:transform .4s ease; border:1px solid var(--ring);
+/* Title + subtitle */
+.security-title {
+  font-size: clamp(32px, 6vw, 65px);
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--gold);
+  font-family: "Vidaloka", serif;
+  line-height: 1;
+  transform: translateY(5px);
+  opacity: 0;
+  transition: transform 800ms cubic-bezier(.2,.9,.25,1), opacity 900ms ease;
 }
-.badge img{ width:100px; height:100px; margin-bottom:15px; }
-.badge p{ font-size:28px; font-weight:600; color:var(--black) }
-.badge:hover{ transform:translateY(-20px); background: rgba(189,154,104,0.04) }
-:root{
-  --gold: #bd9a68;
-  --black: #0f172a;
-  --muted: rgba(15,23,42,0.55);
-  --ring: rgba(15,23,42,0.06);
-  --shadow: 0 40px 90px rgba(15,23,42,0.12);
+
+.security-subtitle {
+  font-size: clamp(14px, 2.2vw, 20px);
+  font-weight: 300;
+  margin-bottom: 32px;
+  color: var(--muted);
+  transform: translateY(10px);
+  opacity: 0;
+  transition: transform 900ms cubic-bezier(.2,.9,.25,1) 0.08s, opacity 900ms ease 0.08s;
 }
+
+/* badges container layout */
+.badges {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: 6px;
+}
+
+/* single badge base */
+.badge {
+  background: rgba(0,0,0,0.02);
+  border-radius: 18px;
+  padding: 18px 14px;
+  width: 180px;
+  height: 200px;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform .6s cubic-bezier(.2,.9,.25,1), box-shadow .45s ease, background .45s ease;
+  border: 1px solid var(--ring, rgba(15,23,42,0.06));
+  box-shadow: 0 12px 30px rgba(15,23,42,0.04);
+  transform: translateY(20px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* icon + label */
+.badge img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  transition: transform .45s ease;
+}
+.badge p {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--black, #0f1a23);
+  margin: 0;
+  text-align: center;
+}
+
+/* hover / focus effect (desktop) */
+.badge:hover,
+.badge:focus {
+  transform: translateY(-12px) scale(1.02);
+  background: linear-gradient(180deg, rgba(183,143,90,0.10), rgba(183,143,90,0.04));
+  box-shadow: rgba(0,0,0,0.12) 0 8px 30px;
+  border-color: rgba(167,126,62,0.18);
+}
+.badge:hover img { transform: scale(1.06); }
+
+/* ---------- SCROLL VISIBLE STATE (added/removed by JS) ---------- */
+/* reveal container children with stagger */
+.badges.visible .badge {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* stagger using nth-child for cinematic entrance */
+.badges.visible .badge:nth-child(1) { transition-delay: 0.08s; }
+.badges.visible .badge:nth-child(2) { transition-delay: 0.18s; }
+.badges.visible .badge:nth-child(3) { transition-delay: 0.28s; }
+.badges.visible .badge:nth-child(4) { transition-delay: 0.36s; }
+.badges.visible .badge:nth-child(5) { transition-delay: 0.48s; }
+/* more nth rules if you have more badges */
+.badges.visible .badge:nth-child(n+6) { transition-delay: 0.56s; }
+
+/* title + subtitle reveal when badges container visible */
+.badges.visible ~ .security-title,
+.badges.visible ~ .security-subtitle { /* if used after; but safest to toggle directly below */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* If you prefer toggling on .security-section (recommended) */
+.security-section.visible .security-title,
+.security-section.visible .security-subtitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- MOBILE RESPONSIVE ---------- */
+@media (max-width: 900px) {
+  .badge { width: 160px; height: 180px; padding: 14px; }
+  .badge img { width: 74px; height: 74px; }
+  .badges { gap: 18px; }
+}
+@media (max-width: 520px) {
+  .security-title { font-size: clamp(20px, 8vw, 32px); margin-bottom: 12px; }
+  .security-subtitle { font-size: 14px; margin-bottom: 18px; }
+  .badge { width: 46%; min-width: 120px; height: auto; padding: 12px; }
+  .badges { gap: 12px; }
+  .badge p { font-size: 15px; }
+}
+
 
 /* ---------- CTA card (light surface with gold heading) ---------- */
 /* Section centering */
@@ -722,20 +808,84 @@ html { scroll-behavior:smooth; }
 }
 
 /* ---------- Features / Content sections mapped to theme ---------- */
+/* ---------- FEATURES: container & layout (keeps your base styles) ---------- */
 .features-section{
   background: linear-gradient(180deg, rgba(255,255,255,1), rgba(250,250,250,1));
-  padding:80px 40px; border-radius:12px; margin:60px auto; max-width:1200px; color:var(--black); box-shadow:var(--shadow);
+  padding:80px 24px; border-radius:12px; margin:60px auto; max-width:1200px; color:var(--black); box-shadow:var(--shadow);
 }
 .features-container{ display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start; }
 
-.features-left{ flex:1 1 45% }
+/* left column */
+.features-left{ flex:1 1 45%; opacity:0; transform: translateY(18px); transition: transform 700ms cubic-bezier(.2,.9,.25,1), opacity 700ms ease; }
+.features-left.visible { opacity:1; transform: translateY(0); }
+
 .features-left h2{ font-size:42px; font-weight:700; color:var(--gold); margin-bottom:20px }
 .features-left p{ font-size:18px; line-height:28px; color:var(--muted) }
 
-.features-right{ flex:1 1 45%; display:flex; flex-direction:column; gap:25px }
-.feature-item h3{ font-size:20px; font-weight:600; color:var(--black); margin-bottom:8px }
-.feature-item p{ font-size:16px; line-height:24px; color:rgba(15,23,42,0.75) }
-.feature-item:hover{ transform:translateX(5px); transition:0.3s; color:var(--gold) }
+/* right column wrapper */
+.features-right{ flex:1 1 45%; display:flex; flex-direction:column; gap:22px; }
+
+/* each feature item (start off to right, invisible) */
+.feature-item {
+  background: transparent;
+  padding: 18px 20px;
+  border-radius: 8px;
+  transform: translateX(40px);
+  opacity: 0;
+  transition: transform 700ms cubic-bezier(.2,.9,.25,1), opacity 700ms ease;
+  will-change: transform, opacity;
+  border-radius: 8px;
+}
+
+/* small visual accent on hover (keeps your hover behaviour) */
+.feature-item:hover {
+  transform: translateX(6px);
+  color: var(--gold);
+}
+
+/* When the section is marked .visible: reveal left column and stagger-right items
+   Items slide from RIGHT -> LEFT into place (translateX 40 → 0) */
+.features-section.visible .features-left {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* reveal all items, but stagger via nth-child transition-delay */
+.features-section.visible .feature-item {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Stagger order: show 1..n with small delay for cinematic flow */
+.features-section.visible .feature-item:nth-child(1) { transition-delay: 0.08s; }
+.features-section.visible .feature-item:nth-child(2) { transition-delay: 0.18s; }
+.features-section.visible .feature-item:nth-child(3) { transition-delay: 0.30s; }
+.features-section.visible .feature-item:nth-child(4) { transition-delay: 0.42s; }
+.features-section.visible .feature-item:nth-child(5) { transition-delay: 0.54s; }
+
+/* When removing .visible the items will naturally transition back to translateX(40px) and opacity 0,
+   producing the "slide out to right" effect — this handles scroll-up/out as requested. */
+
+/* Small polish: slightly faster when hiding so it feels crisp */
+.features-section:not(.visible) .feature-item { transition-duration: 520ms; transition-timing-function: ease; }
+
+/* RESPONSIVE: reduce travel on smaller screens and allow full-width stacking */
+@media (max-width: 980px) {
+  .features-container { gap: 26px; }
+  .features-left, .features-right { flex:1 1 100%; }
+  .features-right { gap: 18px; }
+  .feature-item { padding: 16px; transform: translateX(24px); }
+  .features-section { padding: 48px 18px; }
+}
+
+/* MOBILE: smaller travel, tighter timings */
+@media (max-width: 520px) {
+  .feature-item { transform: translateX(14px); transition-duration: 520ms; }
+  .features-section.visible .feature-item { transform: translateX(0); opacity: 1; }
+  .features-left { text-align: center; }
+  .features-left h2 { font-size: 28px; }
+  .features-left p { font-size: 15px; }
+}
 
 /* ---------- Contact / Form ---------- */
 .contact-section{ padding:80px 40px; background: white; border-radius:12px; margin:60px auto; max-width:1200px; color:var(--black) }
@@ -804,4 +954,236 @@ button:focus, a:focus, input:focus, textarea:focus { outline:3px solid rgba(189,
 @media (max-width:900px){
   .hero-text h1{ font-size:clamp(36px,8vw,60px); line-height:1.02; white-space:normal; border-right:none; width:auto; animation:none }
   .hero-img img{ width:100%; height:auto }
+}
+/* ---------- ABOUT BLOCK (scoped) ---------- */
+/* ABOUT BLOCK — tighter spacing + synced color/fade with balls */
+.about-block {
+  padding:16px 12px;
+  max-width:1200px;
+  margin:18px auto;
+  position:relative;
+}
+
+/* top row: center label; side ball groups placed near the label */
+.about-top {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+  min-height:72px;
+}
+
+/* central label: default gold, fades in when .in is present */
+.about-tag { z-index:10; }
+.about-label {
+  color:var(--gold);                /* default color */
+  font-size:64px;
+  letter-spacing:.06em;
+  font-family:"Vidaloka",serif;
+  font-weight:300;
+  line-height:1;
+  margin-top: 20px;
+  text-align:center;
+  display:inline-block;
+  padding:0 18px;
+  white-space:nowrap;
+  opacity:0;                        /* fade in on scroll */
+  transition: color .6s ease, opacity .6s ease, transform .6s cubic-bezier(.2,.9,.2,1);
+  transform: translateY(16px);
+}
+
+/* visible state (IntersectionObserver will add .in) */
+.about-block.in .about-label {
+  opacity:1;
+  transform:none;
+}
+
+/* side ball groups: positioned relative to the center (closer) */
+.about-balls-left,
+.about-balls-right {
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  gap:8px;
+  align-items:center;
+  pointer-events:none;
+  z-index:5;
+}
+
+/* place the groups close to center */
+.about-balls-left  { left: calc(50% - 320px); }  /* adjust -320px inward from center */
+.about-balls-right { left: calc(50% + 260px); }  /* adjust +260px from center */
+
+/* ball sizes & base */
+.ab-dot { border-radius:50%; background:var(--gold); opacity:0; transform:scale(.45); transition: background .4s ease; }
+.ab-dot.large{ width:24px; height:24px; }
+.ab-dot.med{ width:16px; height:16px; }
+.ab-dot.small{ width:8px; height:8px; }
+
+/* same animation triggers as before */
+.about-block.in .ab-dot.large { animation:abPopBig 3.6s ease-in-out infinite; opacity:1; animation-delay:0.2s; }
+.about-block.in .ab-dot.med   { animation:abPopMed 3.6s ease-in-out infinite; opacity:1; animation-delay:0.55s; }
+.about-block.in .ab-dot.small { animation:abPopSmall 3.6s ease-in-out infinite; opacity:1; animation-delay:0.9s; }
+
+/* toggle color mode: when JS adds .balls-alt the balls go black and label matches */
+.about-block.balls-alt .ab-dot { background:var(--black); }
+.about-block.balls-alt .about-label { color:var(--black); }
+
+/* keyframes (kept same) */
+@keyframes abPopSmall { 0%{ transform:scale(.25); opacity:0 } 12%{ transform:scale(1.05); opacity:1 } 40%{ transform:scale(.85); opacity:.9 } 70%{ transform:scale(.35); opacity:.28 } 100%{ transform:scale(.2); opacity:0 } }
+@keyframes abPopMed   { 0%{ transform:scale(.25); opacity:0 } 10%{ transform:scale(1.06); opacity:1 } 36%{ transform:scale(.88); opacity:.9 } 68%{ transform:scale(.45); opacity:.28 } 100%{ transform:scale(.2); opacity:0 } }
+@keyframes abPopBig   { 0%{ transform:scale(.28); opacity:0 } 14%{ transform:scale(1.07); opacity:1 } 44%{ transform:scale(.92); opacity:.9 } 72%{ transform:scale(.5); opacity:.28 } 100%{ transform:scale(.22); opacity:0 } }
+
+/* responsive: move balls inward on narrow screens; hide if too narrow */
+@media (max-width:1100px){
+  .about-balls-left  { left: calc(50% - 220px); }
+  .about-balls-right { left: calc(50% + 160px); }
+  .about-label{ font-size:48px; }
+}
+@media (max-width:800px){
+  .about-balls-left, .about-balls-right { display:none; }
+  .about-label{ font-size:32px; }
+}
+
+/* layout grid */
+.about-grid { display:grid; grid-template-columns: 1fr 1fr; gap:28px; align-items:center; margin-top: 20px; }
+.about-images { display:flex; gap:1px; justify-content:center; align-items:center; }
+.book-wrap { width:120px; perspective:1400px; display:inline-block;margin-top: 50px; }
+.book-img { width:120px; height:auto; border-radius:16px; object-fit:cover; box-shadow: 0 30px 60px rgba(15,23,42,0.08); transition: transform 1.4s cubic-bezier(.2,.9,.2,1), filter .6s ease; display:block; }
+
+/* front/back book effect; back is offset slightly */
+.book-wrap .front { transform-origin:left center; transform:rotateY(0deg); z-index:2; }
+.book-wrap .back  { transform-origin:right center; margin-left:-36px; transform:rotateY(0deg); opacity:0.98; }
+
+/* ABOUT SLIDER — scoped */
+.about-slider { width:100%; max-width:420px; height:420px; border-radius:20px; overflow:hidden; position:relative;  margin:0 auto; }
+.about-slider__viewport { width:100%; height:100%; position:relative; }
+.about-slider__slides { display:flex; width:300%; height:100%; transition: transform 1.2s cubic-bezier(.2,.9,.2,1); will-change: transform; }
+/* keep slide background transparent and let PNG alpha show through */
+.about-slider__slide { background: transparent; }
+.about-slider__slide img.transparent-slide {
+  width:100%;
+  height:100%;
+  object-fit:cover;   /* or contain, depending on look */
+  display:block;
+  background:transparent;
+}
+/* ABOUT SLIDER — slow, smooth slide timing */
+.about-slider__slides {
+  display:flex;
+  width:300%;
+  height:100%;
+  transition: transform 1.6s cubic-bezier(.22,.9,.3,1); /* <-- slower smooth slide */
+  will-change: transform;
+}
+
+.about-slider__slide {
+  min-width:100%;
+  height:100%;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: transparent;
+  position:relative;
+}
+
+/* subtle image parallax / smoothing while sliding */
+.about-slider__slide img.transparent-slide {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  background:transparent;
+  transition: transform 1.6s cubic-bezier(.22,.9,.3,1), opacity .6s ease;
+  transform-origin:center center;
+}
+
+/* when slide becomes active you can scale slightly to emphasize */
+.about-slider__slide.is-active img,
+.about-slider__slide img:is(:not(.is-active)) {
+  /* default: no scale; we leave room for small parallax if needed */
+}
+/* ensure dynamic-width slides behave correctly */
+.about-slider__slides { display:flex; height:100%; will-change:transform; /* transition set by JS */ }
+.about-slider__slide { flex:0 0 auto; height:100%; display:flex; align-items:center; justify-content:center; }
+
+/* dot progress visual stays the same — you can lengthen its animation by ensuring JS uses the same interval */
+.about-slider__dot.is-active::after {
+  transform:scaleX(1);
+  transition: transform linear 2s; /* sync fill with 2s interval */
+}
+
+
+/* controls (dots) */
+.about-slider__controls { position:absolute; left:50%; transform:translateX(-50%); bottom:16px; display:flex; gap:12px; z-index:8; }
+.about-slider__dot { width:14px; height:14px; border-radius:50%; background:rgba(15,23,42,0.18); border:none; padding:0; cursor:pointer; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(15,23,42,0.06); transition: transform .22s ease, background .28s ease; }
+.about-slider__dot:focus { outline:2px solid rgba(189,154,104,0.24); outline-offset:4px; }
+.about-slider__dot:hover { transform:translateY(-4px); }
+
+/* progress indicator inside dot — animates while slide is active */
+.about-slider__dot::after { content:""; position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:left center; transform:scaleX(0); background: linear-gradient(90deg, var(--gold), #a7743f); transition: transform linear; pointer-events:none; }
+.about-slider__dot.is-active { background:rgba(189,154,104,0.18); }
+.about-slider__dot.is-active::after { transform:scaleX(1); }
+
+/* small responsive tweaks */
+@media (max-width:980px){
+  .about-slider { max-width:360px; height:260px; }
+}
+@media (max-width:560px){
+  .about-slider { max-width:100%; height:220px; border-radius:14px; }
+  .about-slider__controls { gap:8px; bottom:10px; }
+  .about-slider__dot { width:12px; height:12px; }
+}
+
+/* content (right) */
+.about-content {
+  padding: 8px 6px;
+  margin-top: 27px;
+  opacity: 0;
+  transform: translateY(60px); /* start below, invisible */
+  transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+  will-change: opacity, transform;
+}
+
+.about-content.visible {
+  opacity: 1;
+  transform: translateY(0); /* smoothly slide up into place */
+}
+
+.about-title {
+  font-family: 'Vidaloka', serif;
+  font-weight: 300;
+  font-size: 44px;
+  color: var(--gold);
+  line-height: 1.02;
+  margin: 24px 0 12px;
+  transition: opacity 2s ease-out, transform 2s ease-out;
+}
+
+.about-desc {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 20px;
+  
+  margin-bottom: 24px;
+  max-width: 860px;
+  transition: opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s;
+}
+
+
+/* rotator (slow fade) */
+.about-rotator { max-width:540px; }
+.rot-item { display:none; opacity:0; transform:translateY(10px); transition: all 900ms cubic-bezier(.2,.9,.2,1); background:linear-gradient(180deg,#fff,#fbfbfb); padding:12px; border-radius:12px; box-shadow:0 20px 50px rgba(15,23,42,0.06); margin-top:12px; }
+.rot-item.active { display:block; opacity:1; transform:none; }
+.rot-item blockquote { margin:0 0 8px; font-style:italic; color:var(--black); }
+.rot-meta { display:flex; gap:12px; align-items:center; color:var(--muted); font-size:13px; }
+
+/* responsive */
+@media (max-width:980px){
+  .about-grid { grid-template-columns: 1fr; text-align:center; }
+  .about-images { justify-content:center; }
+  .about-title { font-size:32px; }
+  .book-img, .book-wrap{ width:260px; }
 }

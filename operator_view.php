@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 function get_db() {
     static $mysqli = null;
     if ($mysqli === null) {
-        $mysqli = new mysqli('localhost', 'root', '', '');
+        $mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
         if ($mysqli->connect_error) {
             http_response_code(500);
             echo "DB connection failed: " . htmlspecialchars($mysqli->connect_error);
