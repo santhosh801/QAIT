@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KYC & Document Collection Portal - Qamar Infotech</title>
     <link rel="stylesheet" href="landing.css">
+    <!-- MOBILE: viewport + override stylesheet -->
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/path/to/mobile.override.css">
+
   </head>
   <body>
     <!-- HEADER -->
+      
     <header>
       <div class="container">
         <!-- Logo -->
@@ -30,8 +36,7 @@
             <li><a href="#contact">Support</a></li>
             <li class="dropdown"><a href="#login-section">Login ▾</a>
               <ul class="dropdown-menu">
-
-              </ul>
+               </ul>
             </li>
           </ul>
         </nav>
@@ -51,91 +56,110 @@
       </div>
     </section>
     <!-- ABOUT BLOCK — paste this where you want About Us -->
-<section id="about" class="about-block" aria-labelledby="about-title">
- <div class="about-top">
-  <!-- left group: large, med, small -->
-  <div class="about-balls about-balls-left" aria-hidden="true">
-    <span class="ab-dot large"></span>
-    <span class="ab-dot med"></span>
-    <span class="ab-dot small"></span>
-  </div>
-
-  <!-- centered label -->
-  <div class="about-tag">
-    <span class="about-label">ABOUT US</span>
-  </div>
-
-  <!-- right group: small, med, large (mirrored order) -->
-  <div class="about-balls about-balls-right" aria-hidden="true">
-    <span class="ab-dot small"></span>
-    <span class="ab-dot med"></span>
-    <span class="ab-dot large"></span>
-  </div>
-</div>
-
-
-  <div class="about-grid">
-    <!-- LEFT: book-style images -->
-    <!-- ABOUT - Left: single-image slider (paste in place of the two images) -->
-<div class="about-left">
-  <div class="about-slider" aria-roledescription="carousel" data-interval="5000" data-autoplay="true">
-    <div class="about-slider__viewport">
-      <div class="about-slider__slides">
-        <div class="about-slider__slide is-active" aria-hidden="false">
-          <img src="digital-render-file-folder-with-documents-isolated-transparent-background_979495-160800.png" alt="about slide 1" alt="fancy overlay" class="transparent-slide">
+    <section id="about" class="about-block" aria-labelledby="about-title">
+      <div class="about-top">
+        <!-- left group: large, med, small -->
+        <div class="about-balls about-balls-left" aria-hidden="true">
+          <span class="ab-dot large"></span>
+          <span class="ab-dot med"></span>
+          <span class="ab-dot small"></span>
         </div>
-        <div class="about-slider__slide" aria-hidden="true">
-          <img src="massive-stack-papers-documents-files_191095-79383.png" alt="about slide 2" class="transparent-slide">
+
+        <!-- centered label -->
+        <div class="about-tag">
+          <span class="about-label">ABOUT US</span>
         </div>
-        <div class="about-slider__slide" aria-hidden="true">
-          <img src="laptop-with-word-word-it_1153744-209689-removebg-preview.png" alt="about slide 3" class="transparent-slide">
+
+        <!-- right group: small, med, large (mirrored order) -->
+        <div class="about-balls about-balls-right" aria-hidden="true">
+          <span class="ab-dot small"></span>
+          <span class="ab-dot med"></span>
+          <span class="ab-dot large"></span>
         </div>
       </div>
-    </div>
 
-    <!-- controls / dots -->
-    <div class="about-slider__controls" role="tablist" aria-label="Slide controls">
-      <button class="about-slider__dot is-active" data-index="0" aria-label="Show slide 1"></button>
-      <button class="about-slider__dot" data-index="1" aria-label="Show slide 2"></button>
-      <button class="about-slider__dot" data-index="2" aria-label="Show slide 3"></button>
-    </div>
-  </div>
-</div>
+      <div class="about-grid">
+        <!-- LEFT: book-style images -->
+        <!-- ABOUT - Left: single-image slider (paste in place of the two images) -->
+        <div class="about-left">
+          <div class="about-slider" aria-roledescription="carousel"
+            data-interval="5000" data-autoplay="true">
+            <div class="about-slider__viewport">
+              <div class="about-slider__slides">
+                <div class="about-slider__slide is-active" aria-hidden="false">
+                  <img
+                    src="digital-render-file-folder-with-documents-isolated-transparent-background_979495-160800.png"
+                    alt="about slide 1" alt="fancy overlay"
+                    class="transparent-slide">
+                </div>
+                <div class="about-slider__slide" aria-hidden="true">
+                  <img
+                    src="massive-stack-papers-documents-files_191095-79383.png"
+                    alt="about slide 2" class="transparent-slide">
+                </div>
+                <div class="about-slider__slide" aria-hidden="true">
+                  <img
+                    src="laptop-with-word-word-it_1153744-209689-removebg-preview.png"
+                    alt="about slide 3" class="transparent-slide">
+                </div>
+              </div>
+            </div>
 
-
-    <!-- RIGHT: text & rotator -->
-    <div class="about-content">
-      <h2 id="about-title" class="about-title gold">Exclusive Technology To Provide IT Solutions And Services</h2>
-      <p class="about-desc">
-        Partnering with Qamar Infotech ensures peace of mind — secure, auditable KYC flows, automated document handling,
-        and consistent regulatory compliance across branches. Our platform scales with your operations while keeping auditability tight.
-      </p>
-
-      <div class="about-rotator" aria-live="polite">
-        <div class="rot-item active">
-          <blockquote>“Encrypted storage and role-based dashboards made life simple for our team.”</blockquote>
-          <div class="rot-meta"><strong>Julian Bray</strong><span>CEO, khurum@ithub</span><span class="rot-rating">4.5*</span></div>
+            <!-- controls / dots -->
+            <div class="about-slider__controls" role="tablist"
+              aria-label="Slide controls">
+              <button class="about-slider__dot is-active" data-index="0"
+                aria-label="Show slide 1"></button>
+              <button class="about-slider__dot" data-index="1"
+                aria-label="Show slide 2"></button>
+              <button class="about-slider__dot" data-index="2"
+                aria-label="Show slide 3"></button>
+            </div>
+          </div>
         </div>
 
-        <div class="rot-item">
-          <blockquote>“Faster verification and  fewer manual errors, and better audit trails.”</blockquote>
-          <div class="rot-meta"><strong>Priya Kumar</strong><span>Head of Ops</span><span class="rot-rating">4.7*</span></div>
-        </div>
+        <!-- RIGHT: text & rotator -->
+        <div class="about-content">
+          <h2 id="about-title" class="about-title gold">Exclusive Technology To
+            Provide IT Solutions And Services</h2>
+          <p class="about-desc">
+            Partnering with Qamar Infotech ensures peace of mind — secure,
+            auditable KYC flows, automated document handling,
+            and consistent regulatory compliance across branches. Our platform
+            scales with your operations while keeping auditability tight.
+          </p>
 
-        <div class="rot-item">
-          <blockquote>“Role-based access and encrypted storage gave us compliance peace-of-mind.”</blockquote>
-          <div class="rot-meta"><strong>A. Rehman</strong><span>Compliance Lead</span><span class="rot-rating">4.6*</span></div>
+          <div class="about-rotator" aria-live="polite">
+            <div class="rot-item active">
+              <blockquote>“Encrypted storage and role-based dashboards made life
+                simple for our team.”</blockquote>
+              <div class="rot-meta"><strong>Julian Bray</strong><span>CEO,
+                  khurum@ithub</span><span class="rot-rating">4.5*</span></div>
+            </div>
+
+            <div class="rot-item">
+              <blockquote>“Faster verification and fewer manual errors, and
+                better audit trails.”</blockquote>
+              <div class="rot-meta"><strong>Priya Kumar</strong><span>Head of
+                  Ops</span><span class="rot-rating">4.7*</span></div>
+            </div>
+
+            <div class="rot-item">
+              <blockquote>“Role-based access and encrypted storage gave us
+                compliance peace-of-mind.”</blockquote>
+              <div class="rot-meta"><strong>A. Rehman</strong><span>Compliance
+                  Lead</span><span class="rot-rating">4.6*</span></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
     <!-- STEPS -->
     <section class="container">
       <div class="wrap">
         <!-- Put the plain text you want into the heading; JS below will wrap characters automatically -->
-<h2 id="howItWorks" class="title-divider">HOWITWORKS</h2>
+        <h2 id="howItWorks" class="title-divider">HOWITWORKS</h2>
       </div> <div class="steps">
         <div class="flip">
           <div class="front">
@@ -764,8 +788,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 })();
-</script>
 
+
+(function () {
+  document.addEventListener('DOMContentLoaded', function () {
+    const header = document.querySelector('header');
+    if (!header) return;
+
+    const container = header.querySelector('.container') || header;
+    const nav = header.querySelector('nav');
+
+    // find existing toggle or create new one
+    let toggle = header.querySelector('.nav-toggle');
+    if (!toggle) {
+      toggle = document.createElement('button');
+      toggle.className = 'nav-toggle';
+      toggle.type = 'button';
+      toggle.setAttribute('aria-label', 'Toggle menu');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.innerHTML = '<span class="bar"></span>'; // CSS draws bars
+
+      // KEY FIX: insert the toggle INTO the header container (outside nav > ul)
+      // so it remains visible when the nav UL is collapsed on small screens.
+      if (container) {
+        // prefer placing it after the nav so it visually aligns right
+        if (nav && nav.nextSibling) container.insertBefore(toggle, nav.nextSibling);
+        else container.appendChild(toggle);
+      } else {
+        header.appendChild(toggle);
+      }
+    }
+
+    // open/close helpers (also update aria and lock scrolling on mobile)
+    function openNav() {
+      header.classList.add('active');
+      toggle.classList.add('active');
+      toggle.setAttribute('aria-expanded', 'true');
+      if (window.innerWidth <= 980) document.documentElement.style.overflow = 'hidden';
+    }
+    function closeNav() {
+      header.classList.remove('active');
+      toggle.classList.remove('active');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.documentElement.style.overflow = '';
+    }
+
+    // click toggles
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      header.classList.contains('active') ? closeNav() : openNav();
+    });
+
+    // close on outside click (mobile)
+    document.addEventListener('click', function (e) {
+      if (window.innerWidth > 980) return;
+      if (!e.target.closest('header') && header.classList.contains('active')) closeNav();
+    }, true);
+
+    // close on ESC
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && header.classList.contains('active')) closeNav();
+    });
+
+    // cleanup on resize - restore desktop state
+    let resizeTimeout;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(function () {
+        if (window.innerWidth > 980) {
+          closeNav();
+        }
+      }, 120);
+    });
+  });
+})();
+</script>
 
 
   </body>

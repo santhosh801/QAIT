@@ -873,15 +873,7 @@ function loadOverview(filter = '', page = 1) {
 }
 
 // Sidebar filter clicks (Working / Pending / All etc.)
-$(document).on('click', '[data-section="operatorOverviewSection"]', function (e) {
-  e.preventDefault();
-  const filter = $(this).attr('data-filter') || '';
-  // always load page 1 when changing filter
-  loadOverview(filter, 1);
-  // mark active link visually
-  $('[data-section="operatorOverviewSection"]').removeClass('is-active');
-  $(this).addClass('is-active');
-});
+
 
 // Single pagination handler (works for AJAX fragment links and server fallback)
 document.addEventListener('click', function(e) {

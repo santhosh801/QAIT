@@ -1,0 +1,254 @@
+/* mobile.override.css
+   Non-destructive responsive overrides for Landing, Login, and em_verfi pages
+   Append this file after main CSS files. Use !important only where necessary.
+*/
+
+/* 1. Base responsive text scaling */
+html { font-size: 16px; }
+@media (max-width: 980px) { html { font-size: 15px; } }
+@media (max-width: 640px) { html { font-size: 14px; } }
+
+/* 2. Ensure containers are fluid and don't overflow */
+.container, .k-container, .page-wrap, .main-wrap {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Header and top nav adjustments */
+.header, header, .topbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+}
+
+/* 4. Sidebar -> collapsible top row on small screens */
+@media (max-width: 980px) {
+  .sidebar, .left-panel, nav.sidebar {
+    position: static !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 8px 0 !important;
+    background: transparent !important;
+    border: none !important;
+  }
+  /* sidebar items become buttons */
+  .sidebar a, .sidebar .sidebar-item, .side-item, .nav-link {
+    flex: 1 1 auto !important;
+    min-width: 96px !important;
+    text-align: center !important;
+    padding: 8px 10px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+
+  /* Add a small toggle button if sidebar hidden (JS injects class) */
+  .sidebar-toggle {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+}
+
+/* 5. Tables responsive: horizontal scroll + compact cells */
+.k-card.table-fragment table,
+.table-responsive, table.responsive {
+  display: block !important;
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-collapse: collapse !important;
+}
+.k-card.table-fragment table thead th,
+.k-card.table-fragment table tbody td,
+.table-responsive td, .table-responsive th {
+  white-space: nowrap !important;
+  padding: 8px 10px !important;
+  font-size: 13px !important;
+  vertical-align: middle !important;
+}
+
+/* 6. Make row action buttons stack on small devices */
+@media (max-width: 640px) {
+  .row-actions, .actions-inline, .k-card .row-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .row-actions a, .row-actions button {
+    width: 100% !important;
+    min-height: 42px !important;
+  }
+}
+
+/* 7. Forms & inputs: full width & touch-friendly */
+input[type="text"], input[type="password"], input[type="email"], textarea, select {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  font-size: 15px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+}
+
+/* 8. Buttons and clickable items: larger tappable area */
+button, .btn, .button, .k-btn {
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  font-size: 15px !important;
+}
+
+/* 9. Modals & side panels: full width on mobile */
+.ev-modal, .modal, #opDetailPanel, .popup {
+  max-width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+
+/* 10. Collapse long text & avatars */
+.card-title, .ev-headline, h1, h2 {
+  font-size: clamp(18px, 4.2vw, 22px) !important;
+  line-height: 1.2 !important;
+}
+.avatar, .user-photo {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+/* 11. Extra small devices: stack table rows into mini-cards for readability */
+@media (max-width: 420px) {
+  .k-card.table-fragment table thead { display: none !important; }
+  .k-card.table-fragment table tbody tr {
+    display: block !important;
+    margin-bottom: 12px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    background: rgba(0,0,0,0.02) !important;
+  }
+  .k-card.table-fragment table tbody td {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 6px 8px !important;
+    text-align: left !important;
+  }
+}
+
+/* 12. Small aesthetic polish: reduce heavy shadows & round corners */
+.k-card, .card {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06) !important;
+  border-radius: 12px !important;
+}
+
+/* 13. Prevent fixed-width elements from overflowing */
+*[style*="width: 900px"], *[style*="width: 800px"], .fixed-width {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow-wrap: break-word !important;
+}
+
+/* 14. Accessibility: increase contrast for small text */
+.k-card small, .muted {
+  font-size: 13px !important;
+  color: rgba(0,0,0,0.6) !important;
+}
+/* ------------------------------------------
+   ✅ Responsive Navbar / Sidebar Fix
+   ------------------------------------------ */
+
+/* Base navbar style */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background-color: var(--nav-bg, #fff);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 6px;
+}
+
+/* Navbar links container */
+.navbar-links {
+  display: flex;
+  gap: 12px;
+}
+
+/* Buttons or logo */
+.navbar .logo {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Hide toggle button by default */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+/* --- Responsive behaviour --- */
+@media (max-width: 980px) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-toggle {
+    display: block;
+    margin-left: auto;
+    margin-bottom: 8px;
+  }
+
+  .navbar-links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    background: var(--nav-bg, #fff);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-links a {
+    padding: 10px 0;
+    text-align: left;
+    width: 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  /* When navbar is open */
+  .navbar.active .navbar-links {
+    display: flex !important;
+  }
+}
+
+/* Sidebar fallback (if your pages use .sidebar instead of .navbar) */
+@media (max-width: 980px) {
+  .sidebar {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    background: var(--nav-bg, #fff);
+    padding: 8px 12px !important;
+  }
+  .sidebar a {
+    flex: 1 1 45%;
+    text-align: center;
+    margin-bottom: 8px;
+    background: rgba(0,0,0,0.04);
+    border-radius: 6px;
+    padding: 10px;
+  }
+}

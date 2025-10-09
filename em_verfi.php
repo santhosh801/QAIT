@@ -225,7 +225,10 @@ $result = $mysqli->query($sql_main);
   <meta charset="utf-8" />
   <title>Employee KYC Portal</title>
   <link rel="stylesheet" href="emverfi.css?v=<?=file_exists('emverfi.css') ? filemtime('emverfi.css') : time()?>" type="text/css">
-  
+  <!-- MOBILE: viewport + override stylesheet -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="stylesheet" href="/path/to/mobile.override.css">
+
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
