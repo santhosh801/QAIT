@@ -243,11 +243,17 @@ $result = $mysqli->query($sql_main);
 <body>
   <header class="qit-header">
     <div class="container">
-      <div class="logo">
-        <div class="logo-grid"><span class="sq1"></span><span class="sq2"></span><span class="sq3"></span><span class="sq4"></span></div>
-        <div class="logo-text"><span class="big-q">Q</span>
-        <span class="small-it"> IT</span></div>
-      </div>
+    <!-- === Animated QIT Logo (copied from landing page) === -->
+<!-- Animated QIT Logo (fixed size and animation) -->
+<button id="logoBtn" class="logo-btn">
+  <div class="logo-wrap">
+    <img src="qit_logo.png" alt="QIT Logo" width="120" height="100">
+    <div class="logo-mask"></div>
+    <div class="logo-shine"></div>
+  </div>
+</button>
+
+
 
     <div class="header-search">
         <input id="topSearch" type="search" placeholder="Search operator..." value="<?= htmlspecialchars($search) ?>">
@@ -376,47 +382,6 @@ $result = $mysqli->query($sql_main);
           </div>
         </section>
 
-<!-- Paste inside your header .logo element -->
-<!-- MAIN LOGO (inline SVG) -->
-<span class="qit-logo" aria-hidden="true">
-  <svg width="120" height="36" viewBox="0 0 320 96" xmlns="http://www.w3.org/2000/svg" role="img">
-    <!-- squares grid -->
-    <g transform="translate(12,12)">
-      <rect x="0" y="0" width="18" height="18" rx="4" fill="#3b82f6"/>
-      <rect x="22" y="0" width="18" height="18" rx="4" fill="#6c63ff"/>
-      <rect x="0" y="22" width="18" height="18" rx="4" fill="#10b981"/>
-      <rect x="22" y="22" width="18" height="18" rx="4" fill="#f59e0b"/>
-    </g>
-
-    <!-- text -->
-    <g transform="translate(72,22)">
-      <text x="0" y="6" font-family="Vidaloka, serif" font-size="34" fill="var(--gold)" font-weight="700">Q</text>
-      <text x="38" y="24" font-family="Inter, sans-serif" font-size="18" fill="var(--black)" font-weight="700">IT</text>
-    </g>
-  </svg>
-</span>
-
-<!-- ICONS: small set (inline) - copy these into header or wherever you need them -->
-<!-- Search Icon -->
-<svg class="icon icon-search" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-  <circle cx="11" cy="11" r="6"></circle>
-  <path d="m21 21-4.35-4.35"></path>
-</svg>
-
-<!-- Export Icon -->
-<svg class="icon icon-export" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
-  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-  <polyline points="7 10 12 5 17 10"/>
-  <line x1="12" y1="5" x2="12" y2="19"/>
-</svg>
-
-<!-- Accept / Reject small badges -->
-<svg class="icon icon-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M20 6L9 17l-5-5"></path>
-</svg>
-<svg class="icon icon-x" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-  <path d="M18 6L6 18M6 6l12 12"></path>
-</svg>
 
         <!-- Server-rendered main table (initial fallback) -->
         <section id="employeeTable" class="k-section">
@@ -489,7 +454,35 @@ $result = $mysqli->query($sql_main);
     operatorPendingCount: <?= isset($operatorPendingCount) ? (int)$operatorPendingCount : 0 ?>,
     // 👉 add more PHP variables here if your JS needs them
   };
-  </script>
+
+(function(){
+  const btn = document.getElementById('logoBtn');
+  const wrap = btn && btn.querySelector('.logo-wrap');
+  if (!wrap) return;
+
+  function playOnce() {
+    wrap.classList.remove('running','settle');
+    void wrap.offsetWidth; // reflow
+    wrap.classList.add('running');
+    setTimeout(()=> {
+      wrap.classList.add('settle');
+      wrap.classList.remove('running');
+    }, 1150);
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(playOnce, 220);
+  } else {
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(playOnce, 220));
+  }
+
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    playOnce();
+  });
+})();
+</script>
+
   <script src="js/em_verfi.js"></script>
 </body>
 </html>

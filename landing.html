@@ -9,24 +9,18 @@
     <meta name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/path/to/mobile.override.css">
+    <noscript><style>header nav ul li{opacity:1; transform:none; pointer-events:auto;}</style></noscript>
 
   </head>
   <body>
     <!-- HEADER -->
-      
+
     <header>
       <div class="container">
         <!-- Logo -->
+        <!-- Logo wrapper (keep your existing width/height on the <img>) -->
         <div class="logo">
-          <div class="logo-grid">
-            <span class="sq1"></span>
-            <span class="sq2"></span>
-            <span class="sq3"></span>
-            <span class="sq4"></span>
-          </div>
-          <span class="logo-text">
-            <span class="big-q">Q</span><span class="small-it">IT</span>
-          </span>
+          <img src="qit_logo.png" alt="QIT Logo" width="150" height="120">
         </div>
         <!-- Navigation -->
         <nav>
@@ -36,7 +30,7 @@
             <li><a href="#contact">Support</a></li>
             <li class="dropdown"><a href="#login-section">Login ▾</a>
               <ul class="dropdown-menu">
-               </ul>
+              </ul>
             </li>
           </ul>
         </nav>
@@ -862,8 +856,181 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 })();
-</script>
+(function(){
+  const btn = document.getElementById('logoBtn');
+  const wrap = btn && btn.querySelector('.logo-wrap');
 
+  if (!wrap) return;
+
+  // Play animation once on load
+  function playOnce() {
+    // restart
+    wrap.classList.remove('running','settle');
+    // reflow to allow restart
+    void wrap.offsetWidth;
+    wrap.classList.add('running');
+
+    // after animation duration, add settle class to remove pop
+    setTimeout(()=> {
+      wrap.classList.add('settle');
+      // remove running class but keep settled state if you prefer
+      wrap.classList.remove('running');
+    }, 1150); // slightly longer than animations (mask 0.88 + shine + buffer)
+  }
+
+  // initial play on DOMContentLoaded
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    // small delay to ensure images are loaded and visible
+    setTimeout(playOnce, 220);
+  } else {
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(playOnce, 220));
+  }
+
+  // Replay on click (user-triggered) — will run once each click
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    playOnce();
+  });
+
+  // Optional: ensure image is loaded before animating (helps render crisp)
+  const img = wrap.querySelector('img');
+  if (img && !img.complete) {
+    img.addEventListener('load', ()=> { /* no-op: initial play will occur on DOMContentLoaded */ });
+  }
+})();
+
+document.querySelector('.logo img').addEventListener('click', e => {
+  const img = e.target;
+  img.style.animation = 'none';
+  void img.offsetWidth; // reflow
+  img.style.animation = 'logoEntry 7.5s ease-out 0s 8 forwards';
+});
+  
+
+
+(function(){
+  // Config — match your logo CSS animation duration (ms)
+  const LOGO_DURATION_MS = 2500;
+  const BUFFER_MS = 100; // small safe buffer
+  const TOTAL_DELAY = LOGO_DURATION_MS + BUFFER_MS;
+
+  const nav = document.querySelector('nav');
+  const logoImg = document.querySelector('.logo img') || document.querySelector('.logo-btn img') || document.querySelector('.logo img[alt]');
+
+  if (!nav) return;
+  // Mark JS present so fallback CSS can keep nav visible if needed
+  nav.classList.add('js-enabled');
+
+  function startNavAnimation() {
+    // restart nav animation (remove/add class)
+    nav.classList.remove('nav-animate');
+    void nav.offsetWidth; // reflow to restart
+    nav.classList.add('nav-animate');
+  }
+
+  // Try to trigger nav when logo animation ends (preferred)
+  if (logoImg) {
+    // Listen once for animationend on logo element
+    const onLogoEnd = function(e) {
+      // Ensure this is the logo entry animation (some browsers ok without check)
+      startNavAnimation();
+      logoImg.removeEventListener('animationend', onLogoEnd);
+      logoImg.removeEventListener('webkitAnimationEnd', onLogoEnd);
+    };
+    logoImg.addEventListener('animationend', onLogoEnd);
+    logoImg.addEventListener('webkitAnimationEnd', onLogoEnd);
+
+    // Fallback timer if animationend doesn't fire (safety)
+    setTimeout(function(){
+      if (!nav.classList.contains('nav-animate')) startNavAnimation();
+    }, TOTAL_DELAY + 300);
+  } else {
+    // No logo image found — trigger nav animate shortly
+    setTimeout(startNavAnimation, 200);
+  }
+
+  // Replay behavior: clicking the logo replays logo + nav
+  const replayTarget = document.querySelector('.logo-btn') || document.querySelector('.logo') || logoImg && logoImg.parentElement;
+  if (replayTarget && logoImg) {
+    replayTarget.addEventListener('click', function(e){
+      e.preventDefault && e.preventDefault();
+      // restart logo CSS animation
+      logoImg.style.animation = 'none';
+      void logoImg.offsetWidth;
+      logoImg.style.animation = `logoEntry ${LOGO_DURATION_MS}ms ease-out 0s 1 forwards`;
+
+      // restart nav after logo duration
+      setTimeout(startNavAnimation, TOTAL_DELAY);
+    });
+  } else if (replayTarget) {
+    // if no logoImg, just replay nav
+    replayTarget.addEventListener('click', function(){
+      startNavAnimation();
+    });
+  }
+})();
+
+(function(){
+  // CONFIG: match your logo CSS animation duration (ms)
+  const LOGO_DURATION_MS = 970;  // your logoEntry = 2.5s
+  const BUFFER_MS = 100;          // tiny buffer
+  const START_DELAY = LOGO_DURATION_MS + BUFFER_MS;
+  const STAGGER_MS = 150;         // gap between items
+
+  // Select nav and cover several possible structures
+  const nav = document.querySelector('header nav') || document.querySelector('nav') || document.querySelector('.main-nav');
+  if (!nav) { console.warn('Nav not found: header nav / nav / .main-nav selectors tried.'); return; }
+
+  const items = Array.from(nav.querySelectorAll('ul > li'));
+  if (!items.length) { console.warn('No nav items found (expected ul > li).'); return; }
+
+  // Hide all initially (defensive inline style to beat CSS order issues)
+  items.forEach(li => {
+    li.classList.remove('show');
+    // ensure initial hidden even if CSS overridden elsewhere
+    li.style.opacity = '0';
+    li.style.transform = 'translateY(12px)';
+    li.style.pointerEvents = 'none';
+  });
+
+  // function to reveal items one-by-one
+  function revealNav() {
+    // clear any existing state
+    items.forEach(li => li.classList.remove('show'));
+    // schedule reveal
+    items.forEach((li, idx) => {
+      setTimeout(() => {
+        li.classList.add('show');          // CSS handles transition
+        // also clean inline styles so CSS rules take control
+        li.style.opacity = '';
+        li.style.transform = '';
+        li.style.pointerEvents = '';
+      }, idx * STAGGER_MS);
+    });
+  }
+
+  // Play the sequence once after the logo animation finishes
+  setTimeout(revealNav, START_DELAY);
+
+  // Optional replay: click the .logo container to replay logo + nav
+  const logoContainer = document.querySelector('.logo-btn') || document.querySelector('.logo');
+  if (logoContainer) {
+    logoContainer.addEventListener('click', function(e){
+      e.preventDefault && e.preventDefault();
+      // restart logo CSS animation (if your logo is an <img> with CSS animation name 'logoEntry')
+      const img = logoContainer.querySelector('img');
+      if (img) {
+        img.style.animation = 'none';
+        void img.offsetWidth; // force reflow
+        img.style.animation = `logoEntry ${LOGO_DURATION_MS}ms ease-out 0s 1 forwards`;
+      }
+      // restart nav after logo duration
+      setTimeout(revealNav, START_DELAY);
+    }, {passive:true});
+  }
+
+})();
+</script>
 
   </body>
 </html>
