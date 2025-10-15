@@ -3,7 +3,6 @@
 session_start();
 $mysqli = new mysqli('localhost','root','','qmit_system');
 if ($mysqli->connect_errno) { http_response_code(500); echo "Database connection failed."; exit; }
-
 // helper
 function base_url_for_script() {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
@@ -12,12 +11,10 @@ function base_url_for_script() {
     $dir = $dir === '/' ? '' : $dir;
     return $scheme . '://' . $host . $dir;
 }
-
 // token input
 $token = '';
 if (!empty($_GET['token'])) $token = trim((string)$_GET['token']);
 if ($token === '' && !empty($_POST['token'])) $token = trim((string)$_POST['token']);
-
 if ($token === '') {
     $home = htmlspecialchars(base_url_for_script() . '/');
     ?>
@@ -33,7 +30,6 @@ if ($token === '') {
     </div></body></html>
     <?php exit;
 }
-
 // fetch request
 $reqStmt = $mysqli->prepare("SELECT id, operator_id, token, docs_json, expires_at, created_by, created_at FROM resubmission_requests WHERE token = ? LIMIT 1");
 if (!$reqStmt) { echo "<p>DB error</p>"; exit; }
@@ -42,12 +38,10 @@ $reqStmt->execute();
 $reqRes = $reqStmt->get_result();
 if (!$reqRes || $reqRes->num_rows === 0) { http_response_code(404); echo "<p>Resubmission token not found.</p>"; exit; }
 $reqRow = $reqRes->fetch_assoc(); $reqStmt->close();
-
 // expiry
 if (!empty($reqRow['expires_at'])) {
     try { $now = new DateTime(); $exp = new DateTime($reqRow['expires_at']); if ($now > $exp) { echo "<p>This link expired at ".htmlspecialchars($reqRow['expires_at'])."</p>"; exit; } } catch (Exception $e) {}
 }
-
 // fetch operator
 $opId = (int)$reqRow['operator_id'];
 $opStmt = $mysqli->prepare("SELECT * FROM operatordoc WHERE id = ? LIMIT 1");

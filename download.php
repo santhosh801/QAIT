@@ -146,12 +146,10 @@ foreach ($allowed_roots as $root) {
 }
 // Looser fallback: if stored_rel contains 'uploads/' consider allowed (for legacy paths)
 if (!$ok && stripos($stored_rel, 'uploads/') !== false) $ok = true;
-
 if (!$ok) {
     // helpful debug in JSON to let you fix server paths if needed
     http_fail(403, 'Access to this file is not allowed (real: '.$real.', allowed_roots: '.json_encode($allowed_roots).')');
 }
-
 // Build clean download name: Operator[_Branch]_DocKey
 function san_name($s) {
     $s = (string)$s;
@@ -164,11 +162,9 @@ $opname = san_name($opname_raw);
 $branch = $branch_raw ? '_'.san_name($branch_raw) : '';
 $doc_label = san_name($docKey);
 $downloadBase = $opname.$branch.'_'.$doc_label;
-
 // Determine mime/ext
 $ext = strtolower(pathinfo($local_path, PATHINFO_EXTENSION));
 $mime = function_exists('mime_content_type') ? (mime_content_type($local_path) ?: 'application/octet-stream') : 'application/octet-stream';
-
 // If already PDF → stream directly
 if ($ext === 'pdf') {
     header('Content-Type: application/pdf');
@@ -178,7 +174,6 @@ if ($ext === 'pdf') {
     if ($fp) { while (!feof($fp)) { echo fread($fp, 8192); flush(); } fclose($fp); }
     exit;
 }
-
 // If Imagick available and file is an image → convert → PDF
 $image_mimes = ['image/jpeg','image/png','image/jpg','image/gif','image/webp','image/tiff'];
 if (class_exists('Imagick') && in_array($mime, $image_mimes, true)) {
@@ -194,7 +189,6 @@ if (class_exists('Imagick') && in_array($mime, $image_mimes, true)) {
         $pdf_blob = $im->getImagesBlob();
         $im->clear();
         $im->destroy();
-
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="'.$downloadBase.'.pdf"');
         header('Content-Length: '.strlen($pdf_blob));
@@ -204,7 +198,6 @@ if (class_exists('Imagick') && in_array($mime, $image_mimes, true)) {
         // fallthrough to fallback
     }
 }
-
 // Fallback: stream original file
 $orig = basename($local_path);
 header('Content-Type: '.$mime);

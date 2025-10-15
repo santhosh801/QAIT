@@ -27,7 +27,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         header("Location: em_verfi.php");
         exit();
     } else {
-        echo "<script>alert('Invalid login credentials'); window.location.href='em_lo-vf.html';</script>";
+        echo "<script>alert('Invalid login credentials'); window.location.href='em_login.html';</script>";
     }
 
     $stmt->close();

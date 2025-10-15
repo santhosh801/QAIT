@@ -1,4 +1,8 @@
 // Extracted from em_verfi.php — combined inline <script> blocks
+
+
+
+
 (function(){
   // --- SAFE STUBS (prevent ReferenceErrors) ---
 window.initTopScrollbars = window.initTopScrollbars || function(){
@@ -391,61 +395,103 @@ function toast(msg, opts = {}) {
 
 
       // --- UPDATED updateStatus: safer cell update ---
-      function updateStatus(id, status) {
-        $.post('update_status.php', { id:id, status: status }, function(res){
-          if (res && res.success) {
-            const tr = document.getElementById('row-'+id);
-            if (tr) {
-              const sCell = tr.querySelector('td[data-col="status"]');
-              if (sCell) {
-                const inner = sCell.querySelector('strong, span') || sCell;
-                inner.textContent = status;
-              }
-            }
-            toast(res.message || 'Updated');
-          } else {
-            toast('Update failed: ' + (res && res.message ? res.message : 'unknown'));
-          }
-        }, 'json').fail(function(xhr, status, err){ toast('Request failed'); console.error('updateStatus fail', status, err, xhr && xhr.responseText); });
+function updateStatus(id, status) {
+  $.post('update_status.php', { id: id, status: status }, function(res){
+    if (res && res.success) {
+      // update the row cell if fragment isn't going to be reloaded immediately
+      const tr = document.getElementById('row-' + id);
+      if (tr) {
+        const sCell = tr.querySelector('td[data-col="status"]');
+        if (sCell) {
+          const inner = sCell.querySelector('strong, span') || sCell;
+          inner.textContent = status;
+        }
       }
+
+      toast(res.message || 'Updated');
+
+      // now refresh the overview fragment to keep counts/pagination consistent
+      if (typeof loadOverview === 'function') {
+        try {
+          const f = window.currentFilter || '';
+          const p = window.currentPage || 1;
+          // reload current filter + page (AJAX fragment)
+          loadOverview(f, p);
+        } catch (e) {
+          // fallback to full reload if something unexpected occurs
+          console.warn('loadOverview call failed, falling back to reload', e);
+          location.reload();
+        }
+      } else {
+        // if loadOverview not defined for some reason, fallback to safe full reload
+        location.reload();
+      }
+
+    } else {
+      toast('Update failed: ' + (res && res.message ? res.message : 'unknown'), { type: 'error' });
+      console.warn('updateStatus failed', res);
+    }
+  }, 'json').fail(function(xhr, status, err){
+    toast('Request failed', { type: 'error' });
+    console.error('updateStatus fail', status, err, xhr && xhr.responseText);
+  });
+}
+
 
       // --- UPDATED setWork: updates <strong> inside work cell and panel ---
-      function setWork(id, work) {
-        $.post('update_status.php', { id: id, work_status: work }, function(res){
-          if (res && res.success) {
-            const workWrap = document.getElementById('work-' + id);
-            if (workWrap) {
-              const strong = workWrap.querySelector('strong');
-              if (strong) strong.textContent = work;
-              else workWrap.textContent = work;
-            }
-
-            // if panel open for this id, update its work status display
-            const panel = document.getElementById('opDetailPanel');
-            if (panel && panel.dataset.opId == String(id)) {
-              const docsStage = panel.querySelector('.stage[data-stage="docs"]');
-              if (docsStage) {
-                const rows = docsStage.querySelectorAll('.op-row');
-                rows.forEach(r => {
-                  const k = r.querySelector('.k');
-                  const v = r.querySelector('.v');
-                  if (k && v && /work status/i.test(k.textContent || '')) {
-                    v.textContent = work;
-                  }
-                });
-              }
-            }
-
-            toast(res.message || 'Work updated');
-          } else {
-            toast('Update failed: ' + (res && res.message ? res.message : 'unknown'));
-            console.warn('setWork failed', res);
-          }
-        }, 'json').fail(function(xhr, status, err){
-          toast('Request failed — check console');
-          console.error('setWork failed', status, err, xhr && xhr.responseText);
-        });
+     function setWork(id, work) {
+  $.post('update_status.php', { id: id, work_status: work }, function(res){
+    if (res && res.success) {
+      // update inline cell
+      const workWrap = document.getElementById('work-' + id);
+      if (workWrap) {
+        const strong = workWrap.querySelector('strong');
+        if (strong) strong.textContent = work;
+        else workWrap.textContent = work;
       }
+
+      // if panel open for this id, update its work status display
+      const panel = document.getElementById('opDetailPanel');
+      if (panel && panel.dataset.opId == String(id)) {
+        const docsStage = panel.querySelector('.stage[data-stage="docs"]');
+        if (docsStage) {
+          const rows = docsStage.querySelectorAll('.op-row');
+          rows.forEach(r => {
+            const k = r.querySelector('.k');
+            const v = r.querySelector('.v');
+            if (k && v && /work status/i.test(k.textContent || '')) {
+              v.textContent = work;
+            }
+          });
+        }
+      }
+
+      toast(res.message || 'Work updated');
+
+      // refresh overview to reflect new working / not working counts and keep filter stable
+      if (typeof loadOverview === 'function') {
+        try {
+          const f = window.currentFilter || '';
+          const p = window.currentPage || 1;
+          loadOverview(f, p);
+        } catch (e) {
+          console.warn('loadOverview call failed after setWork, falling back to reload', e);
+          location.reload();
+        }
+      } else {
+        location.reload();
+      }
+
+    } else {
+      toast('Update failed: ' + (res && res.message ? res.message : 'unknown'), { type: 'error' });
+      console.warn('setWork failed', res);
+    }
+  }, 'json').fail(function(xhr, status, err){
+    toast('Request failed — check console', { type: 'error' });
+    console.error('setWork failed', status, err, xhr && xhr.responseText);
+  });
+}
+
 
       function saveReview(id) {
         const el = document.getElementById('review-'+id); if (!el) return;
@@ -836,8 +882,9 @@ document.querySelectorAll('#opDetailPanel .accordion-btn, #opDetailPanel .tabs b
   });
 });
 // ---------- Pagination + filter state (single source of truth) ----------
-let currentFilter = '';
-let currentPage = 1;
+// promote to window scope so other handlers (updateStatus/setWork) can reference them
+window.currentFilter = window.currentFilter || '';
+window.currentPage = window.currentPage || 1;
 
 /**
  * loadOverview(filter, page)
