@@ -14,7 +14,7 @@ function get_db()
 {
   static $mysqli = null;
   if ($mysqli === null) {
-    $mysqli = new mysqli('localhost','u554576373_qmit_system','Qamarinfotech123@','u554576373_qmit_system');
+    $mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
     if ($mysqli->connect_error) {
       http_response_code(500);
       echo "DB connection failed: " . htmlspecialchars($mysqli->connect_error);
@@ -57,6 +57,10 @@ $allowlist = [
   'branch_name',
   'joining_date',
   'operator_contact_no',
+  // add these strings into your docKeys array
+'alt_contact_relation',
+'alt_contact_number',
+
   'father_name',
   'dob',
   'gender',
@@ -253,6 +257,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'gender',
     'dob',
     'operator_contact_no',
+    // add these strings into your docKeys array
+'alt_contact_relation',
+'alt_contact_number',
+
     'email',
     'aadhar_number',
     'pan_number',
@@ -557,6 +565,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="tel" id="operator_contact_no" name="operator_contact_no"
           pattern="\d{10}" maxlength="10" minlength="10"
           title="Mobile number must be exactly 10 digits" required>
+          <!-- 🔸 Alternative Contact Section -->
+<label for="alt_contact_relation">Alternative Contact Relation</label>
+<select id="alt_contact_relation" name="alt_contact_relation" required>
+  <option value="">-- Select Relation --</option>
+  <option value="father">Father</option>
+  <option value="mother">Mother</option>
+  <option value="wife">Wife</option>
+  <option value="husband">Husband</option>
+  <option value="other">Other</option>
+</select>
+
+<label for="alt_contact_number">Alternative Contact Number</label>
+<input type="tel" id="alt_contact_number" name="alt_contact_number"
+  pattern="\d{10}" maxlength="10" minlength="10"
+  title="Alternative number must be exactly 10 digits">
+
         <label for="joiningdate">Joining Date</label>
         <input type="date" name="joining_date" required>
         <input type="text" name="branch_name" placeholder="Branch Name" required>

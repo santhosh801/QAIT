@@ -1,0 +1,24 @@
+[16-Oct-2025 08:46:10 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:86
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 86
+[16-Oct-2025 08:49:54 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:73
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 73
+[16-Oct-2025 08:52:47 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:95
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 95
+[16-Oct-2025 08:52:48 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:95
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 95
+[16-Oct-2025 08:52:53 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:95
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 95
+[16-Oct-2025 08:52:55 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to undefined method PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::setCellValueByColumnAndRow() in C:\xampp\htdocs\QAIT\export_basic.php:95
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\QAIT\export_basic.php on line 95

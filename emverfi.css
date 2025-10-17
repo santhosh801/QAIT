@@ -441,6 +441,7 @@ nav a:hover{ background: rgba(28, 175, 201, 0.59); transform: translateX(14px); 
   -webkit-text-fill-color: transparent;
   display: inline-block;
   position: relative;
+  margin-bottom: 0px;
   overflow: hidden;
 }
 
@@ -636,8 +637,8 @@ font-family: "Vidaloka", serif;
 .small-btn + .small-btn{ margin-left:6px }
 
 .col-actions{ white-space:nowrap; }
-.table-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.table-actions .muted{ color:var(--muted); font-size:13px; }
+.table-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.table-actions .muted{ color:var(--muted); font-size:16px; }
 .fragment-pagination{ display:flex; gap:8px; margin-top:12px; }
 .fragment-pagination a{ padding:6px 10px; border-radius:6px; border:1px solid var(--ring); text-decoration:none; color:var(--black) }
 
@@ -647,12 +648,16 @@ font-family: "Vidaloka", serif;
 
 .section-visible{ animation: softAppear .28s ease both; }
 @keyframes softAppear{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
-
+.muted img {
+  vertical-align: middle;
+  margin-left: 6px;
+  cursor: pointer;
+}
 .hidden{ display:none!important }
 .center{ text-align:center }
 .k-sub{ color:var(--muted); font-size:3px }
-.k-subtitle{font-size: 25px;
-    font-weight:300; font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); margin:20px 0 10px 0;
+.k-subtitle{
+    font-weight:300; font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); 
 }
 .k-card-title{ font-weight:500;   font-family:"Vidaloka", serif; font-size:25px; color:var(--gold); }
 
@@ -1237,7 +1242,7 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 
 /* ===== TASK 3: Navbar polish — add 4px gold horizontal divider ===== */
 /* Add a robust 4px gold horizontal divider under page heading / header region */
-.k-page-head { position: relative; padding-bottom: 10px; }
+.k-page-head { position: relative; padding-bottom: 3px; }
 .k-page-head::after {
   content: "";
   display: block;
@@ -1553,8 +1558,12 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 /* =========================
    OP DETAIL PANEL — merged + cleaned (drop-in)
    ========================= */
+/* =========================
+   OP DETAIL PANEL — merged + cleaned (drop-in)
+   Preserves all original rules, keyframes, media queries.
+   ========================= */
 
-/* Base panel (small-screen default) */
+/* === Base panel (small-screen default) === */
 #opDetailPanel {
   position: fixed;
   right: 18px;
@@ -1569,7 +1578,8 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   transform: translateX(14px) scale(.995);
   opacity: 0;
   transition: right .18s ease;
-  padding: 10px;  font-family: Georgia, 'Times New Roman', Times, serif;
+  padding: 10px;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   display: none;
   will-change: transform;
   --panel-font-size: clamp(16px, 0.9vw + 13px, 20px);
@@ -1578,10 +1588,12 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   border: 2px solid rgba(15,23,42,0.05);
   box-shadow: 0 18px 50px rgba(6,12,24,0.14);
 }
+
 /* Visible state toggled by JS (adds/removes .visible) */
 #opDetailPanel.visible {
   display: block;
 }
+
 /* Header inside panel */
 #opDetailPanel .hdr {
   display:flex;
@@ -1615,6 +1627,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   background:rgba(0,0,0,0.03);
   color:var(--black);
 }
+
 /* Header split text animation pieces */
 #opDetailPanel .hdr .title::before {
   content: attr(data-top);
@@ -1633,10 +1646,12 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   animation: showBottomText .75s forwards;
   animation-delay: 0.75s;
 }
-/* content area + rows */
+
+/* content stages */
 #opDetailPanel .stage { display:none; }
 #opDetailPanel .stage.active { display:block; }
 
+/* row styles */
 .op-row {
   display:flex;
   gap:12px;
@@ -1735,6 +1750,91 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   pointer-events: auto;
 }
 
+/* slow hover for interactive items */
+a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hover { transition-duration: .48s !important; }
+
+/* =========================
+   Tabs / Push / Neumorphic overrides
+   ========================= */
+
+#opDetailPanel .tabs button {
+  position: relative;
+  border-radius: 999vw;
+  background: #fff;
+  border: none !important;
+  cursor: pointer;
+  overflow: hidden;
+  font-weight: 100;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  font-size: 1.08em !important;
+  color: #374151;
+  padding: 14px 26px !important;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  font-style: normal;
+  font-family: manrope, sans-serif;
+  transition: transform 150ms ease, box-shadow 1300ms ease;
+  isolation: isolate;
+}
+
+/* subtle glossy overlay */
+#opDetailPanel .tabs button::after {
+  content: "";
+  position: absolute;
+  inset: -0.15em;
+  border-radius: inherit;
+  background: linear-gradient(-135deg, rgba(5,5,5,0.15), transparent 20%, transparent 100%);
+  opacity: 1;
+  filter: blur(1.1125em);
+  mix-blend-mode: multiply;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* text gradient like the demo (start hidden then fade in letters) */
+#opDetailPanel .tabs button span,
+#opDetailPanel .tabs button {
+  background-clip: text;
+  -webkit-background-clip: text;
+  display: inline-block;
+  opacity: 0; /* start hidden */
+  animation: letterFadeIn 4.6s forwards;
+  color: transparent;
+  background-image: linear-gradient(135deg, #191919, #4b4b4b);
+  text-shadow: rgba(0, 0, 0, 0.08) 0 0 0.08em;
+}
+
+/* hover state – pressed/glossy */
+#opDetailPanel .tabs button:hover {
+  transform: translateX(-5px);
+  box-shadow: 0.1em 0.15em 0.05em rgba(5, 5, 5, 0.3) inset;
+}
+
+/* active state (gradient + push) */
+#opDetailPanel .tabs button.active {
+  background: linear-gradient(90deg,#bd9a68,#a5834d) !important;
+  color: #fff !important;
+  transform: translateY(-5px) scale(0.975);
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+}
+
+/* active text: solid white instead of gradient */
+#opDetailPanel .tabs button.active span,
+#opDetailPanel .tabs button.active {
+  background: none;
+  color: #fff !important;
+  -webkit-background-clip: border-box;
+  text-shadow: none;
+}
+
+/* letter fade keyframe */
+@keyframes letterFadeIn {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 /* =========================
    Animations / Keyframes
    ========================= */
@@ -1774,10 +1874,8 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
 }
 
 /* =========================
-   Responsive overrides
+   Large-screen: centered modal with viewport padding (min-width:1200px)
    ========================= */
-
-/* Large-screen: centered modal with viewport padding */
 @media (min-width: 1200px) {
   #opDetailPanel {
     left: 10px;
@@ -1790,7 +1888,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
     margin: auto;
     inset: 10px;
     border-radius: 14px;
-    padding: 20px; /* fixed typo */
+    padding: 20px;
     box-shadow: 0 40px 90px rgba(6,12,24,0.18);
     transform: translateY(18px) scale(.98);
     opacity: 0;
@@ -1819,7 +1917,9 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   #opRowPreview { z-index: 1600; }
 }
 
-/* small-screen responsive override */
+/* =========================
+   Small-screen responsive override (max-width:1199px)
+   ========================= */
 @media (max-width: 1199px) {
   #opDetailPanel {
     right: 12px;
@@ -1839,91 +1939,6 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   }
 }
 
-/* ---------- Theme override: push/neumorphic style tabs ---------- */
-#opDetailPanel .tabs button {
-  position: relative;
-  border-radius: 999vw;
-  background: #fff;
-  border: none !important;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  font-weight: 100;
-  margin-top: 20px;
-  margin-bottom: 20px;margin-left: 20px;
-  font-size: 1.08em !important;
-  color: #374151;
-  padding: 14px 26px !important;
-  line-height: 0.;
-  -webkit-tap-highlight-color: transparent;
-  font-style: manrope ,sans-serif;
-  transition: transform 150ms ease, box-shadow 1300ms ease;
-
-   
-  overflow: hidden;
-  isolation: isolate;
-}
-
-/* subtle glossy overlay */
-#opDetailPanel .tabs button::after {
-  content: "";
-  position: absolute;
-  inset: -0.15em;
-  border-radius: inherit;
-  background: linear-gradient(-135deg,
-      rgba(5, 5, 5, 0.15),
-      transparent 20%,
-      transparent 100%);
-  opacity: 1;
-  color: #000;  font-style: manrope ,sans-serif;
-  filter: blur(1.1125em);
-  mix-blend-mode: multiply;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* text gradient like the demo */
-#opDetailPanel .tabs button span,
-#opDetailPanel .tabs button {
-  background-clip: text;
-  -webkit-background-clip: text;  display: inline-block;
-  opacity: 0; /* start hidden */
-  animation: letterFadeIn 4.6s forwards;  font-style: manrope ,sans-serif;
-  color: transparent;
-  background-image: linear-gradient(135deg, #191919, #4b4b4b);
-  text-shadow: rgba(0, 0, 0, 0.08) 0 0 0.08em;
-}
-#o
-/* hover state – pressed/glossy */
-#opDetailPanel .tabs button:hover {
-  transform: translateX(- 5px);  font-style: manrope ,sans-serif;
-  box-shadow:
-    0.1em 0.15em 0.05em rgba(5, 5, 5, 0.3) inset;
-}
-
-/* active state (your gradient stays, with push effect) */
-#opDetailPanel .tabs button.active {
-  background: linear-gradient(90deg,#bd9a68,#a5834d) !important;
-  color: #fff !important;
-  transform: translateY(-5px) scale(0.975);  font-style: manrope ,sans-serif;
- box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
-}
-
-/* active text: solid white instead of gradient */
-#opDetailPanel .tabs button.active span,
-#opDetailPanel .tabs button.active {
-  background: none;
-  color: #fff !important;
-  -webkit-background-clip: border-box;
-  text-shadow: none;
-}
-@keyframes letterFadeIn {
-  0%   { opacity: 0; transform: translateY(6px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* Tabs */
- 
 
 /* ===== TASK 15: Colored table — style headers/rows to be more vivid and readable ===== */
 .data-table thead th { background: linear-gradient(180deg,#fffdfb,#fbfaf8); color: #444; border-bottom: 3px solid rgba(189,154,104,0.08); font-weight:800; }
