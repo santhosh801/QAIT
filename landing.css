@@ -709,6 +709,46 @@ html { scroll-behavior:smooth; }
   color: var(--black);
   margin: 0;
 }
+/* === MOBILE RESPONSIVE OUTER PADDING FIX === */
+@media (max-width: 768px) {
+  section.container {
+   
+    padding: 36px 18px !important; /* ✅ Adds outer breathing room */
+  }
+
+  .steps {
+    padding: 0 10px;              /* ✅ Space between cards and screen edges */
+    gap: 18px;                    /* ✅ Slightly more gap between cards */
+  }
+
+  .flip {
+    width: 100%;       border: 2px solid var(--black);
+    border-radius: 20px;            /* ✅ Make each card full-width */
+    max-width: 100%;
+    margin: 0 auto;
+    min-height: 180px;            /* ✅ Consistent height for readability */
+  }
+
+  .flip > .front,
+  .flip > .back {
+    padding: 20px !important;     /* ✅ Inner spacing inside cards */
+  }
+
+  .flip h3 {
+    font-size: 18px !important;   /* ✅ Adjust title size */
+  }
+
+  .flip p {
+    font-size: 15px !important;   /* ✅ Adjust paragraph size */
+    line-height: 1.5;
+  }
+
+  /* Optional: slightly soften shadow for mobile look */
+  .flip {
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+  }
+}
 
 /* === ONE-SHOT FLIP ANIMATION === */
 @keyframes frontCoin {
@@ -1233,11 +1273,11 @@ html { scroll-behavior:smooth; }
 
 /* responsive: */
 @media (min-width:980px){
-  .cta-actions{ flex-direction:row; gap:18px; }
+  .cta-actions{ flex-direction:row; gap:1px; }
   .cta-btn{ min-width:200px; }
 }
 @media (max-width:720px){
-  .animated-cta{ padding:26px; border-radius:14px; height:auto; }
+  .animated-cta{ padding:6px; border-radius:14px; height:auto; }
   .animated-cta::before{ display:none; } /* remove halo on tiny devices */
   .lines { display:none; } /* hide decorative orbit on small screens */
   .cta-actions{ width:100%; }
@@ -1482,8 +1522,32 @@ button:focus, a:focus, input:focus, textarea:focus { outline:3px solid rgba(189,
   .about-label{ font-size:48px; }
 }
 @media (max-width:800px){
-  .about-balls-left, .about-balls-right { display:none; }
-  .about-label{ font-size:32px; }
+  /* keep balls visible and scale them down + nudge inward for phones */
+  .about-balls-left,
+  .about-balls-right {
+    display:flex !important;
+    gap:6px;
+    align-items:center;
+    top:50%;
+    transform:translateY(-50%) scale(.92);
+    pointer-events:none;
+    z-index:12;
+    opacity:1 !important;
+  }
+
+  /* move groups much closer to the center so all six are visible */
+  .about-balls-left  { left: calc(50% - 110px) !important; }
+  .about-balls-right { left: calc(50% + 70px)  !important; }
+
+  /* shrink visual sizes on mobile */
+  .about-balls-left .ab-dot.large,
+  .about-balls-right .ab-dot.large  { width:18px; height:18px; }
+  .about-balls-left .ab-dot.med,
+  .about-balls-right .ab-dot.med    { width:12px; height:12px; }
+  .about-balls-left .ab-dot.small,
+  .about-balls-right .ab-dot.small  { width:6px;  height:6px; }
+
+  .about-label{ font-size:32px; margin-top:10px; }
 }
 
 /* layout grid */
@@ -1497,85 +1561,105 @@ button:focus, a:focus, input:focus, textarea:focus { outline:3px solid rgba(189,
 .book-wrap .back  { transform-origin:right center; margin-left:-36px; transform:rotateY(0deg); opacity:0.98; }
 
 /* ABOUT SLIDER — scoped */
-.about-slider { width:100%; max-width:420px; height:420px; border-radius:20px; overflow:hidden; position:relative;  margin:0 auto; }
-.about-slider__viewport { width:100%; height:100%; position:relative; }
-.about-slider__slides { display:flex; width:300%; height:100%; transition: transform 1.2s cubic-bezier(.2,.9,.2,1); will-change: transform; }
-/* keep slide background transparent and let PNG alpha show through */
-.about-slider__slide { background: transparent; }
-.about-slider__slide img.transparent-slide {
-  width:100%;
-  height:100%;
-  object-fit:cover;   /* or contain, depending on look */
-  display:block;
-  background:transparent;
-}
-/* ABOUT SLIDER — slow, smooth slide timing */
+/* ---------- ABOUT: unified slider CSS (replacement) ---------- */
+/* Paste this in place of your existing .about-slider related CSS */
+
+/* container + top label keep your original styles above this if needed */
+.about-slider { width:100%; max-width:520px; margin:0 auto; position:relative; border-radius:20px; margin-right:  200px; }
+.about-slider__viewport { width:100%; position:relative; overflow:hidden; } /* critical: hide non-active slides */
+
+/* Slides row: don't use a fixed 300% width. keep it flexible and translateX */
 .about-slider__slides {
   display:flex;
-  width:300%;
-  height:100%;
-  transition: transform 1.6s cubic-bezier(.22,.9,.3,1); /* <-- slower smooth slide */
+  flex-wrap:nowrap;
+  width:100%;
+  transition: transform 700ms cubic-bezier(.22,.9,.3,1);
   will-change: transform;
 }
 
+/* Each slide is one full viewport-width slot */
 .about-slider__slide {
-  min-width:100%;
-  height:100%;
-  flex-shrink:0;
+  flex: 0 0 100% !important;
+  width: 100% !important;
   display:flex;
   align-items:center;
   justify-content:center;
-  background: transparent;
   position:relative;
+  box-sizing:border-box;
+  visibility: visible; /* slides are clipped by viewport + translated */
+  opacity: 1;
 }
 
-/* subtle image parallax / smoothing while sliding */
-.about-slider__slide img.transparent-slide {
-  width:100%;
-  height:100%;
-  object-fit:cover;
+/* Active state on slide just used for optional styling */
+.about-slider__slide.is-active { /* no overlay needed; class can be used for focus styles */ }
+
+/* Images: responsive, centered, and scaled cleanly */
+.about-slider__slide img.transparent-slide,
+.about-slider__slide img {
   display:block;
+  width:auto;               /* allow height-driven sizing on desktop */
+  max-width:88%;
+  height:auto;
+  max-height:44vh;
+
+  object-fit:contain;       /* safe default for mobile/desktop; we'll override on large screens */
   background:transparent;
-  transition: transform 1.6s cubic-bezier(.22,.9,.3,1), opacity .6s ease;
-  transform-origin:center center;
+  padding:8px 0;
 }
 
-/* when slide becomes active you can scale slightly to emphasize */
-.about-slider__slide.is-active img,
-.about-slider__slide img:is(:not(.is-active)) {
-  /* default: no scale; we leave room for small parallax if needed */
-}
-/* ensure dynamic-width slides behave correctly */
-.about-slider__slides { display:flex; height:100%; will-change:transform; /* transition set by JS */ }
-.about-slider__slide { flex:0 0 auto; height:100%; display:flex; align-items:center; justify-content:center; }
-
-/* dot progress visual stays the same — you can lengthen its animation by ensuring JS uses the same interval */
-.about-slider__dot.is-active::after {
-  transform:scaleX(1);
-  transition: transform linear 2s; /* sync fill with 2s interval */
+/* Desktop: more visual crop/feel — let height drive size */
+@media (min-width:1100px){
+  .about-slider { max-width:520px; }
+  .about-slider__viewport, .about-slider__slides { height:420px; }
+  .about-slider__slide { height:420px; }
+  .about-slider__slide img.transparent-slide,
+  .about-slider__slide img { object-fit:cover; height:85%; max-height:85%; max-width:100%; width:auto; }
 }
 
-
-/* controls (dots) */
-.about-slider__controls { position:absolute; left:50%; transform:translateX(-50%); bottom:16px; display:flex; gap:12px; z-index:8; }
-.about-slider__dot { width:14px; height:14px; border-radius:50%; background:rgba(15,23,42,0.18); border:none; padding:0; cursor:pointer; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(15,23,42,0.06); transition: transform .22s ease, background .28s ease; }
-.about-slider__dot:focus { outline:2px solid rgba(189,154,104,0.24); outline-offset:4px; }
-.about-slider__dot:hover { transform:translateY(-4px); }
-
-/* progress indicator inside dot — animates while slide is active */
-.about-slider__dot::after { content:""; position:absolute; left:0; top:0; width:100%; height:100%; transform-origin:left center; transform:scaleX(0); background: linear-gradient(90deg, var(--gold), #a7743f); transition: transform linear; pointer-events:none; }
-.about-slider__dot.is-active { background:rgba(189,154,104,0.18); }
-.about-slider__dot.is-active::after { transform:scaleX(1); }
-
-/* small responsive tweaks */
-@media (max-width:980px){
-  .about-slider { max-width:360px; height:260px; }
+/* Medium screens */
+@media (min-width:801px) and (max-width:1099px){
+  .about-slider { max-width:460px; }
+  .about-slider__viewport, .about-slider__slides { height:360px; }
+  .about-slider__slide { height:360px; }
+  .about-slider__slide img.transparent-slide { object-fit:cover; height:80%; max-height:80%; }
 }
-@media (max-width:560px){
-  .about-slider { max-width:100%; height:220px; border-radius:14px; }
-  .about-slider__controls { gap:8px; bottom:10px; }
-  .about-slider__dot { width:12px; height:12px; }
+
+/* Mobile: show full image without cropping */
+@media (max-width:800px){
+  .about-slider { max-width:360px; }
+  .about-slider__viewport { height:auto; }
+  .about-slider__slide { height:auto; }
+  .about-slider__slide img.transparent-slide,
+  .about-slider__slide img {
+    object-fit:contain !important;
+    max-width:84% !important;
+    max-height:46vh !important;
+    width:auto !important;
+    margin:8px auto 0 !important;
+  }
 }
+
+/* Dots / controls — keep them centered under viewport */
+.about-slider__controls {
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:14px;
+  display:flex;
+  gap:12px;
+  z-index:30;
+}
+.about-slider__dot {
+  width:14px; height:14px; border-radius:50%;
+  background:rgba(15,23,42,0.18); border:none; cursor:pointer;
+  transition: transform .18s ease, background .22s ease;
+}
+.about-slider__dot.is-active { background: var(--gold) !important; }
+.about-slider__dot:hover{ transform:translateY(-3px); }
+
+/* defensive: make sure viewport hides overflow */
+.about-slider__viewport { overflow:hidden !important; }
+
 
 /* content (right) */
 .about-content {
@@ -1626,4 +1710,81 @@ button:focus, a:focus, input:focus, textarea:focus { outline:3px solid rgba(189,
   .about-images { justify-content:center; }
   .about-title { font-size:32px; }
   .book-img, .book-wrap{ width:260px; }
+}
+/* ==== MOBILE: force full slider images + preserve balls ==== */
+@media (max-width:980px){
+  /* responsive slider sizing */
+  .about-slider { max-width:360px; height:auto !important; max-height:56vh !important; overflow:visible !important; }
+
+  /* show full image rather than cropped */
+  .about-slider__slide img.transparent-slide,
+  .about-slider__slide img {
+    object-fit: contain !important;      /* show whole image */
+    width:auto !important;
+    max-width:92% !important;
+    max-height:56vh !important;
+    margin:0 auto;
+    display:block;
+  }
+
+  /* avoid clipping viewport items like shadows */
+  .about-slider__viewport,
+  .about-slider__slides,
+  .about-slider__slide { overflow: visible !important; }
+}
+
+/* very small phones tweaks */
+@media (max-width:560px){
+  .about-slider { max-width:100%; height:auto !important; border-radius:14px; }
+  .about-block { padding-top:18px !important; padding-bottom:18px !important; }
+  .about-grid { gap:14px; }
+}
+
+/* reduce animation aggressiveness on mobile (optional but cleaner) */
+@media (max-width:810px){
+  .about-block.in .ab-dot.large {    animation-duration:3s !important; }
+  .about-block.in .ab-dot.med   { animation-duration:3s !important; }
+  .about-block.in .ab-dot.small { margin-left: 20px; animation-duration:3s !important; }
+}
+/* === ABOUT SLIDER IMAGE BALANCE FIX === */
+.about-slider__slide img.transparent-slide {
+  display: block;
+  width: auto !important;
+  max-width: 88% !important;
+  height: auto !important;
+  max-height: 44vh !important;
+  margin: 0 auto;
+  object-fit: contain !important;
+  padding: 12px 0;
+  background: transparent !important;
+}
+
+/* individual tweaks for perfect centering */
+.about-slider__slide:nth-child(1) img {
+  max-width: 88% !important;
+  max-height: 40vh !important;
+}
+.about-slider__slide:nth-child(2) img {
+  max-width: 84% !important;
+  max-height: 42vh !important;
+}
+.about-slider__slide:nth-child(3) img {
+  max-width: 86% !important;
+  max-height: 44vh !important;
+}
+
+/* ensure no clipping on viewport */
+.about-slider__viewport,
+.about-slider__slides,
+.about-slider__slide {
+  overflow: visible !important;
+}
+
+/* on very small phones, scale everything down slightly */
+@media (max-width:560px){
+  .about-slider__slide img.transparent-slide {
+    max-width: 92% !important;
+    max-height: 38vh !important;
+    padding: 8px 0;
+  }
 }

@@ -256,6 +256,9 @@
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
             <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
             <!-- Chart.js + datalabels -->
+             <link rel="icon" type="image/png" href="favicon.png" >
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
@@ -394,17 +397,40 @@
                     <div id="overviewTablePlaceholder"></div>
                   </section>
                   <!-- Mailing form -->
-                  <section id="operatorMailingSection" class="k-section hidden">
-                    <div class="signup mail-form">
-                      <form method="post" action="employee.php">
-                        <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
-                        <div class="mail-row"><input type="text" name="employee_name" placeholder="Employee Name" required><input type="email" name="employee_email" placeholder="Employee Email" required></div>
-                        <div class="mail-row"><input type="email" name="operator_email" placeholder="Operator Email" required><input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required></div>
-                        <div class="mail-row"><input type="text" name="unique_id" placeholder="EMPLOYEE ID" required><input type="text" name="mobile_number" placeholder="Mobile Number" required></div>
-                        <button class="btn-effect3" type="submit">Submit</button>
-                      </form>
-                    </div>
-                  </section>
+             <!-- Mailing form -->
+<section id="operatorMailingSection" class="k-section hidden">
+  <div class="signup mail-form">
+    <form method="post" action="employee.php">
+      <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
+
+      <!-- Row 1 -->
+      <div class="mail-row">
+        <input type="text" name="employee_name" placeholder="Employee Name" required>
+        <input type="email" name="employee_email" placeholder="Employee Email" required>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="mail-row">
+        <input type="email" name="operator_email" placeholder="Operator Email" required>
+        <input type="text" name="operator_id" placeholder="Operator ID" required>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="mail-row">
+        <input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required>
+        <input type="text" name="unique_id" placeholder="EMPLOYEE ID" required>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="mail-row">
+        <input type="text" name="mobile_number" placeholder="Mobile Number" required>
+      </div>
+
+      <button class="btn-effect3" type="submit">Submit</button>
+    </form>
+  </div>
+</section>
+
 
 
                   <!-- Server-rendered main table (initial fallback) -->

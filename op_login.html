@@ -7,9 +7,8 @@
 <!-- MOBILE: viewport + override stylesheet -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link rel="stylesheet" href="/path/to/mobile.override.css">
-<link rel="icon" type="image/png" href="qit_logo.png">
+  <!-- Fonts + icons --><link rel="icon" type="image/png" href="qit_logo.png">
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <!-- Fonts + icons -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Vidaloka&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/3a2e6c5d3d.js" crossorigin="anonymous"></script>
 
@@ -30,10 +29,11 @@
     }
 
     *{box-sizing:border-box}
-    html,body{height:200px; margin:0; font-family:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial; color:#0f172a;}
+    html,body{ margin:0; font-family:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial; color:#0f172a;  ;
+ }
 
     #background-container{
-      position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;
+      position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;  
       
     }
 
@@ -249,17 +249,19 @@
 
       <div class="login-box">
         <div class="login-card">
-          <h2 id="loginTitle">Employee Login</h2>
-          <p class="lead">Enter your employee credentials</p>
+          <h2 id="loginTitle">Operator Login</h2>
+          <p class="lead">Enter your operator credentials</p>
 
-          <form id="employeeLoginForm" method="post" action="employee_login.php" novalidate>
+          <form id="employeeLoginForm" method="post" action="operator_login.php" novalidate>
             
-            <div class="crystalline-container">
-              <input class="crystalline-input" id="employee_email" name="employee_email" type="email" placeholder="Email" required autocomplete="email">
-            </div>
-            <div class="crystalline-container">
-              <input class="crystalline-input" id="employee_password" name="employee_password" type="password" placeholder="Password" required autocomplete="current-password">
-            </div>
+       <div class="crystalline-container">
+  <input class="crystalline-input" id="operator_id" name="operator_id" type="text" placeholder="Operator ID" required autocomplete="username">
+</div>
+
+<div class="crystalline-container">
+  <input class="crystalline-input" id="unique_code" name="unique_code" type="password" placeholder="Unique Code" required autocomplete="current-password">
+</div>
+
 
             <button type="submit" class="btn-curl" id="submitBtn">Login</button>
 

@@ -2,20 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KYC & Document Collection Portal - Qamar Infotech</title>
-    <link rel="stylesheet" href="landing.css">
+<meta name="description" content="Secure portal for Operators, Employees, and Admins to manage, verify, and collect KYC documents. Role-based access and automated workflow.">
+<title>QIT — KYC & Document Management Portal</title>    <link rel="stylesheet" href="landing.css">
     <!-- MOBILE: viewport + override stylesheet -->
     <meta name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1">
     <link rel="stylesheet" href="/path/to/mobile.override.css">
     <noscript><style>header nav ul li{opacity:1; transform:none; pointer-events:auto;}</style></noscript>
-
+<link rel="icon" type="image/png" href="qit_logo.png">
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   </head>
   <body>
     <!-- HEADER -->
 
-    <header>
+    <header>  
       <div class="container">
         <!-- Logo -->
         <!-- Logo wrapper (keep your existing width/height on the <img>) -->
@@ -244,7 +244,7 @@
             Login</a>
           <a class="button-30 cta-btn" href="em_login.html"
             role="button">Employee Login</a>
-          <a class="button-30 cta-btn" href="operator_view.php"
+          <a class="button-30 cta-btn" href="op_login.html"
             role="button">Operator Login</a>
         </div>
 
@@ -1030,6 +1030,56 @@ document.querySelector('.logo img').addEventListener('click', e => {
   }
 
 })();
+
+/* Simple, robust slider: 1 full slide visible at a time, auto-advance, dot clicks */
+document.addEventListener('DOMContentLoaded', function () {
+  const slider = document.querySelector('.about-slider');
+  if(!slider) return;
+
+  const slidesWrap = slider.querySelector('.about-slider__slides');
+  const slides = Array.from(slidesWrap.querySelectorAll('.about-slider__slide'));
+  const dots = Array.from(slider.querySelectorAll('.about-slider__dot'));
+
+  // defensive: ensure slides are full-slot
+  slides.forEach(s => s.style.flex = '0 0 100%');
+
+  let index = 0;
+  const INTERVAL = 4000;
+  let timer = null;
+
+  function setSlide(i) {
+    index = (i + slides.length) % slides.length;
+    slidesWrap.style.transform = 'translateX(' + (-index * 100) + '%)';
+    slides.forEach((s, j) => s.classList.toggle('is-active', j === index));
+    dots.forEach((d, j) => d.classList.toggle('is-active', j === index));
+  }
+
+  // bind dots
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      clearInterval(timer);
+      setSlide(i);
+      timer = setInterval(next, INTERVAL);
+    });
+  });
+
+  function next() { setSlide(index + 1); }
+  function start() { timer = setInterval(next, INTERVAL); }
+  function stop() { clearInterval(timer); }
+
+  // start
+  setSlide(0);
+  start();
+
+  // pause on hover/touch
+  slider.addEventListener('mouseenter', stop);
+  slider.addEventListener('mouseleave', start);
+  slider.addEventListener('touchstart', stop, {passive:true});
+  slider.addEventListener('touchend', start, {passive:true});
+
+  // maintain correct transform on resize
+  window.addEventListener('resize', () => setSlide(index));
+});
 </script>
 
 

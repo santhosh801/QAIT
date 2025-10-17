@@ -1,145 +1,247 @@
 <?php
-// employee_mailing_handler.php
+// employee.php (hardened + fixed prepare checks)
 session_start();
 
 require __DIR__ . '/vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Block non-POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(403);
     exit('Invalid request');
 }
 
-// sanitize + trim inputs
+// sanitize + trim
 $employee_name   = trim($_POST['employee_name'] ?? '');
 $employee_email  = trim($_POST['employee_email'] ?? '');
 $operator_email  = trim($_POST['operator_email'] ?? '');
+$operator_id     = trim($_POST['operator_id'] ?? '');
 $aadhaar_id      = trim($_POST['aadhaar_id'] ?? '');
 $unique_id       = trim($_POST['unique_id'] ?? '');
 $mobile_number   = trim($_POST['mobile_number'] ?? '');
 
 // basic validation
-if (!$employee_name || !filter_var($employee_email, FILTER_VALIDATE_EMAIL) || !filter_var($operator_email, FILTER_VALIDATE_EMAIL)) {
-    $_SESSION['mail_error'] = 'Missing or invalid fields';
+if (!$employee_name || !filter_var($employee_email, FILTER_VALIDATE_EMAIL) || !filter_var($operator_email, FILTER_VALIDATE_EMAIL) || !$operator_id) {
+    $_SESSION['mail_error'] = 'Missing or invalid fields (employee/operator email and operator id required).';
     header('Location: em_verfi.php');
     exit;
 }
 
-// generate token
+// DB connect (with error reporting)
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+try {
+    $mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
+    $mysqli->set_charset('utf8mb4');
+} catch (Throwable $e) {
+    error_log("DB connect error: " . $e->getMessage());
+    $_SESSION['mail_error'] = 'DB connection failed.';
+    header('Location: em_verfi.php');
+    exit;
+}
+
 $token = bin2hex(random_bytes(12));
+$operator_code = bin2hex(random_bytes(5)); // 10 hex chars
 
-// Save to DB
-$mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
-if ($mysqli->connect_error) {
-    $_SESSION['mail_error'] = 'DB error';
+// Begin transaction
+$mysqli->begin_transaction();
+try {
+    // ensure employees table columns exist — prepare may still fail if schema differs
+    $insertSql = 'INSERT INTO employees (employee_name, employee_email, operator_email, operator_id, aadhaar_id, unique_id, mobile_number, token)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    $stmt = $mysqli->prepare($insertSql);
+    if ($stmt === false) {
+        throw new Exception('Prepare failed for employees insert: ' . $mysqli->error);
+    }
+    $stmt->bind_param('ssssssss', $employee_name, $employee_email, $operator_email, $operator_id, $aadhaar_id, $unique_id, $mobile_number, $token);
+    $stmt->execute();
+    $stmt->close();
+
+    // ensure operators table exists (safe to run)
+    $createOperatorsSql = "
+        CREATE TABLE IF NOT EXISTS operators (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            operator_id VARCHAR(191) NOT NULL UNIQUE,
+            unique_code VARCHAR(191) NOT NULL,
+            operator_email VARCHAR(255),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ";
+    $mysqli->query($createOperatorsSql);
+
+    // Try update first
+    $upd = $mysqli->prepare('UPDATE operators SET unique_code = ?, operator_email = ? WHERE operator_id = ?');
+    if ($upd === false) {
+        throw new Exception('Prepare failed for operators update: ' . $mysqli->error);
+    }
+    $upd->bind_param('sss', $operator_code, $operator_email, $operator_id);
+    $upd->execute();
+    $affected = $upd->affected_rows;
+    $upd->close();
+
+    if ($affected === 0) {
+        $ins = $mysqli->prepare('INSERT INTO operators (operator_id, unique_code, operator_email) VALUES (?, ?, ?)');
+        if ($ins === false) {
+            throw new Exception('Prepare failed for operators insert: ' . $mysqli->error);
+        }
+        $ins->bind_param('sss', $operator_id, $operator_code, $operator_email);
+        $ins->execute();
+        $ins->close();
+    }
+
+    $mysqli->commit();
+} catch (Throwable $e) {
+    $mysqli->rollback();
+    error_log('DB Error in employee.php: ' . $e->getMessage());
+    // give a friendly message to user, log the real message
+    $_SESSION['mail_error'] = 'Database error. Check server log for details.';
     header('Location: em_verfi.php');
     exit;
 }
-$stmt = $mysqli->prepare('INSERT INTO employees (employee_name, employee_email, operator_email, aadhaar_id, unique_id, mobile_number, token) VALUES (?, ?, ?, ?, ?, ?, ?)');
-if (!$stmt) {
-    $_SESSION['mail_error'] = 'DB prepare failed';
-    header('Location: em_verfi.php');
-    exit;
-}
-$stmt->bind_param('sssssss', $employee_name, $employee_email, $operator_email, $aadhaar_id, $unique_id, $mobile_number, $token);
-$stmt->execute();
-$stmt->close();
+
 $mysqli->close();
 
 // Build operator link
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$operator_link = $protocol . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['PHP_SELF']), '/\\') . "/operator_view.php?token=" . urlencode($token);
+$operator_link = $protocol . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['PHP_SELF']), '/\\') . "/op_login.html";
 
-// Escape for HTML
+
+// Prepare email HTML and alt body (kept short for clarity)
+// prepare an escaper and escaped values
 $esc = function($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); };
+$operator_id_esc    = $esc($operator_id);
+$operator_code_esc  = $esc($operator_code);
+$employee_name_esc  = $esc($employee_name);
+$operator_link_esc  = $esc($operator_link);
 
-// Compose operator-facing HTML body (responsive, clear, form-fill call-to-action)
+// HTML email (inline CSS for best compatibility with email clients)
 $bodyHtml = <<<HTML
-<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; color:#111; line-height:1.45; max-width:720px;">
-  <div style="padding:18px;border-radius:10px;background:#ffffff;border:1px solid #e6e9ee;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-     
-      <div>
-        <div style="font-size:18px;font-weight:800;color:#0f172a">Action required: Complete operator documents</div>
-        <div style="font-size:13px;color:#6b7280;margin-top:4px">An employee has submitted their details — please complete the operator-side form below.</div>
-      </div>
-    </div>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+  </head>
+  <body style="margin:0;padding:24px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f4f6f9;">
+    <!-- Preheader (visible in inbox preview) -->
+    <span style="display:none;max-height:0;overflow:hidden;visibility:hidden;">Please login with Operator ID & Unique Code to complete your documents.</span>
 
-    <h3 style="margin:6px 0 10px 0;font-size:15px;color:#0f172a">Submission summary</h3>
-    <table cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px;">
-      <tr><td style="width:170px;color:#6b7280;font-weight:700">Employee name</td><td>{$esc($employee_name)}</td></tr>
-      <tr><td style="color:#6b7280;font-weight:700">Employee email</td><td>{$esc($employee_email)}</td></tr>
-      <tr><td style="color:#6b7280;font-weight:700">Aadhaar ID</td><td>{$esc($aadhaar_id)}</td></tr>
-      <tr><td style="color:#6b7280;font-weight:700">Employee ID</td><td>{$esc($unique_id)}</td></tr>
-      <tr><td style="color:#6b7280;font-weight:700">Mobile</td><td>{$esc($mobile_number)}</td></tr>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td align="center">
+          <table width="720" cellpadding="0" cellspacing="0" role="presentation" style="max-width:720px;">
+            <tr>
+              <td style="padding:18px 18px 6px 18px;">
+                <div style="background:#ffffff;border-radius:12px;border:1px solid #e6e9ee;padding:22px;color:#0f172a;box-shadow:0 10px 30px rgba(2,6,23,0.06);">
+                  
+                  <!-- Header -->
+                  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <div style="flex:0 0 64px;height:64px;border-radius:10px;background:linear-gradient(180deg,#f7fafc,#fff);display:flex;align-items:center;justify-content:center;border:1px solid #eef2ff;">
+                      <strong style="font-size:20px;color:#bd9a68;font-family:'Vidaloka',serif;">QIT</strong>
+                    </div>
+                    <div>
+                      <div style="font-size:18px;font-weight:800;color:#0f172a">Action required: Complete operator documents</div>
+                      <div style="font-size:13px;color:#6b7280;margin-top:4px">Please login and finish your section of the verification form.</div>
+                    </div>
+                  </div>
+
+                  <!-- Employee note -->
+                  <div style="padding:12px;border-radius:8px;border:1px solid #000000ff;margin-bottom:14px;font-size:13px;color:#000000;">
+                    Submitted by: <strong>{$employee_name_esc}</strong>
+                  </div>
+
+                  <!-- Details box -->
+                  <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:220px;">
+                      <div style="font-size:13px;color:#6b7280;margin-bottom:6px;font-weight:700">Operator ID</div>
+                      <div style="padding:10px;border-radius:8px;background:#f8fafc;border:1px solid #eef2ff;font-weight:700;">{$operator_id_esc}</div>
+                    </div>
+
+                    <div style="flex:1;min-width:220px;">
+                      <div style="font-size:13px;color:#6b7280;margin-bottom:6px;font-weight:700">Unique Code</div>
+                      <div style="padding:10px;border-radius:8px;background:#f1f5f9;border:1px solid #e6eef6;font-weight:700;">{$operator_code_esc}</div>
+                    </div>
+
+                    <div style="flex-basis:100%;height:6px"></div>
+
+                    <!-- Call-to-action button -->
+                    <div style="width:100%;text-align:left;margin-top:6px;">
+                      <a href="{$operator_link_esc}" 
+                         style="display:inline-block;padding:14px 22px;border-radius:10px;background:#0ea5e9;color:#ffffff;text-decoration:none;font-weight:800;box-shadow:0 8px 20px rgba(14,165,233,0.18);margin-top:4px;">
+                        Login & Complete Form
+                      </a>
+                    </div>
+                  </div>
+
+                  <!-- Helper text -->
+                  <div style="margin-top:16px;font-size:13px;color:#374151;line-height:1.45;">
+                    <p style="margin:0 0 6px;">Important: copy both <strong>Operator ID</strong> and <strong>Unique Code</strong> exactly when you log in at the link above.</p>
+                    <p style="margin:0;">If you can't access the link, reply to this email or contact <a href="mailto:support@qit.com">support@qit.com</a>.</p>
+                  </div>
+
+                  <!-- Footer small -->
+                  <div style="margin-top:14px;font-size:11px;color:#9ca3af;">
+                    This message was generated by QIT Verification. Do not share the link publicly — it is intended for the operator only.
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:12px 18px;color:#9ca3af;font-size:12px;">
+                QIT • Verification Team
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
     </table>
-
-    <div style="margin-top:16px;">
-      <strong style="display:block;margin-bottom:8px; font-size:13px">What we need from you</strong>
-      <p style="margin:0 0 12px 0;color:#111;font-size:8px">
-        Please open the link below and complete the operator-side document form - OPERATOR only need to fill specific fields, attach required docs, and submit.
-      </p>
-
-      <a href="{$esc($operator_link)}" style="display:inline-block;padding:14px 20px;border-radius:12px;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:800;font-size:16px;box-shadow:0 6px 18px rgba(14,165,233,0.18)">Complete operator form</a>
-    </div>
-
-    <div style="margin-top:18px;color:#374151;font-size:13px">
-      <p style="margin:0 0 8px">If you have questions or need assistance, reply to this email or contact: <a href="mailto:support@qit.com">support@qit.com</a></p>
-      <p style="margin:0">Thanks,<br><strong>QIT Verification Team</strong></p>
-    </div>
-
-    <div style="margin-top:12px;font-size:11px;color:#9ca3af">Please do not share the link publicly. The link grants access to the submission for completion only.</div>
-  </div>
-</div>
+  </body>
+</html>
 HTML;
 
-// Plain text fallback
+// Plain-text fallback (for clients that don't render HTML)
 $altBody = "Action required: Complete operator documents\n\n"
-         . "Employee: " . $employee_name . "\n"
-         . "Employee Email: " . $employee_email . "\n"
-         . "Aadhaar: " . $aadhaar_id . "\n"
-         . "Employee ID: " . $unique_id . "\n"
-         . "Mobile: " . $mobile_number . "\n\n"
-         . "Open and complete the operator form: " . $operator_link . "\n\n"
-         . "Need help? support@qit.com\n";
+         . "Submitted by: " . $employee_name . "\n"
+         . "Operator ID: " . $operator_id . "\n"
+         . "Unique Code: " . $operator_code . "\n\n"
+         . "Open and login here: " . $operator_link . "\n\n"
+         . "If you need help reply to this email: support@qit.com\n";
 
-// === PHPMailer send ===
-// NOTE: put real SMTP creds in environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT, SMTP_SECURE)
+// PHPMailer send (use env vars or change below)
 $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
 $smtpUser = getenv('SMTP_USER') ?: 'kelaon73@gmail.com';
-$smtpPass = getenv('SMTP_PASS') ?: 'alwkccislfaqsztr';
+$smtpPass = getenv('SMTP_PASS') ?: 'alwkccislfaqsztr'; // replace or use env
 $smtpPort = getenv('SMTP_PORT') ?: 587;
 $smtpSecure = getenv('SMTP_SECURE') ?: 'tls';
 
 try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
-    $mail->Host       = $smtpHost;
-    $mail->SMTPAuth   = true;
-    $mail->Username   = $smtpUser;
-    $mail->Password   = $smtpPass;
-    if (strtolower($smtpSecure) === 'ssl') {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    } else {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    }
-    $mail->Port       = (int)$smtpPort;
+    $mail->Host = $smtpHost;
+    $mail->SMTPAuth = true;
+    $mail->Username = $smtpUser;
+    $mail->Password = $smtpPass;
+    $mail->SMTPSecure = ($smtpPort == 465 || strtolower($smtpSecure) === 'ssl') ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port = (int)$smtpPort;
+
+    // dev debug - set to 0 for production
+    $mail->SMTPDebug = 0;
+    $mail->Debugoutput = function($str, $level) { error_log("PHPMailer: $str"); };
 
     $mail->setFrom($smtpUser, 'QMIT System');
     $mail->addAddress($operator_email);
-    $mail->addReplyTo('support@qit.com', 'QIT Support');
 
     $mail->isHTML(true);
     $mail->Subject = 'Operator action required — complete documents';
-    $mail->Body    = $bodyHtml;
+    $mail->Body = $bodyHtml;
     $mail->AltBody = $altBody;
 
     $mail->send();
-    $_SESSION['mail_success'] = 'Details sent to operator!';
-} catch (Exception $e) {
-    error_log('Mailer Error: ' . $e->getMessage());
-    $_SESSION['mail_error'] = 'Mail send failed';
+    $_SESSION['mail_success'] = 'Details sent to operator.';
+} catch (Throwable $e) {
+    error_log('Mailer exception: ' . $e->getMessage());
+    $_SESSION['mail_error'] = 'Mail sending failed. Check SMTP settings or server log.';
 }
 
 header('Location: em_verfi.php');
