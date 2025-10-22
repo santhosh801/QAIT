@@ -83,6 +83,8 @@ $label_map = [
   <meta charset="utf-8">
   <title>Re-submit Documents — <?= htmlspecialchars($op['operator_full_name'] ?: $op['operator_id']) ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+     <link rel="icon" type="image/png" href="qit_logo.png">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <style>
     body{font-family:Inter,system-ui,Arial,sans-serif;background:#f7fafc;color:#0f172a;padding:18px}
     .wrap{max-width:920px;margin:20px auto;background:#fff;padding:18px;border-radius:10px;box-shadow:0 8px 30px rgba(2,6,23,.06)}

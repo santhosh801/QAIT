@@ -483,6 +483,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QMIT — Operator Registration</title>
   <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
+     <link rel="icon" type="image/png" href="qit_logo.png">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="operator_view.css">
   <style>
     /* small helper styles for download buttons and layout */

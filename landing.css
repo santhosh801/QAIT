@@ -6,30 +6,30 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap');
 
-/* Theme variables (two-color) */
-:root{
-  --gold: #bd9a68;       /* primary gold */
-  --black: #0f172a;      /* primary black (text & accents) */
-  --bg: #ffffff;         /* page background (kept white for legibility) */
-  --card: #ffffff;       /* card surface */
-  --muted: rgba(15,23,42,0.55); /* muted text */
-  --ring: rgba(15,23,42,0.06);
-  --shadow: 0 18px 40px rgba(15,23,42,0.12); /* box shadow tuned for two-color theme */
-  --radius: 12px;
-  --sidebar-w: 220px;
-}
+  /* Theme variables (two-color) */
+  :root{
+    --gold: #bd9a68;       /* primary gold */
+    --black: #0f172a;      /* primary black (text & accents) */
+    --bg: #ffffff;         /* page background (kept white for legibility) */
+    --card: #ffffff;       /* card surface */
+    --muted: rgba(15,23,42,0.55); /* muted text */
+    --ring: rgba(15,23,42,0.06);
+    --shadow: 0 18px 40px rgba(15,23,42,0.12); /* box shadow tuned for two-color theme */
+    --radius: 12px;
+    --sidebar-w: 220px;
+  }
 
-/* Reset & base */
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--black);
-  font-family:"Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  overflow-x:hidden;
+  /* Reset & base */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--black);
+    font-family:"Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    overflow-x:hidden;
 }
 /* ---------- SITE LOGO ---------- */
 /* preserve your existing .logo rules; this targets the new wrapper */
@@ -1435,356 +1435,241 @@ button:focus, a:focus, input:focus, textarea:focus { outline:3px solid rgba(189,
   .hero-text h1{ font-size:clamp(36px,8vw,60px); line-height:1.02; white-space:normal; border-right:none; width:auto; animation:none }
   .hero-img img{ width:100%; height:auto }
 }
-/* ---------- ABOUT BLOCK (scoped) ---------- */
-/* ABOUT BLOCK — tighter spacing + synced color/fade with balls */
-.about-block {
-  padding:16px 12px;
-  max-width:1200px;
-  margin:18px auto;
-  position:relative;
+/* =============== ABOUT: theme-merged & defensive CSS =============== */
+/* ===== ABOUT: FINAL OVERRIDES - paste AT THE END of your main CSS file ===== */
+/* === FINAL ABOUT FIX === */
+/* =================== ABOUT: KYC PORTAL THEME =================== */
+/* ========== ABOUT: Timeline-style (gold/black) ========== */
+:root{
+  --gold: #bd9a68;
+  --black: #0f172a;
+  --muted: rgba(15, 23, 42, 0.912);
+  --bg: #ffffff;
+  --card: #ffffff;
+  --ring: rgba(15,23,42,0.06);
+  --shadow: 0 18px 40px rgba(15,23,42,0.08);
+  --radius: 10px;
+ 
+   --sr-distance-x: 40px;      /* how far from left -> visible */
+  --sr-duration: 800ms;      /* animation duration (slow) */
+  --sr-ease: cubic-bezier(.16,.88,.28,1);
+  --sr-stagger: 180ms;  
+  
+    --sr-distance-y: 40px;   
+  
+  /* visible one-by-one */
 }
 
-/* top row: center label; side ball groups placed near the label */
-.about-top {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  position:relative;
-  min-height:72px;
+/* base */
+#about { background:var(--bg); padding:64px 1px; box-sizing:border-box;  color:var(--black); }
+#about .container { max-width:1180px; margin:0 auto; }
+
+/* layout: left text, right timeline */
+#about .about-grid { display:grid; grid-template-columns: 1fr 460px; gap:78px; align-items:start; }
+
+/* LEFT = text */
+#about .about-left { padding-right:0px; }
+#about .eyebrow { text-transform:uppercase; letter-spacing:.22em; color:var(--muted); font-size:16px; margin-bottom:12px;  }
+#about .heading {
+  font-family:"Vidaloka", serif;
+  font-weight:200;
+  font-size: clamp(34px,6.6vw,56px);
+  line-height:1.02;
+  color:var(--gold);
+  margin:0px 0px 39px 0px;
 }
+#about .sub { color:var(--muted); font-size:13px; letter-spacing:.06em; margin-bottom:18px; text-transform:none; }
+#about .lead { color:var(--muted); font-size:15px; line-height:1.9; margin-bottom:18px; max-width:720px; }
 
-/* central label: default gold, fades in when .in is present */
-.about-tag { z-index:10; }
-.about-label {
-  color:var(--gold);                /* default color */
-  font-size:64px;
-  letter-spacing:.06em;
-  font-family:"Vidaloka",serif;
-  font-weight:300;
-  line-height:1;
-  margin-top: 20px;
-  text-align:center;
-  display:inline-block;
-  padding:0 18px;
-  white-space:nowrap;
-  opacity:0;                        /* fade in on scroll */
-  transition: color .6s ease, opacity .6s ease, transform .6s cubic-bezier(.2,.9,.2,1);
-  transform: translateY(16px);
-}
+/* list in left column */
+#about .about-features { margin-top:8px; padding-left:18px; color:var(--muted); line-height:1.9; }
+#about .about-features li { margin-bottom:10px; font-size:14px; }
+#about .about-features li strong { color:var(--black); font-weight:700; }
 
-/* visible state (IntersectionObserver will add .in) */
-.about-block.in .about-label {
-  opacity:1;
-  transform:none;
-}
-
-/* side ball groups: positioned relative to the center (closer) */
-.about-balls-left,
-.about-balls-right {
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  display:flex;
-  gap:8px;
-  align-items:center;
-  pointer-events:none;
-  z-index:5;
-}
-
-/* place the groups close to center */
-.about-balls-left  { left: calc(50% - 320px); }  /* adjust -320px inward from center */
-.about-balls-right { left: calc(50% + 260px); }  /* adjust +260px from center */
-
-/* ball sizes & base */
-.ab-dot { border-radius:50%; background:var(--gold); opacity:0; transform:scale(.45); transition: background .4s ease; }
-.ab-dot.large{ width:24px; height:24px; }
-.ab-dot.med{ width:16px; height:16px; }
-.ab-dot.small{ width:8px; height:8px; }
-
-/* same animation triggers as before */
-.about-block.in .ab-dot.large { animation:abPopBig 3.6s ease-in-out infinite; opacity:1; animation-delay:0.2s; }
-.about-block.in .ab-dot.med   { animation:abPopMed 3.6s ease-in-out infinite; opacity:1; animation-delay:0.55s; }
-.about-block.in .ab-dot.small { animation:abPopSmall 3.6s ease-in-out infinite; opacity:1; animation-delay:0.9s; }
-
-/* toggle color mode: when JS adds .balls-alt the balls go black and label matches */
-.about-block.balls-alt .ab-dot { background:var(--black); }
-.about-block.balls-alt .about-label { color:var(--black); }
-
-/* keyframes (kept same) */
-@keyframes abPopSmall { 0%{ transform:scale(.25); opacity:0 } 12%{ transform:scale(1.05); opacity:1 } 40%{ transform:scale(.85); opacity:.9 } 70%{ transform:scale(.35); opacity:.28 } 100%{ transform:scale(.2); opacity:0 } }
-@keyframes abPopMed   { 0%{ transform:scale(.25); opacity:0 } 10%{ transform:scale(1.06); opacity:1 } 36%{ transform:scale(.88); opacity:.9 } 68%{ transform:scale(.45); opacity:.28 } 100%{ transform:scale(.2); opacity:0 } }
-@keyframes abPopBig   { 0%{ transform:scale(.28); opacity:0 } 14%{ transform:scale(1.07); opacity:1 } 44%{ transform:scale(.92); opacity:.9 } 72%{ transform:scale(.5); opacity:.28 } 100%{ transform:scale(.22); opacity:0 } }
-
-/* responsive: move balls inward on narrow screens; hide if too narrow */
-@media (max-width:1100px){
-  .about-balls-left  { left: calc(50% - 220px); }
-  .about-balls-right { left: calc(50% + 160px); }
-  .about-label{ font-size:48px; }
-}
-@media (max-width:800px){
-  /* keep balls visible and scale them down + nudge inward for phones */
-  .about-balls-left,
-  .about-balls-right {
-    display:flex !important;
-    gap:6px;
-    align-items:center;
-    top:50%;
-    transform:translateY(-50%) scale(.92);
-    pointer-events:none;
-    z-index:12;
-    opacity:1 !important;
-  }
-
-  /* move groups much closer to the center so all six are visible */
-  .about-balls-left  { left: calc(50% - 110px) !important; }
-  .about-balls-right { left: calc(50% + 70px)  !important; }
-
-  /* shrink visual sizes on mobile */
-  .about-balls-left .ab-dot.large,
-  .about-balls-right .ab-dot.large  { width:18px; height:18px; }
-  .about-balls-left .ab-dot.med,
-  .about-balls-right .ab-dot.med    { width:12px; height:12px; }
-  .about-balls-left .ab-dot.small,
-  .about-balls-right .ab-dot.small  { width:6px;  height:6px; }
-
-  .about-label{ font-size:32px; margin-top:10px; }
-}
-
-/* layout grid */
-.about-grid { display:grid; grid-template-columns: 1fr 1fr; gap:28px; align-items:center; margin-top: 20px; }
-.about-images { display:flex; gap:1px; justify-content:center; align-items:center; }
-.book-wrap { width:120px; perspective:1400px; display:inline-block;margin-top: 50px; }
-.book-img { width:120px; height:auto; border-radius:16px; object-fit:cover; box-shadow: 0 30px 60px rgba(15,23,42,0.08); transition: transform 1.4s cubic-bezier(.2,.9,.2,1), filter .6s ease; display:block; }
-
-/* front/back book effect; back is offset slightly */
-.book-wrap .front { transform-origin:left center; transform:rotateY(0deg); z-index:2; }
-.book-wrap .back  { transform-origin:right center; margin-left:-36px; transform:rotateY(0deg); opacity:0.98; }
-
-/* ABOUT SLIDER — scoped */
-/* ---------- ABOUT: unified slider CSS (replacement) ---------- */
-/* Paste this in place of your existing .about-slider related CSS */
-
-/* container + top label keep your original styles above this if needed */
-.about-slider { width:100%; max-width:520px; margin:0 auto; position:relative; border-radius:20px; margin-right:  200px; }
-.about-slider__viewport { width:100%; position:relative; overflow:hidden; } /* critical: hide non-active slides */
-
-/* Slides row: don't use a fixed 300% width. keep it flexible and translateX */
-.about-slider__slides {
-  display:flex;
-  flex-wrap:nowrap;
-  width:100%;
-  transition: transform 700ms cubic-bezier(.22,.9,.3,1);
-  will-change: transform;
-}
-
-/* Each slide is one full viewport-width slot */
-.about-slider__slide {
-  flex: 0 0 100% !important;
-  width: 100% !important;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-  box-sizing:border-box;
-  visibility: visible; /* slides are clipped by viewport + translated */
-  opacity: 1;
-}
-
-/* Active state on slide just used for optional styling */
-.about-slider__slide.is-active { /* no overlay needed; class can be used for focus styles */ }
-
-/* Images: responsive, centered, and scaled cleanly */
-.about-slider__slide img.transparent-slide,
-.about-slider__slide img {
-  display:block;
-  width:auto;               /* allow height-driven sizing on desktop */
-  max-width:88%;
-  height:auto;
-  max-height:44vh;
-
-  object-fit:contain;       /* safe default for mobile/desktop; we'll override on large screens */
-  background:transparent;
-  padding:8px 0;
-}
-
-/* Desktop: more visual crop/feel — let height drive size */
-@media (min-width:1100px){
-  .about-slider { max-width:520px; }
-  .about-slider__viewport, .about-slider__slides { height:420px; }
-  .about-slider__slide { height:420px; }
-  .about-slider__slide img.transparent-slide,
-  .about-slider__slide img { object-fit:cover; height:85%; max-height:85%; max-width:100%; width:auto; }
-}
-
-/* Medium screens */
-@media (min-width:801px) and (max-width:1099px){
-  .about-slider { max-width:460px; }
-  .about-slider__viewport, .about-slider__slides { height:360px; }
-  .about-slider__slide { height:360px; }
-  .about-slider__slide img.transparent-slide { object-fit:cover; height:80%; max-height:80%; }
-}
-
-/* Mobile: show full image without cropping */
-@media (max-width:800px){
-  .about-slider { max-width:360px; }
-  .about-slider__viewport { height:auto; }
-  .about-slider__slide { height:auto; }
-  .about-slider__slide img.transparent-slide,
-  .about-slider__slide img {
-    object-fit:contain !important;
-    max-width:84% !important;
-    max-height:46vh !important;
-    width:auto !important;
-    margin:8px auto 0 !important;
-  }
-}
-
-/* Dots / controls — keep them centered under viewport */
-.about-slider__controls {
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  bottom:14px;
-  display:flex;
-  gap:12px;
-  z-index:30;
-}
-.about-slider__dot {
-  width:14px; height:14px; border-radius:50%;
-  background:rgba(15,23,42,0.18); border:none; cursor:pointer;
-  transition: transform .18s ease, background .22s ease;
-}
-.about-slider__dot.is-active { background: var(--gold) !important; }
-.about-slider__dot:hover{ transform:translateY(-3px); }
-
-/* defensive: make sure viewport hides overflow */
-.about-slider__viewport { overflow:hidden !important; }
-
-
-/* content (right) */
-.about-content {
-  padding: 8px 6px;
-  margin-top: 27px;
+/* initial hidden state - slide from left */
+#about .about-left .eyebrow,
+#about .about-left .heading,
+#about .about-left .sub,
+#about .about-left .lead,
+#about .about-left .about-features {
   opacity: 0;
-  transform: translateY(60px); /* start below, invisible */
-  transition: opacity 1.2s ease-out, transform 1.2s ease-out;
+  transform: translateX(calc(-1 * var(--sr-distance-x)));
+  transition: opacity var(--sr-duration) var(--sr-ease),
+              transform var(--sr-duration) var(--sr-ease);
   will-change: opacity, transform;
 }
 
-.about-content.visible {
-  opacity: 1;
-  transform: translateY(0); /* smoothly slide up into place */
+/* revealed state */
+#about .about-left .reveal-in {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
 }
 
-.about-title {
-  font-family: 'Vidaloka', serif;
-  font-weight: 300;
-  font-size: 44px;
-  color: var(--gold);
-  line-height: 1.02;
-  margin: 24px 0 12px;
-  transition: opacity 2s ease-out, transform 2s ease-out;
-}
-
-.about-desc {
-  color: var(--muted);
-  line-height: 1.6;
-  margin-top: 20px;
-  
-  margin-bottom: 24px;
-  max-width: 860px;
-  transition: opacity 1s ease-out 0.2s, transform 1s ease-out 0.2s;
-}
-
-
-/* rotator (slow fade) */
-.about-rotator { max-width:540px; }
-.rot-item { display:none; opacity:0; transform:translateY(10px); transition: all 900ms cubic-bezier(.2,.9,.2,1); background:linear-gradient(180deg,#fff,#fbfbfb); padding:12px; border-radius:12px; box-shadow:0 20px 50px rgba(15,23,42,0.06); margin-top:12px; }
-.rot-item.active { display:block; opacity:1; transform:none; }
-.rot-item blockquote { margin:0 0 8px; font-style:italic; color:var(--black); }
-.rot-meta { display:flex; gap:12px; align-items:center; color:var(--muted); font-size:13px; }
-
-/* responsive */
-@media (max-width:980px){
-  .about-grid { grid-template-columns: 1fr; text-align:center; }
-  .about-images { justify-content:center; }
-  .about-title { font-size:32px; }
-  .book-img, .book-wrap{ width:260px; }
-}
-/* ==== MOBILE: force full slider images + preserve balls ==== */
-@media (max-width:980px){
-  /* responsive slider sizing */
-  .about-slider { max-width:360px; height:auto !important; max-height:56vh !important; overflow:visible !important; }
-
-  /* show full image rather than cropped */
-  .about-slider__slide img.transparent-slide,
-  .about-slider__slide img {
-    object-fit: contain !important;      /* show whole image */
-    width:auto !important;
-    max-width:92% !important;
-    max-height:56vh !important;
-    margin:0 auto;
-    display:block;
+/* Accessibility: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #about .about-left .eyebrow,
+  #about .about-left .heading,
+  #about .about-left .sub,
+  #about .about-left .lead,
+  #about .about-left .about-features {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
-
-  /* avoid clipping viewport items like shadows */
-  .about-slider__viewport,
-  .about-slider__slides,
-  .about-slider__slide { overflow: visible !important; }
+}/* ======================== RIGHT: TIMELINE (FINAL MERGED) ======================== */
+:root {
+  --sr-distance-y: 48px;      /* vertical animation distance */
+  --sr-duration: 1400ms;      /* slow reveal duration */
+  --sr-ease: cubic-bezier(.16, .88, .28, 1);
+  --sr-stagger: 360ms;        /* time gap between each tl-item */
+  --sr-inner-stagger: 160ms;  /* gap between icon → text */
 }
 
-/* very small phones tweaks */
-@media (max-width:560px){
-  .about-slider { max-width:100%; height:auto !important; border-radius:14px; }
-  .about-block { padding-top:18px !important; padding-bottom:18px !important; }
-  .about-grid { gap:14px; }
+/* --- Base container --- */
+#about .timeline {
+  position: relative;
+  padding-left: 32px;
 }
 
-/* reduce animation aggressiveness on mobile (optional but cleaner) */
-@media (max-width:810px){
-  .about-block.in .ab-dot.large {    animation-duration:3s !important; }
-  .about-block.in .ab-dot.med   { animation-duration:3s !important; }
-  .about-block.in .ab-dot.small { margin-left: 20px; animation-duration:3s !important; }
-}
-/* === ABOUT SLIDER IMAGE BALANCE FIX === */
-.about-slider__slide img.transparent-slide {
-  display: block;
-  width: auto !important;
-  max-width: 88% !important;
-  height: auto !important;
-  max-height: 44vh !important;
-  margin: 0 auto;
-  object-fit: contain !important;
-  padding: 12px 0;
-  background: transparent !important;
+/* Connector line */
+#about .timeline::before {
+  content: "";
+  position: absolute;
+  left: 57px;
+  top: 12px;
+  bottom: 12px;
+  width: 12px;
+  background: linear-gradient(to bottom, rgba(188, 135, 60, 0.905), rgb(0, 0, 0));
+  border-radius: 12px;
 }
 
-/* individual tweaks for perfect centering */
-.about-slider__slide:nth-child(1) img {
-  max-width: 88% !important;
-  max-height: 40vh !important;
-}
-.about-slider__slide:nth-child(2) img {
-  max-width: 84% !important;
-  max-height: 42vh !important;
-}
-.about-slider__slide:nth-child(3) img {
-  max-width: 86% !important;
-  max-height: 44vh !important;
-}
-
-/* ensure no clipping on viewport */
-.about-slider__viewport,
-.about-slider__slides,
-.about-slider__slide {
-  overflow: visible !important;
+/* --- Timeline item --- */
+#about .tl-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  position: relative;
+  opacity: 0;
+  transform: translateY(var(--sr-distance-y));
+  transition: opacity var(--sr-duration) var(--sr-ease),
+              transform var(--sr-duration) var(--sr-ease);
+  will-change: opacity, transform;
 }
 
-/* on very small phones, scale everything down slightly */
-@media (max-width:560px){
-  .about-slider__slide img.transparent-slide {
-    max-width: 92% !important;
-    max-height: 38vh !important;
-    padding: 8px 0;
+/* --- Icon Circle --- */
+#about .tl-dot {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 3px solid var(--gold);
+  box-shadow: 10px 6px 20px rgba(15,23,42,0.06);
+  position: relative;
+  left: -8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity calc(var(--sr-duration)/2) var(--sr-ease),
+              transform calc(var(--sr-duration)/2) var(--sr-ease),
+              background 0.8s var(--sr-ease);
+}
+#about .tl-dot svg {
+  width: 32px;
+  height: 32px;
+  fill: var(--gold);
+  transition: fill 0.45s var(--sr-ease), transform 0.45s var(--sr-ease);
+}
+
+/* --- Text section --- */
+#about .tl-body {
+  padding-left: 6px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity calc(var(--sr-duration)/2) var(--sr-ease),
+              transform calc(var(--sr-duration)/2) var(--sr-ease);
+}
+#about .tl-title {
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: var(--black);
+  font-weight: 700;
+  transition: color 0.45s var(--sr-ease);
+}
+#about .tl-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 300px;
+  letter-spacing: 0.01em;
+}
+
+/* --- Hover subtle effect --- */
+#about .tl-item:hover .tl-dot {
+  background: var(--gold);
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 22px 40px rgba(15,23,42,0.08);
+}
+#about .tl-item:hover .tl-dot svg { fill: #fff; transform: scale(1.06); }
+#about .tl-item:hover .tl-title { color: var(--gold); }
+
+/* --- Reveal state --- */
+#about .timeline .tl-item.reveal-in {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+#about .timeline .tl-item.reveal-in .tl-dot,
+#about .timeline .tl-item.reveal-in .tl-body {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* --- RESPONSIVENESS --- */
+@media (max-width:1060px) {
+  #about .about-grid { grid-template-columns: 1fr; gap: 28px; }
+  #about .timeline { order: 2; padding-left: 0; margin-top: 8px; }
+  #about .timeline::before { left: 22px; width: 8px; }
+  #about .tl-item { align-items: flex-start; }
+}
+
+/* --- MOBILE (≤600px) --- */
+@media (max-width:600px) {
+  :root {
+    --sr-distance-y: 28px;
+    --sr-duration: 900ms;
+    --sr-stagger: 220ms;
+    --sr-inner-stagger: 110ms;
+  }
+  #about { padding: 36px 12px; }
+  #about .timeline { padding-left: 0; }
+  #about .timeline::before { display: none; } /* hide vertical line on mobile */
+  #about .tl-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  #about .tl-dot {
+    width: 64px;
+    height: 64px;
+    left: 0;
+  }
+  #about .tl-dot svg { width: 24px; height: 24px; }
+  #about .tl-body { padding-left: 0; }
+  #about .tl-desc { max-width: 100%; font-size: 14px; }
+}
+
+/* --- Reduced motion support --- */
+@media (prefers-reduced-motion: reduce) {
+  #about .timeline .tl-item,
+  #about .timeline .tl-item .tl-dot,
+  #about .timeline .tl-item .tl-body {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
   }
 }

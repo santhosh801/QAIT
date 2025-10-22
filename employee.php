@@ -148,7 +148,7 @@ $bodyHtml = <<<HTML
 
                   <!-- Employee note -->
                   <div style="padding:12px;border-radius:8px;border:1px solid #000000ff;margin-bottom:14px;font-size:13px;color:#000000;">
-                    Submitted by: <strong>{$employee_name_esc}</strong>
+                    Operator name : <strong>{$employee_name_esc}</strong>
                   </div>
 
                   <!-- Details box -->
@@ -229,11 +229,11 @@ try {
     $mail->SMTPDebug = 0;
     $mail->Debugoutput = function($str, $level) { error_log("PHPMailer: $str"); };
 
-    $mail->setFrom($smtpUser, 'QMIT System');
+    $mail->setFrom($smtpUser, 'Team QIT');
     $mail->addAddress($operator_email);
 
     $mail->isHTML(true);
-    $mail->Subject = 'Operator action required — complete documents';
+    $mail->Subject = 'Operator action required complete documents';
     $mail->Body = $bodyHtml;
     $mail->AltBody = $altBody;
 
