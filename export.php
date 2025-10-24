@@ -39,7 +39,7 @@ if ($colsRes && $colsRes->num_rows) {
 }
 
 // rows
-$res = $mysqli->query("SELECT * FROM operatordoc $where ORDER BY created_at DESC");
+$res = $mysqli->query("SELECT * FROM operatordoc $where ORDER BY COALESCE(last_modified_at, created_at) DESC");
 while ($r = $res->fetch_assoc()) fputcsv($out, $r);
 
 fclose($out);

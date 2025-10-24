@@ -4,6 +4,29 @@
 // Requirements: PHP 7.2+, mysqli, fileinfo extension enabled.
 // Drop-in replacement: saves files under folder "nameofoperator_branchname_resumbiteed"
 // and filenames as "nameoperator_doclabelname_resum__<rand>.<ext>"
+// base path constants (required by process_single_file)
+$BASE = __DIR__;
+$WEB_BASE_UPLOAD = 'uploads/operatordoc/'; // used for web paths stored in DB (adjust if your site serves them from a different URL path)
+
+// simple mapping from upload doc_key -> operatordoc column (extend if needed)
+$map_label_to_column = [
+    'aadhar_file' => 'aadhar_file',
+    'pan_file' => 'pan_file',
+    'voter_file' => 'voter_file',
+    'ration_file' => 'ration_file',
+    'consent_file' => 'consent_file',
+    'gps_selfie_file' => 'gps_selfie_file',
+    'police_verification_file' => 'police_verification_file',
+    'permanent_address_proof_file' => 'permanent_address_proof_file',
+    'parent_aadhar_file' => 'parent_aadhar_file',
+    'nseit_cert_file' => 'nseit_cert_file',
+    'self_declaration_file' => 'self_declaration_file',
+    'non_disclosure_file' => 'non_disclosure_file',
+    'edu_10th_file' => 'edu_10th_file',
+    'edu_college_file' => 'edu_college_file',
+    'agreement_file' => 'non_disclosure_file', // example alias
+    // add any other label -> column aliases here
+];
 
 ini_set('display_errors', 0);
 error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
@@ -18,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ----- DB CONNECT ---------------------------------------------------------
-$mysqli = new mysqli('localhost','root','','qmit_system');
+$mysqli = new mysqli('localhost', 'root', '', 'qmit_system');
 if ($mysqli->connect_error) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'DB connection error']);
@@ -28,25 +51,41 @@ $mysqli->set_charset('utf8mb4');
 
 // ----- CONFIG -------------------------------------------------------------
 $MAX_SIZE = 8 * 1024 * 1024; // 8 MB
-$ALLOWED_MIME = ['application/pdf','image/jpeg','image/png'];
+$ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'];
 $UPLOAD_ROOT = __DIR__ . '/uploads/operatordoc'; // base root; inside this we create the requested folder
 if (!is_dir($UPLOAD_ROOT)) @mkdir($UPLOAD_ROOT, 0755, true);
 
 // canonical keys allowed (must match operatordoc columns)
 $ALLOWED_DOC_KEYS = [
-  'aadhar_file','pan_file','voter_file','ration_file','consent_file','gps_selfie_file',
-  'police_verification_file','permanent_address_proof_file','parent_aadhar_file',
-  'nseit_cert_file','self_declaration_file','non_disclosure_file','edu_10th_file',
-  'edu_12th_file','edu_college_file','agreement_file','bank_passbook_file','photo_file'
+    'aadhar_file',
+    'pan_file',
+    'voter_file',
+    'ration_file',
+    'consent_file',
+    'gps_selfie_file',
+    'police_verification_file',
+    'permanent_address_proof_file',
+    'parent_aadhar_file',
+    'nseit_cert_file',
+    'self_declaration_file',
+    'non_disclosure_file',
+    'edu_10th_file',
+    'edu_12th_file',
+    'edu_college_file',
+    'agreement_file',
+    'bank_passbook_file',
+    'photo_file'
 ];
 
 // ----- HELPERS ------------------------------------------------------------
-function json_exit($arr, $code = 200) {
+function json_exit($arr, $code = 200)
+{
     http_response_code($code);
     echo json_encode($arr, JSON_UNESCAPED_UNICODE);
     exit;
 }
-function safe_mime_for_file($tmpPath) {
+function safe_mime_for_file($tmpPath)
+{
     try {
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         return $finfo->file($tmpPath) ?: '';
@@ -55,7 +94,8 @@ function safe_mime_for_file($tmpPath) {
     }
 }
 // sanitize a string to lowercase, keep letters, numbers, dash and underscore
-function san($s) {
+function san($s)
+{
     $s = (string)$s;
     $s = preg_replace('/[^\pL\pN\-_]+/u', '_', $s);
     $s = preg_replace('/__+/', '_', $s);
@@ -80,11 +120,12 @@ if ($token !== '') {
                 try {
                     $exp = new DateTime($token_request['expires_at']);
                     $now = new DateTime();
-                    if ($now > $exp) json_exit(['success'=>false,'message'=>'Token expired'], 400);
-                } catch (Exception $e) {}
+                    if ($now > $exp) json_exit(['success' => false, 'message' => 'Token expired'], 400);
+                } catch (Exception $e) {
+                }
             }
         } else {
-            json_exit(['success'=>false,'message'=>'Invalid token'], 400);
+            json_exit(['success' => false, 'message' => 'Invalid token'], 400);
         }
         $tStmt->close();
     }
@@ -93,18 +134,18 @@ if ($token !== '') {
 // operator id (prefer POST id, else derive from token row)
 $operator_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 if ($operator_id <= 0 && $token_request) $operator_id = (int)$token_request['operator_id'];
-if ($operator_id <= 0) json_exit(['success'=>false,'message'=>'Missing operator id'], 400);
+if ($operator_id <= 0) json_exit(['success' => false, 'message' => 'Missing operator id'], 400);
 
 // fetch operator full name and branch (if exists) to build folder name
 $opStmt = $mysqli->prepare("SELECT id, COALESCE(operator_full_name, operator_id) AS fullname, 
     (CASE WHEN JSON_EXTRACT(JSON_OBJECT(), '$') IS NOT NULL THEN NULL ELSE NULL END) AS _dummy FROM operatordoc WHERE id = ? LIMIT 1");
 // Note: above query simply fetches fullname; we'll fetch branch separately if it exists
 $opStmt = $mysqli->prepare("SELECT id, operator_full_name, operator_id, email, (SELECT NULL) as branch_check FROM operatordoc WHERE id = ? LIMIT 1");
-if (!$opStmt) json_exit(['success'=>false,'message'=>'Operator lookup failed (prepare)'], 500);
+if (!$opStmt) json_exit(['success' => false, 'message' => 'Operator lookup failed (prepare)'], 500);
 $opStmt->bind_param('i', $operator_id);
 $opStmt->execute();
 $opR = $opStmt->get_result();
-if (!$opR || $opR->num_rows === 0) json_exit(['success'=>false,'message'=>'Operator not found'], 404);
+if (!$opR || $opR->num_rows === 0) json_exit(['success' => false, 'message' => 'Operator not found'], 404);
 $opRow = $opR->fetch_assoc();
 $opStmt->close();
 
@@ -148,21 +189,34 @@ $mysqli->query("CREATE TABLE IF NOT EXISTS resubmission_uploads (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // ----- FILE PROCESSOR -----------------------------------------------------
-function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, $ALLOWED_DOC_KEYS, $requestId = null, $operator_name_s = 'operator') {
-    $result = ['name'=>$origName,'ok'=>false,'msg'=>'','stored'=>null,'doc_key'=>$docKey];
+function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, $ALLOWED_DOC_KEYS, $requestId = null, $operator_name_s = 'operator')
+{
+    $result = ['name' => $origName, 'ok' => false, 'msg' => '', 'stored' => null, 'doc_key' => $docKey];
 
-    if (!is_uploaded_file($tmpPath)) { $result['msg']='No uploaded file'; return $result; }
+    if (!is_uploaded_file($tmpPath)) {
+        $result['msg'] = 'No uploaded file';
+        return $result;
+    }
 
     $size = @filesize($tmpPath);
-    if ($size === false) { $result['msg']='Unable to read file'; return $result; }
-    if ($size > $MAX_SIZE) { $result['msg']='File too large'; return $result; }
+    if ($size === false) {
+        $result['msg'] = 'Unable to read file';
+        return $result;
+    }
+    if ($size > $MAX_SIZE) {
+        $result['msg'] = 'File too large';
+        return $result;
+    }
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mime = $finfo->file($tmpPath) ?: '';
-    if (!in_array($mime, $ALLOWED_MIME, true)) { $result['msg']='Invalid file type: ' . $mime; return $result; }
+    if (!in_array($mime, $ALLOWED_MIME, true)) {
+        $result['msg'] = 'Invalid file type: ' . $mime;
+        return $result;
+    }
 
     $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
-    if (!in_array($ext, ['jpg','jpeg','png','pdf'], true)) {
+    if (!in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'], true)) {
         if ($mime === 'application/pdf') $ext = 'pdf';
         elseif ($mime === 'image/png') $ext = 'png';
         elseif (strpos($mime, 'jpeg') !== false) $ext = 'jpg';
@@ -170,7 +224,11 @@ function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli,
     }
 
     // create random suffix
-    try { $rand = bin2hex(random_bytes(6)); } catch (Exception $e) { $rand = substr(md5(uniqid('', true)), 0, 12); }
+    try {
+        $rand = bin2hex(random_bytes(6));
+    } catch (Exception $e) {
+        $rand = substr(md5(uniqid('', true)), 0, 12);
+    }
 
     // sanitize docKey label part
     $doc_label = preg_replace('/[^a-z0-9\-_]+/i', '_', $docKey);
@@ -181,11 +239,62 @@ function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli,
     // build filename exactly: nameoperator_doclabelname_resum__<rand>.<ext>
     $san_operator = preg_replace('/[^a-z0-9\-_]+/i', '_', $operator_name_s);
     $san_operator = strtolower(trim($san_operator, "_-"));
-    $filename = $san_operator . '_' . $doc_label . '_resum__' . $rand . '.' . $ext;
-
+    $safeLabel = preg_replace('/[^A-Za-z0-9_-]/', '_', $doc_label);
+    $ts = time();
+    $filename = "{$san_operator}_{$safeLabel}_{$ts}_{$rand}.{$ext}";
     $dest = rtrim($UPLOAD_BASE, '/\\') . '/' . $filename;
-    if (!move_uploaded_file($tmpPath, $dest)) { $result['msg']='Failed to move file'; return $result; }
-    
+
+    // ensure destination dir exists and is writable
+    $destDir = dirname($dest);
+    if (!is_dir($destDir)) {
+        if (!@mkdir($destDir, 0755, true)) {
+            $result['msg'] = 'Failed to create folder: ' . $destDir;
+            error_log("process_single_file: mkdir failed for {$destDir}");
+            return $result;
+        }
+    }
+    // try to move and more helpful errors
+    if (!@move_uploaded_file($tmpPath, $dest)) {
+        $err = error_get_last();
+        $msg = isset($err['message']) ? $err['message'] : 'move_uploaded_file failed';
+        $result['msg'] = 'Failed to move file: ' . $msg;
+        error_log("process_single_file: move_uploaded_file failed dest={$dest} err=" . var_export($err, true));
+        return $result;
+    }
+
+
+    // Build a web-relative path to store in DB (adjust WEB_BASE_UPLOAD if needed)
+    $relative = rtrim($WEB_BASE_UPLOAD, '/\\') . '/' . basename($dest); // e.g. uploads/operatordoc/<folder>/<file>
+
+    // Determine mapped column from doc_label or fallback to docKey name
+    $mapped = $map_label_to_column[$doc_label] ?? null;
+    if (!$mapped) {
+        // if doc_key already matches a column name use that
+        if (in_array($doc_label, $ALLOWED_DOC_KEYS, true)) $mapped = $doc_label;
+    }
+
+    if ($mapped && isset($mysqli) && $mysqli instanceof mysqli) {
+        // Update operatordoc by numeric operator id (this file uses $operatorId param)
+        $upd = $mysqli->prepare("UPDATE operatordoc SET `$mapped` = ?, last_modified_at = NOW() WHERE id = ? LIMIT 1");
+        if ($upd) {
+            $upd->bind_param('si', $relative, $operatorId);
+            $ok = $upd->execute();
+            $upd->close();
+            if (!$ok) {
+                error_log("operatordoc update failed for id {$operatorId}, col {$mapped}: " . $mysqli->error);
+                $result['msg'] = 'DB update failed';
+                // continue — we still return success at file level
+            }
+        } else {
+            error_log("prepare failed: " . $mysqli->error);
+        }
+    }
+
+    // log into resubmission_uploads (existing code will run after this block)
+    $result['success'] = true;
+    $result['path'] = $relative;
+
+
     $webPath = 'uploads/operatordoc/' . $folder = basename($UPLOAD_BASE) . '/' . $filename;
     $result['stored'] = $webPath;
 
@@ -198,11 +307,11 @@ function process_single_file($tmpPath, $origName, $docKey, $operatorId, $mysqli,
             $ok = $upd->execute();
             $upd->close();
             if (!$ok) {
-                $result['msg']='DB update failed';
+                $result['msg'] = 'DB update failed';
                 return $result;
             }
         } else {
-            $result['msg']='DB prepare failed (update)';
+            $result['msg'] = 'DB prepare failed (update)';
             return $result;
         }
     }
@@ -232,9 +341,9 @@ if (isset($_FILES['file']) && isset($_POST['doc_key'])) {
         $res = process_single_file($file['tmp_name'], $file['name'], $doc_key, $operator_id, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, $ALLOWED_DOC_KEYS, ($token_request['id'] ?? null), $operator_name_s);
         $summary[$doc_key][] = $res;
     } else {
-        $summary[$doc_key][] = ['name'=>'','ok'=>false,'msg'=>'Upload error code: '.$file['error'],'doc_key'=>$doc_key];
+        $summary[$doc_key][] = ['name' => '', 'ok' => false, 'msg' => 'Upload error code: ' . $file['error'], 'doc_key' => $doc_key];
     }
-    json_exit(['success'=>true,'summary'=>$summary]);
+    json_exit(['success' => true, 'summary' => $summary]);
 }
 
 // bulk associative files structure: $_FILES['files']['name'][docKey]
@@ -243,12 +352,15 @@ if (!empty($_FILES['files']) && !empty($_FILES['files']['name'])) {
         // handle both single and multiple for each docKey
         if (is_array($nameField)) {
             $count = count($nameField);
-            for ($i=0; $i<$count; $i++) {
+            for ($i = 0; $i < $count; $i++) {
                 $origName = $nameField[$i];
                 $tmpPath = $_FILES['files']['tmp_name'][$docKey][$i] ?? null;
                 $err = $_FILES['files']['error'][$docKey][$i] ?? UPLOAD_ERR_NO_FILE;
                 if ($err === UPLOAD_ERR_NO_FILE) continue;
-                if ($err !== UPLOAD_ERR_OK) { $summary[$docKey][] = ['name'=>$origName,'ok'=>false,'msg'=>'Upload error '.$err,'doc_key'=>$docKey]; continue; }
+                if ($err !== UPLOAD_ERR_OK) {
+                    $summary[$docKey][] = ['name' => $origName, 'ok' => false, 'msg' => 'Upload error ' . $err, 'doc_key' => $docKey];
+                    continue;
+                }
                 $res = process_single_file($tmpPath, $origName, $docKey, $operator_id, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, $ALLOWED_DOC_KEYS, ($token_request['id'] ?? null), $operator_name_s);
                 $summary[$docKey][] = $res;
             }
@@ -257,7 +369,10 @@ if (!empty($_FILES['files']) && !empty($_FILES['files']['name'])) {
             $tmpPath = $_FILES['files']['tmp_name'][$docKey] ?? null;
             $err = $_FILES['files']['error'][$docKey] ?? UPLOAD_ERR_NO_FILE;
             if ($err === UPLOAD_ERR_NO_FILE) continue;
-            if ($err !== UPLOAD_ERR_OK) { $summary[$docKey][] = ['name'=>$origName,'ok'=>false,'msg'=>'Upload error '.$err,'doc_key'=>$docKey]; continue; }
+            if ($err !== UPLOAD_ERR_OK) {
+                $summary[$docKey][] = ['name' => $origName, 'ok' => false, 'msg' => 'Upload error ' . $err, 'doc_key' => $docKey];
+                continue;
+            }
             $res = process_single_file($tmpPath, $origName, $docKey, $operator_id, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, $ALLOWED_DOC_KEYS, ($token_request['id'] ?? null), $operator_name_s);
             $summary[$docKey][] = $res;
         }
@@ -279,7 +394,10 @@ if (!empty($_FILES['files']) && !empty($_FILES['files']['name'])) {
                 if (empty($docs)) $all_present = false;
 
                 foreach ($docs as $dk) {
-                    if (!in_array($dk, $ALLOWED_DOC_KEYS, true)) { $all_present = false; break; }
+                    if (!in_array($dk, $ALLOWED_DOC_KEYS, true)) {
+                        $all_present = false;
+                        break;
+                    }
                     $qq = $mysqli->prepare("SELECT `$dk` FROM operatordoc WHERE id = ? LIMIT 1");
                     if ($qq) {
                         $qq->bind_param('i', $operator_id);
@@ -291,38 +409,51 @@ if (!empty($_FILES['files']) && !empty($_FILES['files']['name'])) {
                             $rrow = $r2->fetch_assoc();
                             if (!empty($rrow[$dk])) $has = true;
                         }
-                        if (!$has) { $all_present = false; break; }
-                    } else { $all_present = false; break; }
+                        if (!$has) {
+                            $all_present = false;
+                            break;
+                        }
+                    } else {
+                        $all_present = false;
+                        break;
+                    }
                 }
 
                 if ($all_present) {
                     $u = $mysqli->prepare("UPDATE resubmission_requests SET used = 1, used_at = NOW(), completed_at = NOW(), status = 'completed' WHERE id = ? LIMIT 1");
-                    if ($u) { $u->bind_param('i', $req_id); $u->execute(); $u->close(); }
+                    if ($u) {
+                        $u->bind_param('i', $req_id);
+                        $u->execute();
+                        $u->close();
+                    }
                 }
             }
             $r->close();
         }
     }
 
-    json_exit(['success'=>true,'summary'=>$summary]);
+    json_exit(['success' => true, 'summary' => $summary]);
 }
 
 // files[general][] multi-upload (fallback)
 if (!empty($_FILES['files']) && isset($_FILES['files']['name']['general']) && is_array($_FILES['files']['name']['general'])) {
     $docKey = 'general';
     $count = count($_FILES['files']['name']['general']);
-    for ($i=0; $i<$count; $i++) {
+    for ($i = 0; $i < $count; $i++) {
         $origName = $_FILES['files']['name']['general'][$i];
         $tmpPath = $_FILES['files']['tmp_name']['general'][$i] ?? null;
         $err = $_FILES['files']['error']['general'][$i] ?? UPLOAD_ERR_NO_FILE;
         if ($err === UPLOAD_ERR_NO_FILE) continue;
-        if ($err !== UPLOAD_ERR_OK) { $summary[$docKey][] = ['name'=>$origName,'ok'=>false,'msg'=>'Upload error '.$err,'doc_key'=>$docKey]; continue; }
+        if ($err !== UPLOAD_ERR_OK) {
+            $summary[$docKey][] = ['name' => $origName, 'ok' => false, 'msg' => 'Upload error ' . $err, 'doc_key' => $docKey];
+            continue;
+        }
         $dynamicKey = $docKey . '_' . $i;
         $res = process_single_file($tmpPath, $origName, $dynamicKey, $operator_id, $mysqli, $UPLOAD_BASE, $ALLOWED_MIME, $MAX_SIZE, array_merge($ALLOWED_DOC_KEYS, [$dynamicKey]), ($token_request['id'] ?? null), $operator_name_s);
         $summary[$docKey][] = $res;
     }
-    json_exit(['success'=>true,'summary'=>$summary]);
+    json_exit(['success' => true, 'summary' => $summary]);
 }
 
 // nothing matched
-json_exit(['success'=>false,'message'=>'No files received or unsupported structure'], 400);
+json_exit(['success' => false, 'message' => 'No files received or unsupported structure'], 400);

@@ -7,6 +7,7 @@
         header("Location: employee.php");
         exit;
       }
+
       // -----------------------------
       // DB
       // -----------------------------
@@ -216,8 +217,36 @@
         }
 
         // -----------------------------
-        // Counts
+        // Counts (safe queries with error-checking)
         // -----------------------------
+        function safe_count($mysqli, $sql)
+        {
+          $res = $mysqli->query($sql);
+          if ($res === false) {
+            error_log("DB count query failed: " . $mysqli->error . " -- SQL: " . $sql);
+            return 0;
+          }
+          $row = $res->fetch_assoc();
+          return (int)($row['total'] ?? 0);
+        }
+
+        // Use safe_count to avoid calling fetch_assoc() on boolean when a query fails
+        $employeeMailCount    = safe_count($mysqli, "SELECT COUNT(*) AS total FROM employees");
+        $operatorPendingCount = safe_count($mysqli, "SELECT COUNT(*) AS total FROM operatordoc WHERE status='pending'");
+        $operatorFilledCount  = safe_count($mysqli, "SELECT COUNT(*) AS total FROM operatordoc WHERE status='accepted'");
+
+        // Working count: prefer single SQL that covers variants
+        $operatorWorkingCount = safe_count(
+          $mysqli,
+          "SELECT COUNT(*) AS total FROM operatordoc WHERE work_status='working' OR status IN ('accepted','verified','em_verified','ph_verified')"
+        );
+
+        $operatorNotWorkingCount = safe_count($mysqli, "SELECT COUNT(*) AS total FROM operatordoc WHERE work_status='not working'");
+
+        // total rows for pagination (safe)
+        $total_rows = safe_count($mysqli, "SELECT COUNT(*) as total FROM operatordoc $where");
+        $total_pages = max(1, ceil($total_rows / $limit));
+
         $employeeMailCount      = (int)$mysqli->query("SELECT COUNT(*) AS total FROM employees")->fetch_assoc()['total'] ?? 0;
         $operatorPendingCount   = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status='pending'")->fetch_assoc()['total'] ?? 0;
         $operatorFilledCount    = (int)$mysqli->query("SELECT COUNT(*) AS total FROM operatordoc WHERE status='accepted'")->fetch_assoc()['total'] ?? 0;
@@ -256,8 +285,8 @@
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
             <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
             <!-- Chart.js + datalabels -->
-             <link rel="icon" type="image/png" href="favicon.png" >
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+            <link rel="icon" type="image/png" href="favicon.png">
+            <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -328,11 +357,298 @@
                     <a href="#" data-section="operatorOverviewSection" data-filter="not working"><span class="nav-label">Not Working</span><span class="nav-icon"></span><span class="badge"><?= $operatorNotWorkingCount ?></span></a>
                     <div class="k-sb-footer">
                       <a href="#" data-section="operatorMailingSection"><span class="nav-label">Operator Mailing</span><span class="nav-icon"></span></a>
+                      <a href="#" data-section="existingOperatorUploadSection"><span class="nav-label">Existing Operator Upload</span><span class="nav-icon"></span></a>
+
                     </div>
                   </nav>
                 </div>
                 <!-- circular emoji collapse/expand button -->
               </aside>
+
+              <!-- START: Existing Operator Upload Panel (REPLACEMENT) -->
+              <section id="existingOperatorUploadSection" class="content-section qb-panel" style="padding:20px; display:block;">
+                <div class="qb-grid">
+                  <!-- LEFT: Upload Form -->
+                  <div class="qb-left">
+                    <h3>Existing Operator Upload</h3>
+
+                    <!-- SINGLE OPERATOR -->
+                    <form id="singleOperatorForm" class="qb-form" data-action="single_operator" enctype="multipart/form-data" method="post">
+                      <label class="qb-label">Operator ID (Single Operator)<span class="qb-required">*</span></label>
+                      <input id="operatorId" name="operator_id" type="text" required class="qb-input" placeholder="e.g. OP123">
+
+                      <label class="qb-label">Operator Excel (CSV/XLSX)</label>
+                      <div class="qb-row">
+                        <input id="operatorExcel" name="operator_excel" type="file" accept=".csv,.xlsx,.xls" class="qb-file" />
+                        <button type="button" onclick="location.href='OperatorBulkUploadDocumentsText.php?download_template=1'">Download template</button>
+
+                      </div>
+
+                      <label class="qb-label">Operator Docs (ZIP or folder)</label>
+                      <input id="operatorDocs" name="operator_docs[]" webkitdirectory directory multiple type="file" accept=".zip,.pdf,.jpg,.jpeg,.png" />
+                      <div id="operatorDocsFileList" class="qb-filelist"></div>
+                      <div class="qb-hint">If you upload a ZIP, the top-level folder **must** be the Operator ID (e.g. <code>OP123/</code>)</div>
+
+                      <div class="qb-actions">
+                        <button type="submit" class="submit-btn qb-submit-icon" title="Upload">Upload</button>
+                      </div>
+
+                      <div id="uploadResult" class="qb-result" aria-live="polite"></div>
+                    </form>
+
+                    <hr class="qb-hr">
+
+                    <!-- BULK OPERATORS Excel (header-only) -->
+                    <form id="bulkExcelForm" class="qb-form" enctype="multipart/form-data" method="post" data-action="bulk_text">
+                      <label class="qb-label">Bulk Operators Excel (Text Only)</label>
+                      <div class="qb-row">
+                        <input id="bulkExcel" name="bulk_excel" type="file" accept=".csv,.xlsx,.xls" required class="qb-file" />
+                      <button type="button" onclick="location.href='OperatorBulkUploadDocumentsText.php?download_template=1'">Download template</button>
+
+
+                      </div>
+
+                      <div class="qb-actions">
+                        <button type="submit" class="submit-btn">Submit</button>
+                      </div>
+                    </form>
+
+                    <hr class="qb-hr">
+
+                    <!-- BULK DOCS ZIP -->
+                    <form id="bulkDocsForm" class="qb-form" enctype="multipart/form-data" method="post" data-action="bulk_docs">
+                      <label class="qb-label">Bulk Docs ZIP (subfolders named by Operator ID)</label>
+                      <input id="bulkDocs" name="bulk_docs" type="file" accept=".zip" required class="qb-file" />
+                      <div class="qb-hint">Each subfolder inside the ZIP must be named with the Operator ID (e.g. <code>OP123/</code>)</div>
+                      <div class="qb-actions">
+                        <button type="submit" class="submit-btn">Submit</button>
+                      </div>
+                    </form>
+
+                    <div id="uploadResultBottom" style="margin-top:10px;"></div>
+                  </div>
+
+                  <!-- RIGHT: Rule Book -->
+                  <aside class="qb-right">
+                    <h3>Upload Rules & Examples</h3>
+
+                    <div class="rule-card">
+                      <div class="rule-header">
+                        <strong>Rule 1 — Single Operator Upload (Excel & Docs)</strong>
+                        <button class="rule-toggle" data-target="#rule1">Show</button>
+                      </div>
+
+                      <div id="rule1" class="rule-body" hidden>
+                        <p>
+                          Use this form to upload data for <strong>one operator at a time</strong>.
+                          You may upload a small Excel/CSV row for the operator <em>AND/OR</em> a folder/ZIP of documents for that same operator.
+                        </p>
+
+                        <h4>Required — Operator ID</h4>
+                        <p>
+                          The <code>Operator ID</code> field is mandatory (<code>operator_id</code>).
+                          Use the exact operator ID format used in your system (e.g. <code>OP123</code>). The server will sanitize names to [A–Z a–z 0–9 _ -].
+                        </p>
+
+                        <h4>Operator Excel (CSV / XLSX)</h4>
+                        <p>
+                          - Prefer <strong>CSV (UTF-8)</strong> for reliability. If you upload XLSX the server must support XLSX parsing (PhpSpreadsheet) — otherwise export to CSV first.
+                          - Template contains header-only row. Click <em>Download template</em> to get the canonical header. Do not modify header names.
+                          - Only text fields go in the CSV — keep any file-column fields blank (e.g. <code>aadhar_file</code>, <code>pan_file</code>, <code>voter_file</code>). Files must be uploaded via the Docs input or ZIP.
+                        </p>
+
+                        <h4>Operator Docs (ZIP or folder)</h4>
+                        <p>
+                          - Accepts: <code>.zip</code>, <code>.pdf</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>.
+                          - If uploading a ZIP: the top-level folder **must** be exactly the Operator ID (e.g. <code>OP123/</code>). No nested ZIP files; no extra top-level folders.
+                          - If uploading a directory (webkitdirectory), the same rule applies: top-level path equals Operator ID.
+                        </p>
+
+                        <pre class="qb-code">
+Example ZIP layout (good)
+OP123/ aadhar.pdf, pan.jpg, address.png, consent.pdf
+
+Bad: OP123/docs/aadhar.pdf  → top level must be OP123/
+Bad: OP123.zip inside another folder → uploader ignores nested zips
+    </pre>
+
+                        <h4>Filename keywords & auto-mapping</h4>
+                        <p>
+                          Filenames that include these keywords will be auto-mapped into DB columns:
+                          <code>aadhar</code>, <code>aadhaar</code>, <code>pan</code>, <code>voter</code>, <code>ration</code>, <code>consent</code>, <code>gps</code>, <code>police</code>, <code>nda</code>, <code>10th</code>, <code>12th</code>, <code>college</code>.
+                          Keep file names descriptive and keyword-rich (e.g. <code>OP123_aadhar.jpg</code>, <code>OP123_pan.pdf</code>).
+                        </p>
+
+                        <h4>Quick Troubleshooting</h4>
+                        <ul>
+                          <li>If upload fails: check server response in DevTools Network tab — look for JSON errors (e.g. <code>Missing bulk_excel</code> / <code>Invalid caseType</code>).</li>
+                          <li>If CSV rows aren’t picked up: ensure header row is present and operator_id column exists (system expects <code>operator_id</code> header).</li>
+                          <li>Files not appearing? confirm <code>uploads/operators/&lt;OPID&gt;/docs/</code> is writable by the webserver user.</li>
+                        </ul>
+
+                        <h4>Notes for admins</h4>
+                        <ul>
+                          <li>The PHP already provided handles ZIP extraction and filename keyword mapping. Don’t change column names in CSV template or it will break mapping.</li>
+                          <li>Use the canonical <code>download_template.php</code> endpoint to provide the exact header to end-users — avoids mismatches.</li>
+                        </ul>
+                      </div>
+                    </div>
+
+
+
+
+
+
+                    <div class="rule-card">
+                      <div class="rule-header">
+                        <strong>Rule 2 — Bulk Operator Upload (ZIP or Excel/CSV)</strong>
+                        <button class="rule-toggle" data-target="#rule4">Show</button>
+                      </div>
+                      <div id="rule4" class="rule-body" hidden>
+
+                        <p>
+                          Upload either of the following:
+                          <br>(A) A <strong>ZIP</strong> containing operator folders <code>OPID/</code> (for documents), or
+                          <br>(B) A <strong>CSV</strong> (or Excel exported as CSV UTF-8) file containing operator details.
+                        </p>
+
+                        <h4>ZIP Upload — for Documents</h4>
+                        <p>
+                          Each subfolder inside the ZIP must be named exactly as the Operator ID (e.g. <code>OP1001/</code>).
+                          The folder should only contain related document files — <strong>no other folders, zips, or unrelated files</strong>.
+                        </p>
+                        <pre class="qb-code">
+OP1001/ aadhar.pdf, pan.jpg, address.png, consent.pdf
+OP1002/ voter.jpg, gps.png, police.pdf
+    </pre>
+                        <p>
+                          Filenames that include keywords such as
+                          <code>aadhar</code>, <code>pan</code>, <code>voter</code>, <code>consent</code>, <code>gps</code>,
+                          <code>police</code>, <code>nda</code>, <code>10th</code>, <code>12th</code>, <code>college</code>
+                          are automatically mapped to database columns.
+                        </p>
+
+                        <h4>CSV Upload — for Operator Details</h4>
+                        <p>
+                          Use the <strong>Bulk Operators Excel (Text Only)</strong> upload for creating operator rows.
+                          The CSV must contain all header fields exactly as in the system template.
+                          <br>Each row represents one operator record.
+                          <br><strong>Important:</strong> No file upload columns (like <code>aadhar_file</code>) should contain any data — keep them blank.
+                        </p>
+
+                        <pre class="qb-code">
+id,operator_id,operator_full_name,email,branch_name,joining_date,operator_contact_no,father_name,dob,gender,
+aadhar_number,pan_number,voter_id_no,ration_card,nseit_number,bank_name,status,work_status
+,OP1001,Ravi Kumar,ravi.kumar@example.com,Salem,2024-05-01,9876543210,Kumar,1998-02-10,Male,1111-2222-3334,ABCDE1234F,TNVOTE1,RC1,NSEIT1,Indian Bank,Accepted,Working
+,OP1002,Meera Nair,meera.nair@example.com,Chennai,2024-06-15,9876501234,Suresh,1999-07-21,Female,1111-2222-3335,ABCDE1235F,TNVOTE2,RC2,NSEIT2,Indian Bank,Accepted,Working
+    </pre>
+
+                        <h4>Notes</h4>
+                        <ul>
+                          <li>ZIP adds or updates document files for operators.</li>
+                          <li>CSV adds or updates text data for operators (no files inside CSV).</li>
+                          <li>Operator folder names must exactly match the IDs inside the CSV.</li>
+                          <li>Do not include any extra nested folders or other file types in the ZIP.</li>
+                          <li>Operator IDs are case-sensitive (use uppercase format like <code>OP1001</code>).</li>
+                          <li>If you use Excel, always export it as <strong>CSV (UTF-8)</strong> before upload.</li>
+                          <li>All uploads automatically sanitize filenames — only A–Z, 0–9, underscore, and dash are allowed.</li>
+                          <li>Template download will always include the latest approved 51-field header.</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="rule-card">
+                      <div class="rule-header">
+                        <strong>Rule 3 — Bulk Docs ZIP Upload</strong>
+                        <button class="rule-toggle" data-target="#rule3">Show</button>
+                      </div>
+
+                      <div id="rule3" class="rule-body" hidden>
+                        <p>
+                          Upload a single <strong>ZIP file</strong> that contains all operator folders.
+                          Each operator’s folder must be named exactly by their <strong>Operator ID</strong> — for example, <code>OP1001/</code>.
+                          Inside each folder, include only that operator’s required documents.
+                        </p>
+
+                        <h4>ZIP Folder Rules</h4>
+                        <ul>
+                          <li>Each subfolder must be named exactly as the Operator ID (e.g. <code>OP1001/</code>).</li>
+                          <li>No spaces, special symbols, or mixed case — only <code>A–Z</code>, <code>0–9</code>, <code>_</code>, and <code>-</code> are allowed.</li>
+                          <li>Do not nest multiple ZIPs inside another ZIP — the system ignores nested archives.</li>
+                          <li>Do not include Excel or text files inside the ZIP. This upload is strictly for documents only.</li>
+                          <li>Each operator’s folder should contain PDF, JPG, JPEG, or PNG documents only.</li>
+                        </ul>
+
+                        <h4>Correct ZIP Structure (Example)</h4>
+                        <pre class="qb-code">
+WS.zip
+│
+├── OP1001/
+│   ├── aadhar.pdf
+│   ├── pan_card.jpg
+│   ├── voter_id.png
+│   └── consent.pdf
+│
+├── OP1002/
+│   ├── aadhar.jpg
+│   ├── gps_selfie.png
+│   ├── police_verification.pdf
+│   └── address_proof.jpg
+    </pre>
+
+                        <h4>Filename Auto-Mapping</h4>
+                        <p>
+                          The system automatically detects document types based on filename keywords.
+                          For example:
+                        </p>
+                        <ul>
+                          <li><code>aadhar</code> / <code>aadhaar</code> → Aadhar File</li>
+                          <li><code>pan</code> → PAN File</li>
+                          <li><code>voter</code> → Voter File</li>
+                          <li><code>ration</code> / <code>familycard</code> → Ration Card File</li>
+                          <li><code>consent</code> / <code>agreement</code> → Consent File</li>
+                          <li><code>gps</code> / <code>selfie</code> / <code>geotag</code> → GPS Selfie</li>
+                          <li><code>police</code> / <code>verification</code> → Police Verification File</li>
+                          <li><code>address</code> / <code>proof</code> → Permanent Address Proof</li>
+                          <li><code>nseit</code> / <code>cert</code> → NSEIT Certificate</li>
+                          <li><code>nda</code> / <code>non_disclosure</code> → Non-Disclosure File</li>
+                          <li><code>10th</code> / <code>sslc</code> / <code>matric</code> → 10th Certificate</li>
+                          <li><code>12th</code> / <code>hsc</code> / <code>plus2</code> → 12th Certificate</li>
+                          <li><code>college</code> / <code>degree</code> / <code>btech</code> → College Certificate</li>
+                        </ul>
+
+                        <h4>Important Notes</h4>
+                        <ul>
+                          <li>The ZIP is automatically extracted into <code>uploads/operators/&lt;OperatorID&gt;/docs/</code>.</li>
+                          <li>File names are sanitized — only [A–Z, a–z, 0–9, _, -] are allowed. Invalid characters are replaced with underscores.</li>
+                          <li>If any folder name doesn’t match an Operator ID, it’s skipped (and logged).</li>
+                          <li>Duplicate file names are automatically renamed with timestamps to avoid overwriting.</li>
+                          <li>The database updates each operator’s record with web-accessible file paths.</li>
+                        </ul>
+
+                        <h4>Quick Validation Tips</h4>
+                        <ul>
+                          <li>Before uploading, open your ZIP — confirm folders are named correctly (no “docs/” or “compressed folder/” prefixes).</li>
+                          <li>Make sure the ZIP size is within your server’s limit (<code>upload_max_filesize</code> and <code>post_max_size</code> in PHP.ini).</li>
+                          <li>Never upload multiple operators’ files inside the same subfolder — keep each operator isolated.</li>
+                          <li>To re-upload updated docs, just upload the new ZIP — existing operator folders will be updated automatically.</li>
+                        </ul>
+
+                        <h4>Summary</h4>
+                        <p>
+                          ✅ <strong>Goal:</strong> One ZIP → Many operators → Each folder = one operator.
+                          ❌ <strong>Don’t include:</strong> Excel files, nested ZIPs, random images, or misnamed folders.
+                          💡 <strong>Tip:</strong> Always verify the folder naming before compressing — saves debugging time.
+                        </p>
+
+                      </div>
+                    </div>
+
+
+                  </aside>
+                </div>
+              </section>
+              <!-- END: Existing Operator Upload Panel -->
+
               <main>
                 <div class="k-container">
                   <div class="k-page-head">
@@ -397,39 +713,39 @@
                     <div id="overviewTablePlaceholder"></div>
                   </section>
                   <!-- Mailing form -->
-             <!-- Mailing form -->
-<section id="operatorMailingSection" class="k-section hidden">
-  <div class="signup mail-form">
-    <form method="post" action="employee.php">
-      <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
+                  <!-- Mailing form -->
+                  <section id="operatorMailingSection" class="k-section hidden">
+                    <div class="signup mail-form">
+                      <form method="post" action="employee.php">
+                        <label for="chk" aria-hidden="true">Employee → Operator Mail</label>
 
-      <!-- Row 1 -->
-      <div class="mail-row">
-        <input type="text" name="employee_name" placeholder="Employee Name" required>
-        <input type="email" name="employee_email" placeholder="Employee Email" required>
-      </div>
+                        <!-- Row 1 -->
+                        <div class="mail-row">
+                          <input type="text" name="employee_name" placeholder="Employee Name" required>
+                          <input type="email" name="employee_email" placeholder="Employee Email" required>
+                        </div>
 
-      <!-- Row 2 -->
-      <div class="mail-row">
-        <input type="email" name="operator_email" placeholder="Operator Email" required>
-        <input type="text" name="operator_id" placeholder="Operator ID" required>
-      </div>
+                        <!-- Row 2 -->
+                        <div class="mail-row">
+                          <input type="email" name="operator_email" placeholder="Operator Email" required>
+                          <input type="text" name="operator_id" placeholder="Operator ID" required>
+                        </div>
 
-      <!-- Row 3 -->
-      <div class="mail-row">
-        <input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required>
-        <input type="text" name="unique_id" placeholder="EMPLOYEE ID" required>
-      </div>
+                        <!-- Row 3 -->
+                        <div class="mail-row">
+                          <input type="text" name="aadhaar_id" placeholder="Aadhaar ID" required>
+                          <input type="text" name="unique_id" placeholder="EMPLOYEE ID" required>
+                        </div>
 
-      <!-- Row 4 -->
-      <div class="mail-row">
-        <input type="text" name="mobile_number" placeholder="Mobile Number" required>
-      </div>
+                        <!-- Row 4 -->
+                        <div class="mail-row">
+                          <input type="text" name="mobile_number" placeholder="Mobile Number" required>
+                        </div>
 
-      <button class="btn-effect3" type="submit">Submit</button>
-    </form>
-  </div>
-</section>
+                        <button class="btn-effect3" type="submit">Submit</button>
+                      </form>
+                    </div>
+                  </section>
 
 
 

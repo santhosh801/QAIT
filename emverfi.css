@@ -2155,3 +2155,116 @@ button:focus, .small-btn:focus, .cd-item:focus { outline: 3px solid rgba(189,154
 
 
 /* End of override section */
+/* ---------- Upload panel styles (append) ---------- */
+.qb-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* left form */
+.qb-left { background: transparent; color: var(--gold-dark);  }
+.qb-form { background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 12px; box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px; }
+.qb-label { display:block; font-weight:300; margin: .6rem 0 .25rem; color:#333; margin-top: 20px; }
+.qb-required { color:#ff6b35; margin-left:4px;}
+.qb-input, .qb-file { width:100%; padding:.6rem .8rem; border-radius:10px; border:1px solid #e8e8e8; background:#fff; }
+.qb-row { display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem; }
+.qb-small { padding:.45rem .6rem; border-radius:8px; background:#fff; border:1px solid #e8e8e8; cursor:pointer; font-size:.86rem; }
+.qb-actions { margin-top:1rem; display:flex; gap:.75rem; align-items:center; }
+.qb-hint { font-size:.85rem; color:#666; margin-top:.5rem; }
+
+/* filelist */
+.qb-filelist { margin-top:.5rem; display:flex; flex-direction:column; gap:.4rem; }
+.qb-file-row { display:flex; justify-content:space-between; align-items:center; padding:.4rem .6rem; border-radius:8px; background:#fafafa; border:1px solid #f0f0f0; }
+.qb-file-remove { background:transparent; border:none; color:rgb(247, 9, 9); font-weight:200; cursor:pointer; }
+
+/* right rulebook */
+.qb-right { background: rgba(255,255,255,0.95); padding:1rem; border-radius:12px;box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px; }
+.rule-card { border-bottom:1px dashed #eee; padding: .6rem 0; }
+.rule-header { display:flex; justify-content:space-between; align-items:center; gap:.6rem; }
+.rule-header strong { font-size: .98rem; }
+.rule-toggle { background:transparent; border:1px solid #eee; padding:.35rem .6rem; border-radius:8px; cursor:pointer; }
+.rule-body { margin-top:.6rem; color:#444; font-size:.92rem; }
+.qb-tree { list-style:none; padding-left:1rem; margin: .5rem 0; color:#333; }
+.qb-tree > li { margin-bottom:.35rem; }
+.qb-code { background:#f7f7f7; padding:.5rem; border-radius:6px; font-family:monospace; font-size:.85rem; overflow:auto; }
+
+/* simulated tree preview */
+.qb-sim-tree { margin-top:.5rem; display:flex; flex-direction:column; gap:.5rem; }
+.qb-toggle-tree { background: #fff; border:1px solid #f0f0f0; padding:.45rem .6rem; cursor:pointer; border-radius:8px; }
+.qb-tree-preview { padding:.6rem; background:#fff; border-radius:8px; border:1px solid #f5f5f5; margin-top:.3rem; }
+
+/* small utilities */
+.qb-hr { border:none; border-top:1px solid #eee; margin:1rem 0; }
+.qb-result.qb-msg-success { color: #127A4B; }
+.qb-result.qb-msg-error { color: #A12B2B; }
+
+/* show/hide animation */
+.qb-panel, .qb-form, .rule-card { animation: fadeInUp .45s both; }
+@keyframes fadeInUp { from { opacity:0; transform: translateY(12px);} to { opacity:1; transform:none; } }
+
+/* responsive */
+@media (max-width: 980px) {
+  .qb-grid { grid-template-columns: 1fr; }
+  .qb-right { order: 2; }
+}
+
+/* small code helper for tree items */
+.qb-tree li ul { margin-left: .6rem; list-style: disc; color:#666; }
+
+/* keep your existing .submit-btn styles; add spacing fix */
+.submit-btn { min-width: 140px; }
+/* Rule dropdown smooth slide + fade (append) */
+.rule-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 420ms cubic-bezier(.2,.9,.2,1),
+    opacity 260ms ease;
+  will-change: max-height, opacity;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+}
+
+/* visible state */
+.rule-body.is-open {
+  opacity: 1;
+  /* max-height will be set inline via JS to exact scrollHeight for smooth animation */
+  padding-top: .6rem;
+  padding-bottom: .6rem;
+  margin-top: .5rem;
+}
+
+/* bullet styling for lists inside rule-body */
+.rule-body ul, .rule-body ol {
+  margin: .4rem 0 0.6rem 1.05rem;
+  padding: 0;
+  color: #333;
+  font-size: .95rem;
+  line-height: 1.45;
+}
+.rule-body li { margin: .35rem 0; }
+
+/* small transition helper for the toggle button */
+.rule-toggle {
+  transition: transform .18s ease, background-color .18s ease;
+}
+.rule-toggle.rotate {
+  transform: rotate(180deg);
+}
+
+/* accessibility focus styles */
+.rule-toggle:focus {
+  outline: 3px solid rgba(189,154,104,0.18);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* optional lightweight fade-in utility used briefly by JS */
+.rule-body._flash {
+  animation: fadeInQuick .36s ease both;
+}
+@keyframes fadeInQuick { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }

@@ -396,6 +396,7 @@
       "operatorStatusSection",
       "operatorOverviewSection",
       "operatorMailingSection",
+      "existingOperatorUploadSection",
     ];
     sections.forEach((s) => {
       const el = document.getElementById(s);
@@ -2784,3 +2785,528 @@ function downloadResubmissionByOperator(opId) {
       alert("Failed to check resubmission request");
     });
 }
+// ---------- Operator Bulk Upload Integration (improved) ----------
+/* CSS loader: the CSS below should be put in your separate CSS file as requested.
+   See the CSS section after this JS block. */
+
+(function() {
+  // Create a global toast container if not present
+  if (!document.getElementById('qb-toast-container')) {
+    const c = document.createElement('div');
+    c.id = 'qb-toast-container';
+    document.body.appendChild(c);
+  }
+})();
+
+function showToast(message, type = 'info', autoHide = 3000) {
+  // types: info | success | error
+  const container = document.getElementById('qb-toast-container');
+  const t = document.createElement('div');
+  t.className = `qb-toast qb-toast-${type} qb-fadein`;
+  t.innerHTML = `<div class="qb-toast-body">${message}</div>`;
+  container.appendChild(t);
+  // auto hide
+  setTimeout(()=> {
+    t.classList.remove('qb-fadein');
+    t.classList.add('qb-fadeout');
+    setTimeout(()=> t.remove(), 450);
+  }, autoHide);
+}
+
+// Helper to disable and re-enable form controls during upload
+function setFormBusy(form, busy=true) {
+  const btns = form.querySelectorAll('button, input[type="submit"]');
+  btns.forEach(b => b.disabled = busy);
+  if (busy) form.classList.add('qb-busy');
+  else form.classList.remove('qb-busy');
+}
+
+// file list widget: converts <input type="file"> into a list with remove buttons
+function attachFileList(input) {
+  if (!input) return;
+  // avoid double attach
+  if (input.dataset.qbAttached) return;
+  input.dataset.qbAttached = '1';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'qb-filelist-wrapper';
+  input.insertAdjacentElement('afterend', wrapper);
+
+  function refreshList() {
+    wrapper.innerHTML = '';
+    // For multi-file inputs, use FileList
+    const files = input.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((f, idx) => {
+      const row = document.createElement('div');
+      row.className = 'qb-file-row';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'qb-file-name';
+      nameSpan.textContent = f.name;
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'qb-file-remove';
+      removeBtn.innerHTML = '&#x2716;';
+      removeBtn.title = 'Remove';
+      removeBtn.addEventListener('click', () => {
+        // remove this file from input.files via DataTransfer
+        const dt = new DataTransfer();
+        Array.from(files).forEach((file, i) => { if (i !== idx) dt.items.add(file); });
+        input.files = dt.files;
+        refreshList();
+      });
+      row.appendChild(nameSpan);
+      row.appendChild(removeBtn);
+      wrapper.appendChild(row);
+    });
+  }
+
+  input.addEventListener('change', refreshList);
+}
+
+// wire custom file lists for known inputs if present
+document.addEventListener('DOMContentLoaded', () => {
+  // match both plain and array-style input names
+  const names = ['operator_excel','operator_docs','operator_docs[]','bulk_excel','bulk_docs'];
+  names.forEach(name => {
+    const el = document.querySelector(`input[name="${name}"]`);
+    if (el) attachFileList(el);
+  });
+
+  // also attach to dynamic elements if added later (mutation observer optional)
+});
+
+
+// actual upload code with protection
+async function uploadFormData(form) {
+  // Avoid multiple concurrent uploads from same form
+  if (form.dataset.uploading === '1') {
+    return { success:false, message:'Upload already in progress' };
+  }
+  form.dataset.uploading = '1';
+  setFormBusy(form, true);
+
+  try {
+    const fd = new FormData(form);
+    fd.append('caseType', form.dataset.action || '');
+    const res = await fetch('OperatorBulkUploadDocumentsText.php', { method:'POST', body: fd });
+    const text = await res.text();
+    // Try parse JSON; if not JSON, log raw text for debugging
+    try {
+      const json = JSON.parse(text);
+      return json;
+    } catch (e) {
+      console.error('Non-JSON response from server:', text);
+      return { success:false, message:'Invalid server response (check console)', raw:text };
+    }
+  } catch (err) {
+    console.error('Upload fetch error', err);
+    return { success:false, message:'Network error' };
+  } finally {
+    form.dataset.uploading = '0';
+    setFormBusy(form, false);
+  }
+}
+
+document.addEventListener('submit', function(e) {
+  const form = e.target;
+  if (!form || !form.dataset || !form.dataset.action) return;
+  e.preventDefault();
+  // id for result area
+  const resultDiv = form.querySelector('#uploadResult') || document.getElementById('uploadResult');
+  if (resultDiv) {
+    resultDiv.classList.remove('qb-msg-success','qb-msg-error');
+    resultDiv.textContent = '⏳ Processing...';
+  }
+  uploadFormData(form).then(json => {
+    if (json.success) {
+      if (resultDiv) {
+        resultDiv.textContent = 'Imported ' + (json.message || 'success');
+        resultDiv.classList.add('qb-msg-success');
+      }
+      showToast(json.message || 'Upload successful', 'success', 2500);
+      // refresh overview list
+      if (typeof loadOverview === 'function') loadOverview('', 1);
+    } else {
+      if (resultDiv) {
+        resultDiv.textContent = '⚠️ ' + (json.message || 'Error');
+        resultDiv.classList.add('qb-msg-error');
+      }
+      showToast(json.message || 'Upload failed. Check console.', 'error', 5000);
+      if (json.raw) console.log('Server raw output:', json.raw);
+    }
+  }).catch(err => {
+    console.error(err);
+    showToast('Upload failed. Check console.', 'error', 5000);
+    if (resultDiv) resultDiv.textContent = '⛔ Upload failed';
+  });
+});
+
+function toastUpload(msg, type='info') { showToast(msg, type); }
+// ---------------- Section toggle / sidebar link handler ----------------
+(function(){
+  function showSection(id){
+    // hide all content-section sections
+    document.querySelectorAll('.content-section').forEach(s => {
+      s.style.display = 'none';
+      s.classList.remove('qb-panel-visible');
+    });
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = ''; // let CSS handle layout
+    // small fade-in class
+    el.classList.add('qb-panel-visible');
+    // scroll into view for users
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // attach click to any sidebar nav anchor that has data-section
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a[data-section]');
+    if (!a) return;
+    e.preventDefault();
+    const target = a.getAttribute('data-section');
+    // set active class on nav
+    document.querySelectorAll('nav a[data-section]').forEach(n => n.classList.remove('is-active'));
+    a.classList.add('is-active');
+    showSection(target);
+  });
+
+  // On page load: if URL hash present, try to show that section; else show default.
+  document.addEventListener('DOMContentLoaded', function(){
+    // try to show existingOperatorUploadSection if sidebar link exists and was clicked previously
+    // default to operatorStatusSection if exists
+    const hash = location.hash.replace('#','');
+    if (hash && document.getElementById(hash)) {
+      showSection(hash);
+    } else {
+      // try to find nav with is-active and show its data-section
+      const active = document.querySelector('nav a.is-active');
+      if (active) {
+        const sec = active.getAttribute('data-section');
+        if (sec && document.getElementById(sec)) showSection(sec);
+      }
+    }
+  });
+})();
+// ---------- Operator upload helper (drop-in) ----------
+document.addEventListener('DOMContentLoaded', function() {
+
+  /* ---------- Config: change these headers to your keywords ---------- */
+  const singleHeaders = ['operator_id', 'operator_name', 'email', 'phone']; // change as needed
+  const bulkHeaders   = ['operator_id','operator_name','contact_email'];     // change as needed
+
+  // Utility: download a CSV (header-only)
+  function downloadCSV(headers, filename) {
+    const csv = headers.join(',') + '\n';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Wire download buttons
+  const dlSingle = document.getElementById('downloadSingleTemplate');
+  const dlBulk   = document.getElementById('downloadBulkTemplate');
+  if (dlSingle) dlSingle.addEventListener('click', function(){ downloadCSV(singleHeaders, 'operator-template.csv'); });
+  if (dlBulk)   dlBulk.addEventListener('click', function(){ downloadCSV(bulkHeaders, 'bulk-operators-template.csv'); });
+
+  // show header previews in rulebook
+  const elSinglePreview = document.getElementById('singleHeadersPreview');
+  const elBulkPreview   = document.getElementById('bulkHeadersPreview');
+  if (elSinglePreview) elSinglePreview.textContent = singleHeaders.join(', ');
+  if (elBulkPreview)   elBulkPreview.textContent = bulkHeaders.join(', ');
+
+  // QUICk filelist for operator docs input (for directory uploads)
+  function attachFileListSimple(input, outElSelector) {
+    if (!input) return;
+    const out = document.querySelector(outElSelector);
+    input.addEventListener('change', function() {
+      if (!out) return;
+      out.innerHTML = '';
+      const files = Array.from(input.files || []);
+      if (!files.length) { out.textContent = '(no files)'; return; }
+      files.slice(0, 30).forEach(f => { // cap to 30 for UI sanity
+        const d = document.createElement('div');
+        d.className = 'qb-file-row';
+        d.innerHTML = `<span class="qb-file-name">${f.webkitRelativePath || f.name}</span><small class="qb-file-meta">${(f.size/1024|0)} KB</small>`;
+        out.appendChild(d);
+      });
+      if (files.length > 30) {
+        const more = document.createElement('div'); more.className='qb-file-row'; more.textContent = `+ ${files.length-30} more files...`;
+        out.appendChild(more);
+      }
+    });
+  }
+
+  attachFileListSimple(document.getElementById('operatorDocs'), '#operatorDocsFileList');
+
+  // Rule toggles (expand/collapse)
+  document.querySelectorAll('.rule-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const target = document.querySelector(this.dataset.target);
+      if (!target) return;
+      const showing = !target.hidden;
+      target.hidden = showing;
+      this.textContent = showing ? 'Show' : 'Hide';
+    });
+  });
+
+  // Simulated ZIP preview expansion for demo (uses data-contents attribute)
+  document.querySelectorAll('.qb-toggle-tree').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const preview = this.nextElementSibling;
+      if (!preview) return;
+      if (!preview.hidden) { preview.hidden = true; preview.innerHTML=''; return; }
+      preview.hidden = false;
+      const items = (this.dataset.contents || '').split(',').map(s => s.trim()).filter(Boolean);
+      const ul = document.createElement('ul');
+      ul.className = 'qb-tree';
+      items.forEach(i => {
+        const li = document.createElement('li'); li.textContent = i; ul.appendChild(li);
+      });
+      preview.innerHTML = ''; preview.appendChild(ul);
+    });
+  });
+
+  // small accessibility: submit handlers already handled in your existing code
+  // but we'll prevent a double form submit UX by disabling submit on click quickly
+  document.querySelectorAll('form.qb-form').forEach(form => {
+    form.addEventListener('submit', function(ev) {
+      const btn = form.querySelector('button[type="submit"], .submit-btn');
+      if (btn) { btn.disabled = true; setTimeout(()=>btn.disabled=false, 2000); }
+    });
+  });
+
+  // user note: you can update keywords list dynamically if you want
+  const keywordsList = document.getElementById('keywordsList');
+  if (keywordsList) {
+    // Example: you can populate or update via JS like this:
+    // keywordsList.innerHTML = ['identity','address','agreement'].map(k => '<li>'+k+'</li>').join('');
+  }
+
+}); // DOMContentLoaded
+// Rule toggles: smooth slide + fade + accessible (paste inside DOMContentLoaded or at end)
+(function () {
+  // attach once
+  const toggles = Array.from(document.querySelectorAll('.rule-toggle'));
+  if (!toggles.length) return;
+
+  toggles.forEach(btn => {
+    const targetSelector = btn.dataset.target;
+    if (!targetSelector) return;
+    const panel = document.querySelector(targetSelector);
+    if (!panel) return;
+
+    // init ARIA
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', panel.id || '');
+    panel.setAttribute('aria-hidden', 'true');
+
+    // ensure panel is closed initially (remove hidden attr so CSS controls height)
+    if (panel.hasAttribute('hidden')) {
+      panel.removeAttribute('hidden');
+      panel.style.display = 'block'; // visible to measure, but max-height 0 hides it
+    }
+
+    // helper to collapse
+    function collapse() {
+      // set max-height to current height for transition starting point
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+      // force reflow
+      panel.getBoundingClientRect();
+      // then transition to 0
+      requestAnimationFrame(() => {
+        panel.style.maxHeight = '0px';
+        panel.classList.remove('is-open');
+        panel.setAttribute('aria-hidden', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.classList.remove('rotate');
+      });
+    }
+
+    // helper to expand
+    function expand() {
+      // set max-height to content height
+      panel.style.maxHeight = panel.scrollHeight + 'px';
+      panel.classList.add('is-open', '_flash');
+      panel.setAttribute('aria-hidden', 'false');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.classList.add('rotate');
+      // remove the flash helper after animation
+      setTimeout(()=> panel.classList.remove('_flash'), 380);
+      // then clear maxHeight after transition completes so it can auto-size if content changes
+      panel.addEventListener('transitionend', function te(ev) {
+        if (ev.propertyName === 'max-height') {
+          // only clear if currently open
+          if (panel.classList.contains('is-open')) {
+            panel.style.maxHeight = 'none';
+          }
+          panel.removeEventListener('transitionend', te);
+        }
+      });
+    }
+
+    // toggle handler (prevents double-tap problems)
+    let busy = false;
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (busy) return;
+      busy = true;
+      const isOpen = panel.classList.contains('is-open');
+      if (isOpen) {
+        // collapse
+        // set maxHeight to current content height (if none, compute)
+        panel.style.maxHeight = (panel.scrollHeight || 0) + 'px';
+        // small timeout to ensure starting value applied
+        requestAnimationFrame(() => collapse());
+      } else {
+        // prepare: if maxHeight is 'none' clear style first
+        panel.style.maxHeight = '0px';
+        // allow a frame to apply
+        requestAnimationFrame(() => expand());
+      }
+      // release busy after animation time (safe margin)
+      setTimeout(() => { busy = false; }, 520);
+      // also update button text if desired (Show <-> Hide)
+      btn.textContent = isOpen ? 'Show' : 'Hide';
+    });
+
+    // optional: close panel when clicking outside (useful)
+    document.addEventListener('click', function (ev) {
+      const isInside = ev.target.closest && ev.target.closest(targetSelector);
+      const clickedToggle = ev.target.closest && ev.target.closest('.rule-toggle');
+      if (!isInside && !clickedToggle && panel.classList.contains('is-open')) {
+        // collapse quietly
+        collapse();
+        btn.textContent = 'Show';
+      }
+    }, { capture: true });
+
+  });
+
+})();
+
+
+
+// paste into em_verfi.js (replace older saveRow)
+async function saveRow(maybeId) {
+  try {
+    // determine id
+    let id = (typeof maybeId !== 'undefined' && maybeId !== null) ? Number(maybeId) : NaN;
+
+    // fallback: element dataset or last clicked element
+    if (!id || isNaN(id) || id <= 0) {
+      const ae = document.activeElement;
+      if (ae && ae.dataset && ae.dataset.id) id = Number(ae.dataset.id);
+    }
+    if (!id || isNaN(id) || id <= 0) {
+      const el = window._lastClickedElement || document.activeElement;
+      if (el) {
+        const tr = el.closest ? el.closest('tr[id^="row-"]') : null;
+        if (tr) {
+          const m = tr.id.match(/^row-(\d+)$/);
+          if (m) id = Number(m[1]);
+        }
+      }
+    }
+    // fallback: modal hidden input
+    if (!id || isNaN(id) || id <= 0) {
+      const modal = document.querySelector('#row-edit-modal');
+      if (modal) {
+        const hid = modal.querySelector('input[name="id"], input[name="operator_id"], input[type="hidden"].row-id');
+        if (hid) id = Number(hid.value || hid.dataset.id || 0);
+      }
+    }
+
+    if (!id || isNaN(id) || id <= 0) {
+      alert('Save failed: missing row id. Make sure Save Row is called with the row id or the Save button has data-id attribute.');
+      console.error('saveRow: could not determine id. maybeId=', maybeId, 'activeElement=', document.activeElement);
+      return;
+    }
+
+    // collect data
+    const payload = { id: id };
+    const row = document.getElementById(`row-${id}`);
+    const modal = document.querySelector('#row-edit-modal');
+
+    if (modal) {
+      modal.querySelectorAll('input[name],select[name],textarea[name]').forEach(el => {
+        if (el.type === 'checkbox') payload[el.name] = !!el.checked;
+        else if (el.type === 'radio') { if (el.checked) payload[el.name] = el.value; }
+        else payload[el.name] = el.value;
+      });
+    }
+    if (row) {
+      // gather inputs displayed inline (makeRowEditable uses input[data-edit])
+      row.querySelectorAll('input[name],select[name],textarea[name]').forEach(el => {
+        if (el.type === 'checkbox') payload[el.name] = !!el.checked;
+        else if (el.type === 'radio') { if (el.checked) payload[el.name] = el.value; }
+        else payload[el.name] = el.value;
+      });
+      // also gather cell text content; key = data-col (this helps if your columns are DB column names)
+      row.querySelectorAll('td[data-col]').forEach(td => {
+        const col = td.getAttribute('data-col');
+        if (!col) return;
+        // do not overwrite if we already collected value via named input
+        if (payload.hasOwnProperty(col)) return;
+        const dataVal = td.getAttribute('data-value');
+        payload[col] = dataVal !== null ? dataVal : td.textContent.trim();
+      });
+    }
+
+    console.info('saveRow payload', payload);
+
+    const resp = await fetch('update_row.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      cache: 'no-cache'
+    });
+
+    const raw = await resp.text();
+    console.info('update_row.php raw response', raw);
+    let json = null;
+    try { json = JSON.parse(raw); } catch(e) {
+      alert('Server returned invalid JSON. Check DevTools Network -> Response.');
+      console.error('Invalid JSON response', raw);
+      return;
+    }
+
+    if (!json.success) {
+      // if backend returned helpful diagnostic we show it
+      const msg = (json.message || json.error || 'server error');
+      alert('Save failed: ' + msg);
+      console.error('saveRow server error', json);
+      // If server returned row_preview it helps identify mismatch
+      if (json.row_preview) console.info('row_preview', json.row_preview);
+      return;
+    }
+
+    // success — update cells inline or reload
+    if (json.updated_fields && row) {
+      Object.entries(json.updated_fields).forEach(([col,val]) => {
+        const td = row.querySelector(`td[data-col="${col}"]`);
+        if (!td) return;
+        // if file columns, you may want to create a link
+        if (col.endsWith('_file') && val) td.innerHTML = `<a href="${val}" target="_blank">View</a>`;
+        else td.textContent = val === null ? '' : String(val);
+      });
+    } else {
+      location.reload();
+    }
+
+    showToast ? showToast('Row saved', 'success', 2500) : alert('Row saved successfully');
+  } catch (err) {
+    console.error('saveRow exception', err);
+    alert('Save failed (client error). Check console.');
+  }
+}
+
+// optional: store last-click for fallback id resolution
+document.addEventListener('click', function(e){ window._lastClickedElement = e.target; }, true);

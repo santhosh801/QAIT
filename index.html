@@ -45,7 +45,7 @@
         <p>A secure platform for Operators, Employees, and Admins to collect,
           verify, and manage KYC documents with role-based access, dashboards,
           and automated notifications.</p>
-        <a href="operator_view.php" class="btn" role="button">Start Operator
+        <a href="op_login.html" class="btn" role="button">Start Operator
           Registration</a> </div>
       <div class="hero-img">
         <img src="lan.jpg" alt="KYC Portal Illustration">
@@ -136,45 +136,55 @@
     </section>
 
     <!-- STEPS -->
-    <section class="container">
+    <section class="how-section container">
       <div class="wrap">
-        <!-- Put the plain text you want into the heading; JS below will wrap characters automatically -->
-        <h2 id="howItWorks" class="title-divider">HOWITWORKS</h2>
-      </div> <div class="steps">
-        <div class="flip">
-          <div class="front">
-            <h3>1. Fill KYC Details</h3>
-            <p>Operators securely log in and enter personal, banking, and
-              employment details.</p>
-          </div>
-          <div class="back">
-            <p>Secure login with employee-provided credentials ensures
-              safety.</p>
-          </div>
-        </div>
+        <h2 id="howItWorks" class="title-divider"></h2>
+      </div>
 
-        <div class="flip">
-          <div class="front">
-            <h3>2. Upload Documents</h3>
-            <p>Upload Aadhaar, PAN, Bank Proof, and other mandatory KYC
-              documents.</p>
+      <div class="steps" id="steps">
+        <!-- Card 1 -->
+        <article class="card" tabindex="0">
+          <div class="card-inner">
+            <img class="card-img" src="c1.jpg" alt="KYC image">
+            <h3 class="card-title">1. Fill KYC Details</h3>
+            <p class="card-text">Operators securely log in and complete guided
+              KYC forms: personal details, banking information, employment
+              history and branch assignment. Inline validation helps prevent
+              common errors (Aadhaar/PAN formats, required fields), and all
+              data is transmitted over TLS and stored encrypted for compliance.</p>
           </div>
-          <div class="back">
-            <p>Supported formats: PDF, JPEG, PNG with encrypted storage.</p>
-          </div>
-        </div>
 
-        <div class="flip">
-          <div class="front">
-            <h3>3. Review & Verify</h3>
-            <p>Employees verify and approve/reject submissions. Admin oversees
-              and manages all records.</p>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="card" tabindex="0">
+          <div class="card-inner">
+            <img class="card-img" src="c2.jpg" alt="Upload Documents">
+            <h3 class="card-title">2. Upload Documents</h3>
+            <p class="card-text">Upload Aadhaar, PAN, bank proof and other
+              required documents as images or PDFs. The uploader supports
+              camera capture on mobile, automatic file-type validation,
+              recommended size limits, and optional OCR-assisted extraction to
+              pre-fill form fields for faster submission.</p>
+
           </div>
-          <div class="back">
-            <p>Admins and employees manage operators branch-wise with
-              dashboards.</p>
+
+        </article>
+
+        <!-- Card 3 -->
+        <article class="card" tabindex="0">
+          <div class="card-inner">
+            <img class="card-img" src="c3.jpg" alt="Verify">
+            <h3 class="card-title">3. Review & Verify</h3>
+            <p class="card-text">Employees review submissions, approve or
+              request resubmission with annotated feedback, and record the
+              verification outcome. Admins have a consolidated view for
+              oversight, audit logs, escalations and exportable reports to
+              support compliance and dispute resolution.</p>
+
           </div>
-        </div>
+
+        </article>
       </div>
     </section>
 
@@ -898,9 +908,124 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   io.observe(about);
 })();
+ (function(){
+    // Observe each .card for entrance at 30% viewport (0.3)
+    const cards = document.querySelectorAll('.card');
+    if(!cards.length) return;
+
+    const entranceObserver = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('inview-card');
+          entranceObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.50 });
+
+    cards.forEach(c => entranceObserver.observe(c));
+
+    // Observe inner sequence at 50%: image fade -> h3 fade up -> p flip
+    const sequenceObserver = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          const img = entry.target.querySelector('.card-img');
+          const title = entry.target.querySelector('.card-title');
+          const txt = entry.target.querySelector('.card-text');
+
+          // Sequence timings (adjust as needed)
+          if(img) {
+            img.classList.add('inview-img');
+            img.style.transitionDelay = '0ms';
+          }
+          if(title) {
+            // delay slightly so image appears first
+            setTimeout(()=> title.classList.add('animate-fadeUp'), 1000);
+          }
+          if(txt) {
+            // p flip after h3
+            setTimeout(()=> txt.classList.add('animate-flipX'), 1520);
+          }
+
+          // No need to animate back-face; keep it static
+          sequenceObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.70 });
+
+    cards.forEach(c => sequenceObserver.observe(c));
+
+    // If user supplied images haven't opacity 0 initially, ensure CSS sets it:
+    // (We set it via .card-img style above.)
+  })();
+ /* ===== JS: slower, staggered one-by-one reveal at 50% viewport =====
+   - threshold: 0.50
+   - larger baseDelay for slower cadence
+   - mobile shortens but still gentle
+*/
+(function(){
+  const section = document.querySelector('.features-section[data-animate]');
+  if(!section) return;
+
+  const leftCol = section.querySelector('.features-left');
+  const items = Array.from(section.querySelectorAll('.feature-item'));
+
+  // IntersectionObserver for section (50% visible)
+  const secObs = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        // mark section visible --> left column animates (CSS transition)
+        section.classList.add('visible');
+
+        // Stagger each item slowly:
+        // desktop baseDelay = 360ms (nice slow cadence)
+        // mobile baseDelay = 220ms (keeps it snappy on small screens)
+        const baseDelay = window.innerWidth < 520 ? 220 : 360;
+
+        items.forEach((it, idx) => {
+          // progressively larger delay per item to create one-by-one flow
+          const delay = idx * baseDelay + 120; // small initial offset
+          setTimeout(() => it.classList.add('inview'), delay);
+        });
+
+        // animate heading & paragraph slightly after section visible
+        setTimeout(() => {
+          if(leftCol){
+            leftCol.classList.add('visible');
+          }
+        }, 80);
+
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.50 });
+
+  secObs.observe(section);
+
+  // Accessibility: keyboard reveal on focus
+  items.forEach((it) => {
+    it.addEventListener('focus', () => {
+      if(!it.classList.contains('inview')) it.classList.add('inview');
+    });
+  });
+})();
+// Reveal the .security-title when the .security-section hits 50% viewport
+(function(){
+  const section = document.querySelector('.security-section');
+  if(!section) return;
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        section.classList.add('visible');
+        obs.unobserve(entry.target); // fade in once, no fade-out
+      }
+    });
+  }, { threshold: 0.5 });
+
+  observer.observe(section);
+})();
+
 </script>
-
-
 
   </body>
 </html>

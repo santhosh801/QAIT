@@ -1,0 +1,6 @@
+operator_id,operator_full_name,email,branch_name,joining_date,operator_contact_no,aadhar_number
+OP1001,Ravi Kumar,ravi.kumar@example.com,Salem,2024-05-01,9876543210,1234-5678-9012
+OP1002,Meera Nair,meera.nair@example.com,Chennai,2024-06-15,9876501234,2345-6789-0123
+OP1003,Aarav Singh,aarav.singh@example.com,Bengaluru,2024-07-20,9123456780,3456-7890-1234
+OP1004,Sana Patil,sana.patil@example.com,Coimbatore,2024-08-10,9012345678,4567-8901-2345
+OP1005,Karan Verma,karan.verma@example.com,Madurai,2024-09-05,9001122334,5678-9012-3456
