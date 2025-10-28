@@ -28,7 +28,7 @@ if (!$employee_name || !filter_var($employee_email, FILTER_VALIDATE_EMAIL) || !f
     exit;
 }
 
-// DB connect (with error reporting)
+// DBconnect (with error reporting)
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try {
     $mysqli = new mysqli('localhost', 'root', '', 'qmit_system');

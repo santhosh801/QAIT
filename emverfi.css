@@ -43,7 +43,7 @@ body{
 .header-search {
   display:flex !important;
   align-items:center;
-  gap:24px;
+  gap:4px;
   margin-top: 40px;
   width: 15%;
   margin-left: 250px;
@@ -55,23 +55,17 @@ body{
 /* Search input */
 .header-search input[type="search"], #topSearch {
   height:40px;
-  padding:8px 12px;
+  padding:17px 12px;
   border-radius:10px;
   border:1px solid var(--ring);
   width:360px;
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
   box-sizing:border-box;
   background:#fff;
   font-size:14px;
 }
 
-/* keep header items on single row — no wrap */
-.header-search {
-  display:flex !important;
-  align-items:center;
-  gap:16px;
-  flex-wrap:nowrap !important;     /* prevent wrapping to next line */
-  white-space:nowrap;
-}
+
 
 /* ensure bank select and export csv don't expand and push Export Docs down */
 .header-search .filter-bar,
@@ -85,7 +79,7 @@ body{
 #bulkExportWrap {
   display: inline-flex !important;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-left: 1px !important;    /* adjust spacing */
   vertical-align: middle;
   flex: 0 0 auto ;
@@ -111,8 +105,6 @@ body{
   box-shadow: 0 12px 28px rgba(184,134,80,0.12);
 }
 
-/* defensive: if the Export Docs was wrapped by an extra container, force it inline */
-#bulkExportWrap { white-space: nowrap; }
 
 /* small screens: allow wrapping but keep Export Docs visible under search (tweak as needed) */
 @media (max-width: 880px) {
@@ -942,57 +934,7 @@ aside#resizableSidebar.sidebar-collapsed .k-card-title { text-indent: -9999px; h
 }
 
 /* Search bar: sleek 2px border + glow on focus + pulse animation */
-.header-search {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  --search-bg: #fff;
-  --search-border: rgba(15,23,42,0.12);
-  --accent: #3BAFDA;
-  --glow: 0 8px 28px rgba(59,175,218,0.18);
-  --transition-time: 220ms;
-}
 
-.header-search input[type="search"] {
-  flex: 1 1 auto;
-  min-width: 160px;
-  padding: 10px 12px;
-  border: 2px solid var(--search-border);
-  border-radius: 10px;
-  background: var(--search-bg);
-  font-size: 14px;
-  transition: border-color var(--transition-time) cubic-bezier(.2,.9,.2,1),
-              box-shadow var(--transition-time) cubic-bezier(.2,.9,.2,1),
-              transform 180ms ease;
-  outline: none;
-  box-shadow: none;
-}
-.header-search input[type="search"]:focus,
-.header-search.search-focused input[type="search"] {
-  border-color: var(--accent);
-  box-shadow: var(--glow);
-  transform: translateY(-1px);
-}
-@keyframes search-pulse {
-  0% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
-  50% { box-shadow: 0 12px 32px rgba(59,175,218,0.22); transform: translateY(-2px); }
-  100% { box-shadow: 0 6px 18px rgba(59,175,218,0.12); transform: translateY(-1px); }
-}
-.header-search.searching input[type="search"] {
-  animation: search-pulse 700ms ease-in-out 1;
-}
-.header-search button#topSearchBtn {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 120ms ease, opacity 120ms ease;
-  box-shadow: 0 6px 16px rgba(59,175,218,0.12);
-}
-.header-search button#topSearchBtn:active { transform: translateY(1px); opacity: .95; }
 
 /* Export link should sit visually with the search */
 .header-search a.sidebar-export {
@@ -1538,7 +1480,7 @@ background: linear-gradient(to right, #2c3e50, #f0f4f7); /* W3C, IE 10+/ Edge, F
 /* Give unique hues by known IDs/classes (safe selectors based on verfi.php) */
 #topExport { background: linear-gradient(90deg,#eff6ff,#eaf8ff); color:#0b63a6; border-color: rgba(47,128,237,0.08); }
 #bulkExportWrap .small-btn { background: linear-gradient(90deg,#fff8f1,#fff6ea); color:#8a5b1f; border-color: rgba(165,130,74,0.08); }
-.header-search button#topSearchBtn { background: linear-gradient(90deg,#e6f6ff,#dff6ff); color:#04527a; border-color: rgba(3,105,161,0.06); }
+.header-search button#topSearchBtn { background: linear-gradient(90deg,#e6f6ff,#dff6ff); color:#000000; border-color: rgba(3,105,161,0.06); }
 
 /* unique hover/down animation — push downward on click (distinct feel) */
 .header-search .small-btn:active,
@@ -1873,7 +1815,7 @@ a:hover, button:hover, .small-btn:hover, .status-card:hover, .calendar-wrap:hove
   100% { opacity: 1; transform: translateX(0); }
 }
 
-/* =========================
+/* =========================  
    Large-screen: centered modal with viewport padding (min-width:1200px)
    ========================= */
 @media (min-width: 1200px) {
@@ -2012,11 +1954,7 @@ button:focus, .small-btn:focus, .cd-item:focus { outline: 3px solid rgba(189,154
 }
 
 /* from em_verfi.php — moved inline styles for: <div class="header-search" style="display:flex;align-items:center;gap:20px; width:55%; margin-left:250px;"> */
-.header-search {
-  /* existing file already sets display / align-items / gap — only add layout-specific values */
-  width: 55%;
-  margin-left: 250px;
-}
+
 
 /* from em_verfi.php — moved inline styles for: <div class='row-export' style='display:inline-block; margin-left:8px; margin-top:6px;'> */
 .row-export {
@@ -2268,3 +2206,180 @@ button:focus, .small-btn:focus, .cd-item:focus { outline: 3px solid rgba(189,154
   animation: fadeInQuick .36s ease both;
 }
 @keyframes fadeInQuick { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+#inlineSearch:focus {
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+
+
+
+#overviewTablePlaceholder tbody tr {
+  transition: background 0.2s ease;
+}
+
+#overviewTablePlaceholder tbody tr:hover {
+  background: rgba(255, 229, 100, 0.152);
+}
+.inline-search{
+  height: 34px;
+  padding: 6px 10px;
+  border: 1px solid rgba(15,23,42,.12);
+box-shadow: rgba(0, 0, 0, 0.09) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px; border-radius: 8px;
+  outline: none;
+  min-width: 240px;
+  font: inherit;
+}
+.inline-search:focus{
+  border-color: #000000;
+  box-shadow: rgb(204, 219, 232) 3px 3px 6px 0px inset, rgba(255, 255, 255, 0.5) -3px -3px 6px 1px inset;;
+}/* =========================
+   KYC Table — QIT Theme + Animated + 2px framing
+   ========================= */
+:root{
+  /* QIT-ish palette */
+  --qit-bg: #ffffff;
+  --qit-ink: #000000;
+  --qit-muted: #6b7280;
+  --qit-border: #e6e0d6;            /* warm border, not blue */
+  --qit-header-bg: #ffffff;         /* warm ivory header */
+  --qit-header-ink: #000000;
+  --qit-accent: #c9a34a;            /* gold */
+  --qit-accent-2: #e3c884;          /* light gold */
+  --qit-row-alt: #fffcf7;           /* very light warm */
+  --qit-row-hover: #fff6e7;
+  --qit-radius: 10px;
+}
+
+/* 2px breathing room inside screen */
+.k-container, .table-fragment, #employeeTable { padding-left: 2px; padding-right: 2px; }
+
+/* Frame + shadow */
+#employeeTable .table-wrap,
+.table-fragment .table-wrap,
+.table-fragment {
+  background: var(--qit-bg);
+  border: 1px solid var(--qit-border);
+  border-radius: var(--qit-radius);
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(71, 59, 25, 0.08);
+}
+
+/* Base table */
+#employeeTable table.data-table.excel-like,
+.table-fragment table.data-table.excel-like {
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  color: var(--qit-ink);
+  font-size: 24px;
+  background: var(--qit-bg);
+}
+
+/* Header */
+#employeeTable thead th,
+.table-fragment thead th{
+  position: sticky; top: 0; z-index: 2;
+  background: var(--qit-header-bg) !important;
+  color: var(--qit-header-ink) !important;
+  font-weight: 700; letter-spacing: .01em;
+  padding: 12px 14px !important; white-space: nowrap;
+  border-bottom: 1px solid var(--qit-border) !important;
+  border-right: 1px solid var(--qit-border) !important;
+}
+#employeeTable thead th:last-child,
+.table-fragment thead th:last-child{ border-right: 0 !important; }
+
+/* Cells */
+#employeeTable td, #employeeTable th,
+.table-fragment td, .table-fragment th{
+  padding: 12px 14px !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  background: #fff;
+  border-bottom: 1px solid var(--qit-border) !important;
+  border-right: 1px solid var(--qit-border) !important;
+}
+#employeeTable td:last-child, #employeeTable th:last-child,
+.table-fragment td:last-child, .table-fragment th:last-child{ border-right: 0 !important; }
+
+/* Zebra + hover */
+#employeeTable tbody tr:nth-child(odd) td,
+.table-fragment tbody tr:nth-child(odd) td{ background: var(--qit-row-alt); }
+#employeeTable tbody tr:hover td,
+.table-fragment tbody tr:hover td{
+  background: var(--qit-row-hover) !important;
+}
+
+/* Hide meta cols */
+#employeeTable .col-hidden, .table-fragment .col-hidden{ display:none !important; }
+
+/* S.No */
+#employeeTable th.sn, #employeeTable td.sn,
+.table-fragment th.sn, .table-fragment td.sn{
+  width:72px !important; min-width:72px !important; text-align:center !important;
+  font-variant-numeric: tabular-nums; color:#5b4a22;
+}
+
+/* 7 core widths (match your order) */
+#employeeTable th:nth-child(2), #employeeTable td:nth-child(2),
+.table-fragment th:nth-child(2), .table-fragment td:nth-child(2){ width:160px !important; max-width:260px; font-weight:600; }
+#employeeTable th:nth-child(3), #employeeTable td:nth-child(3),
+.table-fragment th:nth-child(3), .table-fragment td:nth-child(3),
+#employeeTable th:nth-child(4), #employeeTable td:nth-child(4),
+.table-fragment th:nth-child(4), .table-fragment td:nth-child(4),
+#employeeTable th:nth-child(6), #employeeTable td:nth-child(6),
+.table-fragment th:nth-child(6), .table-fragment td:nth-child(6){
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+#employeeTable th:nth-child(3), #employeeTable td:nth-child(3),
+.table-fragment th:nth-child(3), .table-fragment td:nth-child(3){ width:100px !important; }
+#employeeTable th:nth-child(4), #employeeTable td:nth-child(4),
+.table-fragment th:nth-child(4), .table-fragment td:nth-child(4){ width:100px !important; }
+#employeeTable th:nth-child(5), #employeeTable td:nth-child(5),
+.table-fragment th:nth-child(5), .table-fragment td:nth-child(5){ width:100px !important; }
+#employeeTable th:nth-child(6), #employeeTable td:nth-child(6),
+.table-fragment th:nth-child(6), .table-fragment td:nth-child(6){ width:100px !important; letter-spacing:.02em; }
+#employeeTable th:nth-child(7), #employeeTable td:nth-child(7),
+.table-fragment th:nth-child(7), .table-fragment td:nth-child(7){ width:120px !important; }
+
+/* =========================
+   ANIMATIONS (warm + subtle)
+   ========================= */
+@keyframes kTableFade { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+@keyframes kGridDraw  { 0%{ box-shadow: inset 0 0 0 0 var(--qit-accent-2); }
+                        100%{ box-shadow: inset 0 0 0 2px var(--qit-accent-2); } }
+@keyframes kRowIn     { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+@keyframes kTextReveal{ from{opacity:0; filter:blur(2px)} to{opacity:1; filter:none} }
+
+/* when page is ready, add .k-anim-ready to <body> (JS below) */
+.k-anim-ready #employeeTable .table-wrap,
+.k-anim-ready .table-fragment .table-wrap{
+  animation: kTableFade .35s ease-out both, kGridDraw .6s ease-out .25s both;
+}
+
+/* stagger rows */
+.k-anim-ready #employeeTable tbody tr,
+.k-anim-ready .table-fragment tbody tr{ animation: kRowIn 1.28s ease both; }
+.k-anim-ready #employeeTable tbody tr:nth-child(n),
+.k-anim-ready .table-fragment tbody tr:nth-child(n){ animation-delay: calc(.10s + (var(--i, 1) * .85s)); }
+
+/* text reveal per cell */
+.k-anim-ready #employeeTable td, .k-anim-ready #employeeTable th,
+.k-anim-ready .table-fragment td, .k-anim-ready .table-fragment th{
+  animation: kTextReveal 2.28s ease both;
+  animation-delay: 1.80s;
+}
+
+/* apply CSS counter to rows for stagger (no HTML/JS changes needed) */
+#employeeTable tbody tr, .table-fragment tbody tr { counter-increment: row; }
+#employeeTable tbody tr { --i: counter(row); }
+.table-fragment tbody tr { --i: counter(row); }
+
+/* Responsive padding tighten */
+@media (max-width:1100px){
+  #employeeTable th, #employeeTable td,
+  .table-fragment th, .table-fragment td{ padding:10px 12px !important; }
+}

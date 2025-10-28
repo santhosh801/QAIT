@@ -35,6 +35,17 @@
         'edu_12th_file' => '12th',
         'edu_college_file' => 'CollegeCert'
       ];
+      // Columns to show in OP DATA (overview) tables
+      $OVERVIEW_VISIBLE_COLS = [
+        'sno'                 => 'S.No',
+        'operator_full_name'  => 'Operator Name',
+        'operator_id'         => 'Operator ID',
+        'operator_contact_no' => 'Contact No',
+        'branch_name'         => 'Branch',
+        'aadhar_number'       => 'Aadhaar No',
+        'bank_name'           => 'Bank',
+      ];
+
       // helper: build options html server-side once
       $docOptionsHtml = '<option value="">Export…</option>';
       $docOptionsHtml .= '<option value="all">Export All Docs (ZIP)</option>';
@@ -80,12 +91,19 @@
       // AJAX fragment endpoint (table only)
       // -----------------------------
       if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+        // BEFORE you compute $total_rows / $total_pages
+        $limit = 100000; // effectively "all"; adjust if you need a higher ceiling
+
         $countRes = $mysqli->query("SELECT COUNT(*) as total FROM operatordoc $where");
-        $total_rows = ($countRes ? ($countRes->fetch_assoc()['total'] ?? 0) : 0);
-        $total_pages = max(1, ceil($total_rows / $limit));
-        $offset = (isset($_GET['page']) ? (max(1, (int)$_GET['page']) - 1) * $limit : 0);
-        $sql = "SELECT * FROM operatordoc $where ORDER BY created_at DESC LIMIT $limit OFFSET $offset";
+        $total_rows = ($countRes ? (int)($countRes->fetch_assoc()['total'] ?? 0) : 0);
+
+        // No pagination while we’re in all-rows mode
+        $total_pages = 1;
+        $offset = 0;
+
+        $sql = "SELECT * FROM operatordoc $where ORDER BY created_at DESC"; // 👈 no LIMIT/OFFSET
         $res = $mysqli->query($sql);
+
       ?>
         <div class="k-card table-fragment">
           <div class="table-actions">
@@ -108,9 +126,13 @@
                 echo ' — <strong class="page-label">' . htmlspecialchars($filter) . '</strong>';
               }
               echo '</span>';
+
               echo '&nbsp;&nbsp;<a href="export_basic.php?filter=' . $filterParam . '" title="Download basic data as Excel" style="vertical-align:middle; text-decoration:none;">';
               echo '<img src="cloud-download.png" alt="Export" style="width:34px;height:34px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.12);"/>';
               echo '</a>';
+              // Inline search (no button)
+              echo '&nbsp;&nbsp;<input id="inlineSearch" class="inline-search" type="search" ';
+              echo 'placeholder="Search all data…" aria-label="Search all data" />';
 
               ?>
             </div>
@@ -125,70 +147,120 @@
               <table class="data-table excel-like">
                 <thead>
                   <tr>
-                    <?php
-                    $colsRes = $mysqli->query("SELECT * FROM operatordoc LIMIT 1");
-                    $colNames = [];
-                    if ($colsRes && $colsRes->num_rows) {
-                      $fields = $colsRes->fetch_fields();
-                      foreach ($fields as $f) {
-                        $colNames[] = $f->name;
-                        echo "<th>" . htmlspecialchars($f->name) . "</th>";
-                      }
-                    }
-                    ?>
-                    <th>Review</th>
-                    <th>Work</th>
-                    <th>Actions</th>
+                    <th class="sn">S.No</th>
+                    <th>Operator Name</th>
+                    <th>Operator ID</th>
+                    <th>Contact No</th>
+                    <th>Branch</th>
+                    <th>Aadhaar No</th>
+                    <th>Bank</th>
                   </tr>
                 </thead>
+
+
+
+
                 <tbody>
                   <?php
                   if ($res && $res->num_rows > 0) {
+                    $sn = 0;
+
+                    // hidden (panel) fields we still need, but do NOT show as columns
+                    $HIDDEN_COLS = [
+                      // Basic
+                      'email',
+                      'joining_date',
+                      'pan_number',
+                      'voter_id_no',
+                      // Contact
+                      'father_name',
+                      'dob',
+                      'gender',
+                      'alt_contact_relation',
+                      'alt_contact_number',
+                      'current_hno_street',
+                      'current_village_town',
+                      'current_pincode',
+                      'permanent_hno_street',
+                      'permanent_village_town',
+                      'permanent_pincode',
+                      // Status/notes
+                      'status',
+                      'work_status',
+                      'review_notes'
+                    ];
+
+                    // document columns (render as links if present)
+                    $DOC_FILE_COLS = [
+                      'aadhar_file',
+                      'pan_file',
+                      'voter_file',
+                      'ration_file',
+                      'consent_file',
+                      'gps_selfie_file',
+                      'police_verification_file',
+                      'permanent_address_proof_file',
+                      'parent_aadhar_file',
+                      'nseit_cert_file',
+                      'self_declaration_file',
+                      'non_disclosure_file',
+                      'edu_10th_file',
+                      'edu_12th_file',
+                      'edu_college_file'
+                    ];
+
                     while ($row = $res->fetch_assoc()) {
-                      $id = (int)$row['id'];
-                      echo "<tr id='row-{$id}'>";
-                      foreach ($colNames as $col) {
+                      $id   = (int)$row['id'];
+                      $opId = htmlspecialchars($row['operator_id'] ?? '', ENT_QUOTES);
+
+                      echo "<tr id='row-{$id}' data-operator-id=\"{$opId}\">";
+
+                      // 7 visible
+                      echo "<td class='sn'>" . (++$sn) . "</td>";
+                      echo "<td data-col='operator_full_name'>" . htmlspecialchars($row['operator_full_name'] ?? '') . "</td>";
+                      echo "<td data-col='operator_id'>" . htmlspecialchars($row['operator_id'] ?? '') . "</td>";
+                      echo "<td data-col='operator_contact_no'>" . htmlspecialchars($row['operator_contact_no'] ?? '') . "</td>";
+                      echo "<td data-col='branch_name'>" . htmlspecialchars($row['branch_name'] ?? '') . "</td>";
+                      echo "<td data-col='aadhar_number'>" . htmlspecialchars($row['aadhar_number'] ?? '') . "</td>";
+                      echo "<td data-col='bank_name'>" . htmlspecialchars($row['bank_name'] ?? '') . "</td>";
+
+                      // hidden text fields for the panel
+                      foreach ($HIDDEN_COLS as $col) {
                         $val = $row[$col] ?? '';
-                        if (str_ends_with($col, '_file') && $val) $display = '<a href="' . htmlspecialchars($val) . '" target="_blank" class="file-link">View</a>';
-                        else $display = htmlspecialchars((string)$val);
-                        echo "<td data-col=\"" . htmlspecialchars($col, ENT_QUOTES) . "\">{$display}</td>";
+                        echo "<td class='col-hidden' data-col='" . htmlspecialchars($col, ENT_QUOTES) . "'>"
+                          . htmlspecialchars((string)$val)
+                          . "</td>";
                       }
-                      $rv = htmlspecialchars($row['review_notes'] ?? '', ENT_QUOTES);
-                      echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
-                      $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
-                      echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
 
-                      // Added quick resubmit button + per-row export UI
-                      echo "<td class='col-actions nowrap'>";
-                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button>";
-                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button>";
-                      echo "<button class='small-btn' onclick=\"updateStatus({$id},'rejected')\">Reject</button>";
-                      echo "<button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button>";
-                      echo "<button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button>";
-                      echo "<button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button>";
-                      // ... inside the per-row actions echo block ...
-                      // Per-row export dropdown + button
-                      echo "<div class='row-export'>";
-                      echo "<select class='rowExportSelect form-select' data-id='{$id}'>{$docOptionsHtml}</select>";
-                      echo "<button class='rowExportBtn small-btn' data-id='{$id}'>Export</button>";
-                      echo "</div>";
+                      // hidden doc file fields (links)
+                      foreach ($DOC_FILE_COLS as $col) {
+                        $url = trim($row[$col] ?? '');
+                        $display = $url !== '' ? '<a href="' . htmlspecialchars($url) . '" target="_blank" class="file-link">View</a>' : '';
+                        echo "<td class='col-hidden' data-col='" . htmlspecialchars($col, ENT_QUOTES) . "'>" . $display . "</td>";
+                      }
 
-                      echo "</td>";
+                      // also keep id hidden
+                      echo "<td class='col-hidden' data-col='id'>{$id}</td>";
+
                       echo "</tr>";
                     }
                   } else {
-                    echo "<tr><td colspan='200' class='center'>No records found</td></tr>";
+                    echo "<tr><td colspan='7' class='center'>No records found</td></tr>";
                   }
                   ?>
                 </tbody>
+
+
+
+
+
               </table>
               <!-- Server rendered pagination (preserve search/filter/bank) -->
 
-              <div class="fragment-pagination">
-                <?php for ($p = 1; $p <= $total_pages; $p++): ?>
-                  <a href="#" class="overview-page" data-page="<?= $p ?>" data-filter="<?= htmlspecialchars($filter, ENT_QUOTES) ?>" data-current-page="<?= (int)$page ?>"><?= $p ?></a>
-                <?php endfor; ?>
-              </div>
+              <?php if (false): ?>
+                <div class="fragment-pagination"> ... </div>
+              <?php endif; ?>
+
             </div>
             <script src="em_verfi.js"></script>
           <?php
@@ -309,8 +381,7 @@
 
 
                 <div class="header-search">
-                  <input id="topSearch" type="search" placeholder="Search operator..." value="<?= htmlspecialchars($search) ?>">
-                  <button id="topSearchBtn" class="gold-btn">Search</button>
+
 
                   <div class="filter-bar">
                     <label for="bankFilter" class="filter-label">Bank:</label>
@@ -348,7 +419,7 @@
                   <div class="k-card-title">Operator</div>
                   <nav class="sidebar-nav">
                     <a href="#" data-section="operatorStatusSection" class="is-active"><span class="nav-label">Operator Status</span><span class="nav-icon"></span></a>
-                    <a href="#" data-section="operatorOverviewSection" data-filter=""><span class="nav-label">OP DATA (All)</span><span class="nav-icon"></span></a>
+                    <a href="#" data-section="operatorOverviewSection" data-filter=""><span class="nav-label">All Operators</span><span class="nav-icon"></span></a>
                     <div class="k-subtitle">Working</div>
                     <a href="#" data-section="operatorOverviewSection" data-filter="working"><span class="nav-label" id="sss">Working</span><span class="nav-icon"></span><span class="badge"><?= $operatorWorkingCount ?></span></a>
                     <a href="#" data-section="operatorOverviewSection" data-filter="pending"><span class="nav-label">Pending</span><span class="nav-icon"></span><span class="badge"><?= $operatorPendingCount ?></span></a>
@@ -403,7 +474,7 @@
                       <label class="qb-label">Bulk Operators Excel (Text Only)</label>
                       <div class="qb-row">
                         <input id="bulkExcel" name="bulk_excel" type="file" accept=".csv,.xlsx,.xls" required class="qb-file" />
-                      <button type="button" onclick="location.href='OperatorBulkUploadDocumentsText.php?download_template=1'">Download template</button>
+                        <button type="button" onclick="location.href='OperatorBulkUploadDocumentsText.php?download_template=1'">Download template</button>
 
 
                       </div>
@@ -753,61 +824,105 @@ WS.zip
                   <section id="employeeTable" class="k-section">
                     <div class="table-wrap auto-scroll-wrap">
                       <div class="table-scroll-inner">
-                        <table class="data-table excel-like">
+                        <table class="data-table excel-like ">
                           <thead>
                             <tr>
-                              <?php
-                              $cols = $result ? $result->fetch_fields() : [];
-                              $colNames = [];
-                              foreach ($cols as $c) {
-                                $colNames[] = $c->name;
-                                echo "<th>" . htmlspecialchars($c->name) . "</th>";
-                              }
-                              ?>
-                              <th>Review</th>
-                              <th>Work</th>
-                              <th>Actions</th>
+                              <th class="sn">S.No</th>
+                              <th>Operator Name</th>
+                              <th>Operator ID</th>
+                              <th>Contact No</th>
+                              <th>Branch</th>
+                              <th>Aadhaar No</th>
+                              <th>Bank</th>
                             </tr>
                           </thead>
+
+
+
                           <tbody>
                             <?php
-                            if ($result && $result->num_rows > 0):
-                              $result->data_seek(0);
-                              while ($row = $result->fetch_assoc()):
-                                $id = (int)$row['id'];
-                                echo "<tr id='row-{$id}'>";
-                                foreach ($colNames as $col) {
+                            if ($res && $res->num_rows > 0) {
+                              $sn = 0;
+
+                              $HIDDEN_COLS = [
+                                'email',
+                                'joining_date',
+                                'pan_number',
+                                'voter_id_no',
+                                'father_name',
+                                'dob',
+                                'gender',
+                                'alt_contact_relation',
+                                'alt_contact_number',
+                                'current_hno_street',
+                                'current_village_town',
+                                'current_pincode',
+                                'permanent_hno_street',
+                                'permanent_village_town',
+                                'permanent_pincode',
+                                'status',
+                                'work_status',
+                                'review_notes'
+                              ];
+
+                              $DOC_FILE_COLS = [
+                                'aadhar_file',
+                                'pan_file',
+                                'voter_file',
+                                'ration_file',
+                                'consent_file',
+                                'gps_selfie_file',
+                                'police_verification_file',
+                                'permanent_address_proof_file',
+                                'parent_aadhar_file',
+                                'nseit_cert_file',
+                                'self_declaration_file',
+                                'non_disclosure_file',
+                                'edu_10th_file',
+                                'edu_12th_file',
+                                'edu_college_file'
+                              ];
+
+                              while ($row = $res->fetch_assoc()) {
+                                $id   = (int)$row['id'];
+                                $opId = htmlspecialchars($row['operator_id'] ?? '', ENT_QUOTES);
+
+                                echo "<tr id='row-{$id}' data-operator-id=\"{$opId}\">";
+
+                                echo "<td class='sn'>" . (++$sn) . "</td>";
+                                echo "<td data-col='operator_full_name'>" . htmlspecialchars($row['operator_full_name'] ?? '') . "</td>";
+                                echo "<td data-col='operator_id'>" . htmlspecialchars($row['operator_id'] ?? '') . "</td>";
+                                echo "<td data-col='operator_contact_no'>" . htmlspecialchars($row['operator_contact_no'] ?? '') . "</td>";
+                                echo "<td data-col='branch_name'>" . htmlspecialchars($row['branch_name'] ?? '') . "</td>";
+                                echo "<td data-col='aadhar_number'>" . htmlspecialchars($row['aadhar_number'] ?? '') . "</td>";
+                                echo "<td data-col='bank_name'>" . htmlspecialchars($row['bank_name'] ?? '') . "</td>";
+
+                                foreach ($HIDDEN_COLS as $col) {
                                   $val = $row[$col] ?? '';
-                                  $display = str_ends_with($col, '_file') && $val ? '<a href="' . htmlspecialchars($val) . '" target="_blank" class="file-link">View</a>' : htmlspecialchars((string)$val);
-                                  echo "<td data-col=\"" . htmlspecialchars($col, ENT_QUOTES) . "\">{$display}</td>";
+                                  echo "<td class='col-hidden' data-col='" . htmlspecialchars($col, ENT_QUOTES) . "'>"
+                                    . htmlspecialchars((string)$val)
+                                    . "</td>";
                                 }
-                                $rv = htmlspecialchars($row['review_notes'] ?? '', ENT_QUOTES);
-                                echo "<td><input id='review-{$id}' value=\"{$rv}\" class='input-compact' /><button class='small-btn' onclick='saveReview({$id})'>Save</button></td>";
-                                $ws = htmlspecialchars($row['work_status'] ?? 'working', ENT_QUOTES);
-                                echo "<td><div id='work-{$id}' class='nowrap'><strong>{$ws}</strong></div><div class='btn-row'><button class='small-btn' onclick=\"setWork({$id},'working')\">Working</button><button class='small-btn' onclick=\"setWork({$id},'not working')\">Not Working</button></div></td>";
 
-                                // Added Resubmit quick button in server-rendered table as well
-                                echo "<td class='col-actions nowrap'>";
-                                echo "<button class='small-btn' onclick=\"updateStatus({$id},'accepted')\">Accept</button>";
-                                echo "<button class='small-btn' onclick=\"updateStatus({$id},'pending')\">Pending</button>";
-                                echo "<button class='small-btn' onclick=\"openResubmitModal({$id})\">Resubmit</button>";
-                                echo "<button class='small-btn' onclick=\"makeRowEditable({$id})\">Edit</button>";
-                                echo "<button class='small-btn' onclick=\"saveRow({$id})\">Save Row</button>";
+                                foreach ($DOC_FILE_COLS as $col) {
+                                  $url = trim($row[$col] ?? '');
+                                  $display = $url !== '' ? '<a href="' . htmlspecialchars($url) . '" target="_blank" class="file-link">View</a>' : '';
+                                  echo "<td class='col-hidden' data-col='" . htmlspecialchars($col, ENT_QUOTES) . "'>" . $display . "</td>";
+                                }
 
-                                // Per-row export dropdown + button
-                                echo "<div class='row-export'>";
-                                echo "<select class='rowExportSelect form-select' data-id='{$id}'>{$docOptionsHtml}</select>";
-                                echo "<button class='rowExportBtn small-btn' data-id='{$id}'>Export</button>";
-                                echo "</div>";
+                                echo "<td class='col-hidden' data-col='id'>{$id}</td>";
 
-                                echo "</td>";
                                 echo "</tr>";
-                              endwhile;
-                            else:
-                              echo "<tr><td colspan='200' class='center'>No records found</td></tr>";
-                            endif;
+                              }
+                            } else {
+                              echo "<tr><td colspan='7' class='center'>No records found</td></tr>";
+                            }
                             ?>
                           </tbody>
+
+
+
+
                         </table>
                       </div>
                     </div>
