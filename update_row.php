@@ -1,7 +1,75 @@
 <?php
-// update_row.php (robust drop-in)
-// Overwrites previous file. Saves debug to logs/update_row_debug.log next to this script.
-// Requires mysqli. Tested on PHP7+ / XAMPP.
+declare(strict_types=1);
+session_start();
+header('Content-Type: application/json; charset=utf-8');
+
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+// --- auth ---
+if (!isset($_SESSION['employee_email'])) {
+  http_response_code(401);
+  echo json_encode(['success'=>false,'message'=>'Not authenticated']);
+  exit;
+}
+
+// --- db ---
+require_once __DIR__ . '/db_conn.php';  // must set $mysqli = $conn inside
+$dbc = isset($mysqli) && ($mysqli instanceof mysqli) ? $mysqli : null;
+if (!$dbc) {
+  // fallback local connect if db_conn.php differs
+  $dbc = @new mysqli('localhost','root','','qmit_system');
+}
+if ($dbc->connect_errno) {
+  echo json_encode(['success'=>false,'message'=>'DB connection error: '.$dbc->connect_error]);
+  exit;
+}
+$dbc->set_charset('utf8mb4');
+
+// --- read input (JSON or form) ---
+$raw = file_get_contents('php://input');
+$in  = $raw ? json_decode($raw, true) : null;
+if (!is_array($in) || empty($in)) $in = $_POST;
+
+$id    = isset($in['id']) ? (int)$in['id'] : 0;              // DB primary key (numeric)
+$notes = isset($in['review_notes']) ? (string)$in['review_notes'] : '';
+$notes = trim(mb_substr($notes, 0, 4000, 'UTF-8'));          // keep within TEXT
+
+if ($id <= 0) {
+  echo json_encode(['success'=>false,'message'=>'Missing DB id']);
+  exit;
+}
+
+// --- update ---
+$stmt = $dbc->prepare("UPDATE operatordoc SET review_notes = ? WHERE id = ? LIMIT 1");
+if (!$stmt) {
+  echo json_encode(['success'=>false,'message'=>'Prepare failed: '.$dbc->error]);
+  exit;
+}
+$stmt->bind_param('si', $notes, $id);
+$ok = $stmt->execute();
+$aff = $stmt->affected_rows;
+$stmt->close();
+
+// Fetch back what’s saved (authoritative repaint)
+$row = null;
+$sel = $dbc->prepare("SELECT review_notes FROM operatordoc WHERE id = ? LIMIT 1");
+$sel->bind_param('i', $id);
+$sel->execute();
+$res = $sel->get_result();
+$row = $res ? $res->fetch_assoc() : null;
+$sel->close();
+$dbc->close();
+
+// Treat 0 rows as success (same value) and return current DB value
+echo json_encode([
+  'success'       => (bool)$ok,
+  'message'       => ($ok ? ($aff > 0 ? 'Review saved' : 'No change') : 'Update failed'),
+  'affected_rows' => $aff,
+  'id'            => $id,
+  'review_notes'  => $row['review_notes'] ?? $notes
+]);
+
 
 // ---- quick config ----
 ini_set('display_errors', 0);
@@ -32,6 +100,7 @@ if ($id <= 0) {
     echo json_encode(['success'=>false, 'message'=>'Missing operator id (id or operator_id)']);
     exit;
 }
+
 
 // ---- DB connect ----
 $DB_HOST = 'localhost';
@@ -211,6 +280,7 @@ debug_log("EXEC_OK affected_rows={$affected} for id={$id}");
 
 // if 0 rows affected: return preview to help debug
 if ($affected === 0) {
+    // Treat as success but include preview for transparency
     $preview = null;
     $pstmt = $mysqli->prepare("SELECT * FROM operatordoc WHERE id = ? LIMIT 1");
     if ($pstmt) {
@@ -220,12 +290,13 @@ if ($affected === 0) {
         $preview = $res && $res->num_rows ? $res->fetch_assoc() : null;
         $pstmt->close();
     }
-    debug_log("NO_ROWS_UPDATED preview: " . json_encode($preview));
-    echo json_encode(['success'=>false,'message'=>'No rows updated (affected_rows = 0). Possible id mismatch or identical values.','row_preview'=>$preview,'sql'=>$sql,'params'=>$params]);
+    debug_log("NO_ROWS_UPDATED (unchanged) preview: " . json_encode($preview));
+    echo json_encode(['success'=>true,'message'=>'Saved (no changes)','updated_fields'=>$preview]);
     $stmt->close();
     $mysqli->close();
     exit;
 }
+
 
 // fetch canonical updated values
 $colsToReturn = [];

@@ -3,6 +3,21 @@
 // Creates a resubmission request and optionally triggers send_rejection_mail.php
 // Expects POST: id (operator id), docs[] (array of canonical doc keys), expires_days (optional), email_now (optional)
 // Session must contain employee_email (verifier)
+$op_id_str = $_POST['operator_id'] ?? $_GET['operator_id'] ?? '';
+$id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+
+if ($op_id_str && !$id) {
+  $q = $conn->prepare("SELECT id FROM operatordoc WHERE TRIM(operator_id)=? LIMIT 1");
+  $q->bind_param("s", $op_id_str);
+  $q->execute();
+  $r = $q->get_result();
+  if ($row = $r->fetch_assoc()) $id = (int)$row['id'];
+}
+
+if ($id <= 0) {
+  echo json_encode(['success'=>false,'message'=>'Invalid operator id']);
+  exit;
+}
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');

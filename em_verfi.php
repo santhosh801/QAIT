@@ -223,7 +223,7 @@
                       echo "<td data-col='branch_name'>" . htmlspecialchars($row['branch_name'] ?? '') . "</td>";
                       echo "<td data-col='aadhar_number'>" . htmlspecialchars($row['aadhar_number'] ?? '') . "</td>";
                       echo "<td data-col='bank_name'>" . htmlspecialchars($row['bank_name'] ?? '') . "</td>";
-
+                     
                       // hidden text fields for the panel
                       foreach ($HIDDEN_COLS as $col) {
                         $val = $row[$col] ?? '';
@@ -349,7 +349,6 @@
             <link rel="stylesheet" href="emverfi.css?v=<?= file_exists('emverfi.css') ? filemtime('emverfi.css') : time() ?>" type="text/css">
             <!-- MOBILE: viewport + override stylesheet -->
             <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-            <link rel="stylesheet" href="/path/to/mobile.override.css">
 
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script src="https://unpkg.com/feather-icons"></script>

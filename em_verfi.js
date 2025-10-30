@@ -1,4 +1,18 @@
 // Extracted from em_verfi.php — combined inline <script> blocks
+// single-tab guard// global guard
+// global guard
+window.currentTableRow = null;
+window.__DOC_WIN = null;
+function openOnceInNewTab(url) {
+  if (window.__DOC_WIN && !window.__DOC_WIN.closed) {
+    try {
+      window.__DOC_WIN.location = url;
+      window.__DOC_WIN.focus();
+      return;
+    } catch (e) {}
+  }
+  window.__DOC_WIN = window.open(url, "_blank", "noopener");
+}
 
 (function () {
   // --- SAFE STUBS (prevent ReferenceErrors) ---
@@ -450,7 +464,9 @@
           exportEl.href = "em_verfi.php?" + p.toString();
         }
         initAutoScrollAll();
-        initTopScrollbars();
+        window.addEventListener("load", () => {
+          if (typeof initTopScrollbars === "function") initTopScrollbars();
+        });
         // bind row export buttons after fragment load
         if (typeof bindRowExports === "function") bindRowExports();
       },
@@ -575,6 +591,17 @@
             if (strong) strong.textContent = work;
             else workWrap.textContent = work;
           }
+          document.addEventListener(
+            "click",
+            (e) => {
+              const tr = e.target.closest && e.target.closest('tr[id^="row-"]');
+              if (!tr) return;
+              window.currentTableRow = tr; // ✅ keep reference
+              const data = gatherRowData(tr);
+              renderIntoPanel(data);
+            },
+            false
+          );
 
           // if panel open for this id, update its work status display
           const panel = document.getElementById("opDetailPanel");
@@ -1128,11 +1155,13 @@
           <button data-stage="basic" class="active">Basic</button>
           <button data-stage="contact">Contact</button>
           <button data-stage="docs">Docs & Status</button>
+          <button id="openDocStatusBtn" class="small-btn" style="margin-left:auto;">Documentation</button>
         </div>
         <div class="content">
           <div class="stage active" data-stage="basic"></div>
           <div class="stage" data-stage="contact"></div>
           <div class="stage" data-stage="docs"></div>
+          <div class="stage" data-stage="Documentation"></div>
         </div>
       `;
       document.body.appendChild(panel);
@@ -1308,13 +1337,67 @@
     }
 
     function renderIntoPanel(data) {
+      // Build/refresh the panel UI
       createUI();
+
       const panel = document.getElementById("opDetailPanel");
+      if (panel) {
+        panel.dataset.opId = String(data.id || data.db_id || data.row_id || ""); // DB primary key (numeric)
+        panel.dataset.operatorId = String(data.operator_id || data.op_id || ""); // Human operator id (OP1005)
+      }
       if (!panel) return;
+
+      // Store the LIVE operator id on the panel (single source of truth)
+      // Store both the DB numeric id and the operator code (OPxxxx
+
+      // Rewire the "Documentation" button safely (no stale closures)
+      const oldBtn = document.getElementById("openDocStatusBtn");
+      if (oldBtn) {
+        // remove any prior listeners by cloning
+        const freshBtn = oldBtn.cloneNode(true);
+        oldBtn.replaceWith(freshBtn);
+
+        freshBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const opId =
+            panel.dataset && panel.dataset.opId
+              ? panel.dataset.opId.trim()
+              : "";
+          if (!opId) {
+            alert("Missing operator_id");
+            return;
+          }
+
+          // Reuse one tab if present; otherwise open a new one
+          if (!window.__DOC_WIN || window.__DOC_WIN.closed) {
+            window.__DOC_WIN = window.open(
+              "document_status.php?operator_id=" + encodeURIComponent(opId),
+              "_blank",
+              "noopener"
+            );
+          } else {
+            try {
+              window.__DOC_WIN.location =
+                "document_status.php?operator_id=" + encodeURIComponent(opId);
+              window.__DOC_WIN.focus();
+            } catch (_) {
+              window.open(
+                "document_status.php?operator_id=" + encodeURIComponent(opId),
+                "_blank",
+                "noopener"
+              );
+            }
+          }
+        });
+      }
+
+      // If you also populate other tabs/fields, do that here…
+      // fillBasicTab(data); fillContactTab(data); etc.
 
       // store op id for actions
       const opId = data.id || data["id"] || null;
-      panel.dataset.opId = opId || "";
 
       panel.querySelector(".title").textContent =
         data.operator_full_name || `Operator ${opId || ""}`;
@@ -1446,7 +1529,6 @@
         }
         return btn;
       }
-
       // Accept / Pending / Reject
       actions.appendChild(
         mkBtn("Accept", `updateStatus(${safeId},'accepted')`)
@@ -1454,13 +1536,11 @@
       actions.appendChild(
         mkBtn("Pending", `updateStatus(${safeId},'pending')`)
       );
-
       // Working toggles
       actions.appendChild(mkBtn("Working", `setWork(${safeId},'working')`));
       actions.appendChild(
         mkBtn("Not Working", `setWork(${safeId},'not working')`)
       );
-
       // Request Resubmission (new)
       actions.appendChild(
         mkBtn(
@@ -1722,7 +1802,10 @@
             encodeURIComponent(opId) +
             "&doc_key=" +
             encodeURIComponent(doc);
-          window.open(dlUrl, "_blank");
+          goOnce(
+            "document_status.php?operator_id=" + encodeURIComponent(opCode)
+          );
+          dlUrl, "_blank";
         });
       });
 
@@ -2219,6 +2302,12 @@
       function (e) {
         const panel = document.getElementById("opDetailPanel");
         if (!panel) return;
+        // Single source of truth on the panel:
+        panel.dataset.dbId =
+          data && (data.id || data.ID) ? String(data.id || data.ID).trim() : "";
+        panel.dataset.opCode =
+          data && data.operator_id ? String(data.operator_id).trim() : "";
+
         if (panel.classList.contains("visible")) {
           const clickedInside =
             e.target.closest &&
@@ -2514,6 +2603,12 @@
 
     function panelMakeEditable(opId) {
       const panel = document.getElementById("opDetailPanel");
+      opId = opId || (panel && panel.dataset.opId);
+      if (!panel || !opId) {
+        alert("Missing operator_id");
+        return;
+      } panel.dataset.opId = opId; 
+      
       if (!panel || String(panel.dataset.opId) !== String(opId)) {
         // Panel not open for this operator - attempt to open it if there's a function
         try {
@@ -2554,95 +2649,80 @@
         console.log("Panel editable");
       }
     }
-
     function panelSaveRow(opId) {
       const panel = document.getElementById("opDetailPanel");
-      if (!panel || String(panel.dataset.opId) !== String(opId)) {
-        if (typeof oldSaveRow === "function") return oldSaveRow(opId);
+      const id = Number(opId || (panel && panel.dataset.opId) || 0);
+      const operatorId = panel?.dataset.operatorId || "";
+
+      if (!panel || !id) {
+        alert("Missing internal record id (DB id). Cannot save.");
         return;
       }
-      const payload = { id: opId };
-      // collect inputs
-      panel
-        .querySelectorAll(
+
+      // Collect edited data
+      const payload = { id: id, operator_id: operatorId };
+      panel.querySelectorAll(".op-row").forEach((row) => {
+        const key = row.dataset.field;
+        if (!key) return;
+        const input = row.querySelector(
           "input.panel-input, textarea.panel-input, select.panel-input"
-        )
-        .forEach((inp) => {
-          const f =
-            inp.dataset.field || inp.name || inp.id.replace(/^panel-/, "");
-          if (!f) return;
-          payload[f] = inp.value;
-        });
-
-      // send to server (uses jQuery existing in the page)
-      $.post(
-        "update_row.php",
-        payload,
-        function (res) {
-          if (res && res.success) {
-            const updated = res.updated_fields || payload;
-            // update table cells
-            Object.keys(updated).forEach((k) => {
-              if (k === "id" || k === "operator_id") return;
-              const td = document.getElementById("cell-" + k + "-" + opId);
-              if (td) td.textContent = updated[k];
-              else {
-                const td2 = document.querySelector(
-                  'td[data-field="' + k + '"][data-id="' + opId + '"]'
-                );
-                if (td2) td2.textContent = updated[k];
-              }
-            });
-
-            // reflect values back to panel view and hide inputs
-            // reflect values back to panel view and hide inputs
-            panel.querySelectorAll(".op-row").forEach((rowEl) => {
-              const key = rowEl.dataset.field || "";
-              const vEl = rowEl.querySelector(".v");
-              if (!key || !vEl) return;
-
-              // Prefer input value if present, otherwise use textContent (works for hidden cells too)
-              const inp = vEl.querySelector(
-                "input.panel-input, textarea.panel-input, select.panel-input"
-              );
-              const newVal = inp ? inp.value : (vEl.textContent || "").trim();
-
-              // Update the table cell so the list reflects panel edits
-              const td = currentTableRow.querySelector(`td[data-col="${key}"]`);
-              if (td) td.textContent = newVal;
-
-              // Hide the input after applying
-              if (inp) {
-                inp.classList.add("hidden");
-                // Optionally show the plain text again
-                vEl.setAttribute("data-value", newVal);
-              }
-            });
-
-            panel.dataset.editing = "";
-            try {
-              toast(res.message || "Saved");
-            } catch (e) {
-              alert(res.message || "Saved");
-            }
-          } else {
-            try {
-              toast(
-                "Save failed: " + (res && res.message ? res.message : "unknown")
-              );
-            } catch (e) {
-              alert("Save failed");
-            }
-          }
-        },
-        "json"
-      ).fail(function () {
-        try {
-          toast("Save request failed");
-        } catch (e) {
-          alert("Save request failed");
-        }
+        );
+        const span = row.querySelector(".view");
+        const val = input
+          ? input.value.trim()
+          : span
+          ? span.textContent.trim()
+          : "";
+        payload[key] = val;
       });
+
+      const notes = panel.querySelector("#panel-review");
+      if (notes) payload.review_notes = notes.value.trim();
+
+      fetch("update_row.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (!res.success) throw new Error(res.message || "Update failed");
+
+          const updated = res.updated_fields || {};
+          console.log("✅ DB updated:", updated);
+
+          // update visible panel
+          Object.keys(updated).forEach((key) => {
+            const row = panel.querySelector(`.op-row[data-field="${key}"]`);
+            if (!row) return;
+            const span = row.querySelector(".view");
+            const inp = row.querySelector(".panel-input");
+            const val = updated[key] || "";
+            if (span) span.textContent = val || "—";
+            if (inp) inp.style.display = "none";
+            if (span) span.style.display = "inline";
+          });
+
+          panel.dataset.editing = "0";
+
+          // patch main table
+          const tr = document.getElementById("row-" + id);
+          if (tr) {
+            Object.keys(updated).forEach((key) => {
+              const td = tr.querySelector(`td[data-col="${key}"]`);
+              if (td) {
+                const inner = td.querySelector("strong, span") || td;
+                inner.textContent = updated[key] || "—";
+              }
+            });
+          }
+
+          toast("Row saved & synced ✅");
+        })
+        .catch((err) => {
+          console.error("❌ Save failed:", err);
+          toast("Save failed: " + err.message, "error");
+        });
     }
 
     // expose helpers
@@ -2783,7 +2863,8 @@ function downloadResubmissionByOperator(opId) {
       const url =
         "download_resubmission.php?request_id=" +
         encodeURIComponent(json.request_id);
-      window.open(url, "_blank");
+      goOnce("document_status.php?operator_id=" + encodeURIComponent(opCode));
+      url, "_blank";
     })
     .catch((err) => {
       console.error(err);
@@ -3474,17 +3555,104 @@ document.addEventListener("input", function (e) {
   }
 });
 
-
-
-
 // ---------- Kickstart animations once DOM is ready ----------
-  // kick animations once DOM is ready
-  (function () {
-    const run = () => document.body.classList.add('k-anim-ready');
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => setTimeout(run, 520));
-    } else {
-      setTimeout(run, 520);
-    }
-  })();
+// kick animations once DOM is ready
+(function () {
+  const run = () => document.body.classList.add("k-anim-ready");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => setTimeout(run, 520));
+  } else {
+    setTimeout(run, 520);
+  }
+})();
+function wireDocButton() {
+  const panel = document.getElementById("opDetailPanel");
+  if (!panel) return;
+  // Single source of truth on the panel:
+  const old = panel.querySelector("#openDocStatusBtn");
+  if (!old) return;
 
+  // 🔥 remove any old handlers by cloning the node
+  const fresh = old.cloneNode(true);
+  old.replaceWith(fresh);
+
+  fresh.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const opId =
+      panel.dataset && panel.dataset.opId ? panel.dataset.opId.trim() : "";
+    if (!opId) {
+      alert("Missing operator id");
+      return;
+    }
+
+    // open in one dedicated tab (optional) — or just window.open
+    if (!window.__DOC_WIN || window.__DOC_WIN.closed) {
+      window.__DOC_WIN = window.open(
+        "document_status.php?operator_id=" + encodeURIComponent(opId),
+        "_blank",
+        "noopener"
+      );
+    } else {
+      try {
+        window.__DOC_WIN.location =
+          "document_status.php?operator_id=" + encodeURIComponent(opId);
+        window.__DOC_WIN.focus();
+      } catch (_) {
+        window.open(
+          "document_status.php?operator_id=" + encodeURIComponent(opId),
+          "_blank",
+          "noopener"
+        );
+      }
+    }
+  });
+}
+function getPanelIds() {
+  const p = document.getElementById("opDetailPanel");
+  return {
+    dbId: Number(p?.dataset?.dbId || 0),
+    opCode: (p?.dataset?.opCode || "").trim(),
+  };
+}
+
+// one handler for all action buttons
+panel.querySelectorAll(".action-btn").forEach((btn) => {
+  btn.addEventListener(
+    "click",
+    () => {
+      const ids = getPanelIds();
+      if (!ids.dbId) {
+        toast("Missing DB id", "error");
+        return;
+      }
+
+      // map button data to payload
+      const payload = { id: ids.dbId };
+      if (btn.dataset.status) payload.status = btn.dataset.status; // accepted | pending
+      if (btn.dataset.work) payload.work_status = btn.dataset.work; // working | not working
+
+      // nothing to do for reqResub / dlResub here
+      if (!payload.status && !payload.work_status) return;
+
+      fetch("update_status.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((r) => r.json())
+        .then((j) => {
+          if (!j.success) throw new Error(j.message || "Update failed");
+          if (payload.status) setChip("overallStatusChip", payload.status);
+          if (payload.work_status)
+            setChip("workStatusChip", payload.work_status);
+        })
+        .catch((err) => {
+          console.error("update_status failed:", err);
+          toast("Request failed — check console", "error");
+        });
+    },
+    { passive: true }
+  );
+});
