@@ -2,34 +2,47 @@
    Document & Status — FINAL JS
    ============================ */
 
-// Guard: init once
-if (!window.__DS_INITED) {
-  window.__DS_INITED = true;
+/* ---------- boot / loader (fail-safe) ---------- */
+(function () {
+  // define bootShow at top-level (not inside a block)
+  const bootShow = () => {
+    const loader = document.getElementById("loader");
+    if (loader) loader.style.display = "none";
+    const main = document.getElementById("main-content");
+    if (main) main.style.display = "grid";
+    initDS();
+  };
 
-  window.addEventListener("load", () => {
-    // 3s loader, then show once
+  if (!window.__DS_INITED) {
+    window.__DS_INITED = true;
+
+    // short vibe, never forever
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(bootShow, 600);
+    });
+
+    // hard fallback after 3.5s
     setTimeout(() => {
       const loader = document.getElementById("loader");
-      if (loader) loader.style.display = "none";
-      const main = document.getElementById("main-content");
-      if (main) main.style.display = "grid";
-      initDS();
-    }, 2300);
-  });
-}
-// after you render the operator details into the panel
+      if (loader && loader.style.display !== "none") bootShow();
+    }, 3500);
+  }
+})();
+
+/* ---------- panel dataset helper (safe) ---------- */
 const panel = document.getElementById("opDetailPanel");
 if (panel && typeof data !== "undefined" && data && data.operator_id) {
   panel.dataset.opId = String(data.operator_id).trim();
 }
 
+/* ---------- main init ---------- */
 function initDS() {
-  // Never block download links opened in new tabs
+  // Don’t block download links that open in new tab
   document.addEventListener(
     "click",
     (e) => {
       const a = e.target.closest('a[target="_blank"]');
-      if (a && a.classList.contains("i-download")) return; // allow download
+      if (a && a.classList.contains("i-download")) return; // allow default
     },
     { capture: true }
   );
@@ -54,9 +67,7 @@ function initDS() {
               setChip("overallStatusChip", res.status || val);
               toast("Status updated ✔️", "success");
             })
-            .catch((err) =>
-              toast("Status update failed: " + err.message, "error")
-            );
+            .catch((err) => toast("Status update failed: " + err.message, "error"));
           return;
         }
 
@@ -71,9 +82,7 @@ function initDS() {
               setChip("workStatusChip", res.work_status || val);
               toast("Work status updated ⚙️", "success");
             })
-            .catch((err) =>
-              toast("Work update failed: " + err.message, "error")
-            );
+            .catch((err) => toast("Work update failed: " + err.message, "error"));
           return;
         }
 
@@ -90,52 +99,52 @@ function initDS() {
     );
   }
 
-  // Review notes save
-// Review notes save (permanent + repaint)
-const saveBtn = document.getElementById("saveReview");
-if (saveBtn) {
-  saveBtn.addEventListener("click", () => {
-    const dbId = Number(window.OP_ROW_ID || 0);
-    if (!dbId) {
-      toast("Missing DB id", "error");
-      return;
-    }
-    const ta = document.getElementById("reviewNotes");
-    const notes = (ta && ta.value ? ta.value : "").trim();
+  // Review notes save (permanent + repaint)
+  const saveBtn = document.getElementById("saveReview");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const dbId = Number(window.OP_ROW_ID || 0);
+      if (!dbId) {
+        toast("Missing DB id", "error");
+        return;
+      }
+      const ta = document.getElementById("reviewNotes");
+      const notes = (ta && ta.value ? ta.value : "").trim();
 
-    fetch("update_row.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: dbId, review_notes: notes }),
-      credentials: "same-origin",
-    })
-      .then(async (r) => {
-        const text = await r.text();
-        let j = null;
-        try { j = JSON.parse(text); } catch {}
-        if (!r.ok || !j || j.success !== true) {
-          const msg = (j && (j.error || j.message)) || `HTTP ${r.status}: ${text.slice(0,180)}`;
-          throw new Error(msg);
-        }
-        return j;
+      fetch("update_row.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dbId, review_notes: notes }),
+        credentials: "same-origin",
       })
-      .then((j) => {
-        // Authoritative repaint from DB
-        if (ta) ta.value = j.review_notes || "";
-        showTick();                   // your green tick
-        toast("Review saved ✓");      // UX confirmation
-      })
-      .catch((e) => {
-        console.error(e);
-        toast("Request failed — " + e.message, "error");
-      });
-  });
-}
+        .then(async (r) => {
+          const text = await r.text();
+          let j = null;
+          try {
+            j = JSON.parse(text);
+          } catch {}
+          if (!r.ok || !j || j.success !== true) {
+            const msg = (j && (j.error || j.message)) || `HTTP ${r.status}: ${text.slice(0, 180)}`;
+            throw new Error(msg);
+          }
+          return j;
+        })
+        .then((j) => {
+          if (ta) ta.value = j.review_notes || "";
+          showTick();
+          toast("Review saved ✓");
+        })
+        .catch((e) => {
+          console.error(e);
+          toast("Request failed — " + e.message, "error");
+        });
+    });
+  }
 
-
-  // Initialize counts + donut + paint rows from saved JSON
-  initCountsAndDonut();
+  // counts + paint
+  initCounts();
   paintRowsFromSavedMap();
+  autoPreviewFirst();
 
   // Preview handler
   const previewLabel = document.getElementById("previewLabel");
@@ -145,12 +154,7 @@ if (saveBtn) {
       "click",
       (e) => {
         if (e.target.closest(".ico")) return;
-        setPreview(
-          previewLabel,
-          previewBody,
-          row.dataset.label || "",
-          row.dataset.file || ""
-        );
+        setPreview(previewLabel, previewBody, row.dataset.label || "", row.dataset.file || "");
       },
       { passive: true }
     );
@@ -158,17 +162,15 @@ if (saveBtn) {
 
   // Per-doc actions
   const receivedWrap = document.getElementById("docReceived");
+  if (receivedWrap) {
+    receivedWrap.addEventListener("click", (e) => handleDocIcons(e, window.__DS_COUNTS));
+  }
   const notRecvWrap = document.getElementById("docNotReceived");
-  if (receivedWrap)
-    receivedWrap.addEventListener("click", (e) =>
-      handleDocIcons(e, window.__DS_COUNTS, window.myDonut)
-    );
-  if (notRecvWrap)
-    notRecvWrap.addEventListener("click", (e) =>
-      handleDocIcons(e, window.__DS_COUNTS, window.myDonut)
-    );
+  if (notRecvWrap) {
+    notRecvWrap.addEventListener("click", (e) => handleDocIcons(e, window.__DS_COUNTS));
+  }
 
-  // “Save All” button (optional bulk confirm)
+  // “Save All” bulk confirm
   const saveAll = document.getElementById("saveAllDocs");
   if (saveAll) {
     saveAll.addEventListener("click", async () => {
@@ -186,8 +188,7 @@ if (saveBtn) {
           body: JSON.stringify({ operator_id: OPERATOR_ID, states: map }),
         });
         const j = await res.json();
-        if (!j || j.success !== true)
-          throw new Error((j && j.message) || "Failed");
+        if (!j || j.success !== true) throw new Error((j && j.message) || "Failed");
         toast("All document statuses saved ✔");
       } catch (err) {
         alert("Bulk save failed: " + err.message);
@@ -199,14 +200,22 @@ if (saveBtn) {
   }
 
   // Initial chip colors
-  if (typeof BOOT_STATUS === "string" && BOOT_STATUS)
-    setChip("overallStatusChip", BOOT_STATUS);
-  if (typeof BOOT_WORK === "string" && BOOT_WORK)
-    setChip("workStatusChip", BOOT_WORK);
+  if (typeof BOOT_STATUS === "string" && BOOT_STATUS) setChip("overallStatusChip", BOOT_STATUS);
+  if (typeof BOOT_WORK === "string" && BOOT_WORK) setChip("workStatusChip", BOOT_WORK);
 }
 
-/* ---------- Boot helpers ---------- */
-function initCountsAndDonut() {
+/* ---------- helpers ---------- */
+
+// auto-select first document into preview
+function autoPreviewFirst() {
+  const row = document.querySelector('.doc-item.received, .doc-item[data-file]:not(.not-received)');
+  if (!row) return;
+  const previewLabel = document.getElementById("previewLabel");
+  const previewBody = document.getElementById("previewContent");
+  setPreview(previewLabel, previewBody, row.dataset.label || "", row.dataset.file || "");
+}
+
+function initCounts() {
   const c = {
     accepted: Number((window.DOC_COUNTS && DOC_COUNTS.accepted) || 0),
     pending: Number((window.DOC_COUNTS && DOC_COUNTS.pending) || 0),
@@ -214,9 +223,9 @@ function initCountsAndDonut() {
     notReceived: Number((window.DOC_COUNTS && DOC_COUNTS.notReceived) || 0),
   };
   window.__DS_COUNTS = { ...c };
-  applyCounts(c); // writes cards + donut
+  applyCounts(c);
 
-  // Also fetch latest doc_counts from server in case another reviewer updated it
+  // server refresh (cards only)
   fetch(`get_doc_counts.php?operator_id=${encodeURIComponent(OPERATOR_ID)}`)
     .then((r) => r.json())
     .then((d) => d && d.success && applyCounts(d))
@@ -227,10 +236,7 @@ function paintRowsFromSavedMap() {
   if (!window.DOC_STATUS_MAP) return;
   let map = {};
   try {
-    map =
-      typeof DOC_STATUS_MAP === "string"
-        ? JSON.parse(DOC_STATUS_MAP || "{}")
-        : DOC_STATUS_MAP || {};
+    map = typeof DOC_STATUS_MAP === "string" ? JSON.parse(DOC_STATUS_MAP || "{}") : DOC_STATUS_MAP || {};
   } catch {
     map = {};
   }
@@ -244,13 +250,17 @@ function paintRowsFromSavedMap() {
   });
 }
 
-/* ---------- Per-document actions ---------- */
-function handleDocIcons(e, counts, donut) {
+/* ---------- per-doc actions ---------- */
+function handleDocIcons(e, counts) {
   const a = e.target.closest(".ico");
   if (!a) return;
-  e.preventDefault();
+
+  const isDownload = a.classList.contains("i-download");
+  if (!isDownload) e.preventDefault();
+
   const row = e.target.closest(".doc-item");
   if (!row) return;
+
   const key = row.dataset.key;
   const file = row.dataset.file || "";
   const cur = row.dataset.state || "none"; // none|pending|accepted
@@ -272,23 +282,23 @@ function handleDocIcons(e, counts, donut) {
     pulse(row, next);
   }
 
+  // state actions
   if (a.classList.contains("i-pending")) {
     updateDocStatus(key, "pending").then(() => setState("pending"));
     return;
   }
   if (a.classList.contains("i-accept")) {
-    updateDocStatus(key, "accept").then(() => setState("accepted"));
+    updateDocStatus(key, "accepted").then(() => setState("accepted"));
     return;
   }
-  if (a.classList.contains("i-download")) {
-    if (!file) {
-      toast("No file to download", "error");
-      return;
-    }
-    a.setAttribute("target", "_blank");
-    window.open(a.href, "_blank");
-    return;
+
+  // download (new tab via HTML target)
+  if (isDownload) {
+    if (!file) toast("No file to download", "error");
+    return; // let browser handle it
   }
+
+  // upload/replace
   if (a.classList.contains("i-replace") || a.classList.contains("i-upload")) {
     const inp = document.createElement("input");
     inp.type = "file";
@@ -299,6 +309,7 @@ function handleDocIcons(e, counts, donut) {
       fd.append("operator_id", OPERATOR_ID);
       fd.append("doc_key", key);
       fd.append("file", inp.files[0]);
+
       fetch("upload_docs.php", { method: "POST", body: fd })
         .then((r) => r.json().catch(() => ({})))
         .then((res) => {
@@ -310,7 +321,6 @@ function handleDocIcons(e, counts, donut) {
               row.classList.remove("not-received");
               row.classList.add("received");
               row.dataset.file = res.path || "uploaded";
-              ensureDownloadIcon(row);
               applyCounts(c);
             }
             toast("Uploaded");
@@ -324,6 +334,7 @@ function handleDocIcons(e, counts, donut) {
   }
 }
 
+/* ---------- server calls & UI utils ---------- */
 function updateDocStatus(doc_key, action) {
   return post("update_doc_review.php", {
     id: OP_ROW_ID,
@@ -343,55 +354,28 @@ function updateDocStatus(doc_key, action) {
         };
         applyCounts(window.__DS_COUNTS);
       }
-    } catch (_) {}
+    } catch {}
     return true;
   });
 }
 
-/* ---------- UI helpers ---------- */
 function applyCounts(c) {
   setText("#cAccepted", c.accepted);
   setText("#cPending", c.pending);
   setText("#cReceived", c.received);
   setText("#cNotReceived", c.notReceived);
-  if (window.myDonut) {
-    myDonut.data.datasets[0].data = [
-      c.accepted,
-      c.pending,
-      c.received,
-      c.notReceived,
-    ];
-    myDonut.update();
-  } else {
-    // First-time build (just in case)
-    const ctx = document.getElementById("statusChart");
-    if (ctx) {
-      window.myDonut = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Accepted", "Pending", "Received", "Not Received"],
-          datasets: [
-            { data: [c.accepted, c.pending, c.received, c.notReceived] },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: "bottom" } },
-        },
-      });
-    }
-  }
 }
+
 function pulse(el, state) {
   el.style.transition = "background .25s ease, transform .2s";
   el.style.transform = "translateY(-1px)";
-  el.style.background =
-    state === "accepted" ? "#e8f7e9" : state === "pending" ? "#fff8e6" : "";
+  el.style.background = state === "accepted" ? "#e8f7e9" : state === "pending" ? "#fff8e6" : "";
   setTimeout(() => {
     el.style.transform = "";
     el.style.background = "";
   }, 350);
 }
+
 function setPreview(previewLabel, previewBody, label, file) {
   if (!previewLabel || !previewBody) return;
   previewLabel.innerHTML = "<b>" + escapeHtml(label) + "</b>";
@@ -399,18 +383,16 @@ function setPreview(previewLabel, previewBody, label, file) {
     previewBody.innerHTML = "No document uploaded.";
     return;
   }
-  if (/\.(png|jpe?g|gif|webp)$/i.test(file)) {
-    previewBody.innerHTML = `<img src="${encodeURI(file)}" alt="${escapeHtml(
-      label
-    )}" style="max-width:100%;max-height:100%;object-fit:contain;">`;
+  const safe = encodeURI(file);
+  const title = escapeHtml(label);
+
+  if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file)) {
+    previewBody.innerHTML = `<img src="${safe}" alt="${title}" />`;
   } else {
-    previewBody.innerHTML = `<iframe src="${encodeURI(
-      file
-    )}" title="${escapeHtml(
-      label
-    )}" style="width:100%;height:250px;border:0;"></iframe>`;
+    previewBody.innerHTML = `<iframe src="${safe}" title="${title}"></iframe>`;
   }
 }
+
 function setChip(id, val) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -421,6 +403,7 @@ function setChip(id, val) {
   else if (v.includes("pending")) el.classList.add("chip-warn");
   else if (v.includes("not")) el.classList.add("chip-bad");
 }
+
 function setText(sel, val) {
   const el = document.querySelector(sel);
   if (el) el.textContent = val;
@@ -436,7 +419,6 @@ function toast(msg, type) {
 }
 
 /* ---------- net ---------- */
-/* ---------- net ---------- */
 function post(url, data) {
   return fetch(url, {
     method: "POST",
@@ -448,23 +430,18 @@ function post(url, data) {
     let json = null;
     try {
       json = JSON.parse(text);
-    } catch (e) {}
+    } catch {}
     if (!r.ok || !json || json.success !== true) {
-      const msg =
-        (json && (json.error || json.message)) ||
-        `HTTP ${r.status}${text ? `: ${text.slice(0, 180)}` : ""}`;
+      const msg = (json && (json.error || json.message)) || `HTTP ${r.status}${text ? `: ${text.slice(0, 180)}` : ""}`;
       throw new Error(msg);
     }
-    return json; // <- return parsed JSON
+    return json;
   });
 }
 
 /* ---------- utils ---------- */
 function escapeHtml(s) {
-  return (s || "").replace(
-    /[&<>"']/g,
-    (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])
-  );
+  return (s || "").replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 }
 function postNewTab(action, params) {
   const form = document.createElement("form");
@@ -482,3 +459,43 @@ function postNewTab(action, params) {
   form.submit();
   form.remove();
 }
+/* Lightweight zoom controls without touching your existing JS */
+(function () {
+  const box = document.getElementById('previewBox');
+  const content = document.getElementById('previewContent');
+  if (!box || !content) return;
+
+  // toolbar
+  const bar = document.createElement('div');
+  bar.className = 'preview-toolbar';
+  bar.innerHTML = `
+    <button type="button" id="zOut">−</button>
+    <button type="button" id="zIn">+</button>
+    <button type="button" id="z100">100%</button>
+  `;
+  box.prepend(bar);
+
+  let scale = 1;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  function getMedia() {
+    return content.querySelector('img, iframe, embed, object');
+  }
+
+  function apply() {
+    const m = getMedia();
+    if (!m) return;
+    m.style.transform = `scale(${scale})`;
+    m.style.transformOrigin = 'top left';
+    // enable scroll when zoomed
+    content.style.overflow = scale !== 1 ? 'auto' : 'auto';
+  }
+
+  document.getElementById('zIn').onclick  = () => { scale = clamp(scale + 0.1, 0.2, 3); apply(); };
+  document.getElementById('zOut').onclick = () => { scale = clamp(scale - 0.1, 0.2, 3); apply(); };
+  document.getElementById('z100').onclick = () => { scale = 1; apply(); };
+
+  // reset zoom whenever content swaps to a new doc
+  new MutationObserver(() => { scale = 1; apply(); })
+    .observe(content, { childList: true, subtree: true });
+})();

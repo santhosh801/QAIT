@@ -1,6 +1,24 @@
 <?php
 require_once "db_conn.php";
 
+function norm_state(string $s): string
+{
+  $s = strtolower(trim($s));
+  $map = [
+    'accept' => 'accepted',
+    'accepted' => 'accepted',
+    'pending' => 'pending',
+    'receive' => 'received',
+    'received' => 'received',
+    'replace' => 'replacement',
+    'replaced' => 'replacement',
+    'replacement' => 'replacement',
+    'not_received' => 'not-received',
+    'not-received' => 'not-received',
+  ];
+  return $map[$s] ?? 'received';
+}
+
 /**
  * STRICT: read only from operatordoc (no joins).
  * Accepts:
@@ -78,6 +96,23 @@ if (!$op) {
   http_response_code(404);
   die("Operator not found in operatordoc for: " . htmlspecialchars($raw));
 }
+/* -------- NEW: pull per-document states from operator_documents -------- */
+$stateMap = [];
+$countsFromOD = ['accepted' => 0, 'pending' => 0, 'received' => 0, 'not-received' => 0, 'replacement' => 0];
+
+$st = $conn->prepare("SELECT doc_key, state FROM operator_documents WHERE operator_id = ?");
+$st->bind_param('s', $op['operator_id']);
+$st->execute();
+$rs = $st->get_result();
+while ($row = $rs->fetch_assoc()) {
+  $s = norm_state((string)$row['state']);
+  $stateMap[$row['doc_key']] = $s;
+  if (isset($countsFromOD[$s])) $countsFromOD[$s]++;           // normalized counts
+}
+$st->close();
+
+/* expose to JS if you still want boot painting support */
+$stateMapJson = json_encode($stateMap, JSON_UNESCAPED_UNICODE);
 
 /** Map: label => column */
 $DOCS = [
@@ -203,11 +238,16 @@ function h($s)
           foreach ($DOCS as $label => $col):
             $file = $op[$col] ?? '';
             if (!$file) continue;
-            $state = strtolower((string)($map[$col] ?? 'none'));
-            if ($state === 'accept') $state = 'accepted';
+
+            // NEW: prefer operator_documents; fallback to your old json
+            $rawState = $stateMap[$col] ?? (isset($map[$col]) ? strtolower((string)$map[$col]) : 'received');
+            $state = norm_state($rawState); // 'accepted' | 'pending' | 'received' | 'replacement' | 'not-received'
           ?>
-            <div class="doc-item received <?= $state ?>" data-key="<?= h($col) ?>"
-              data-label="<?= h($label) ?>" data-file="<?= h($file) ?>" data-state="<?= h($state) ?>">
+            <div class="doc-item received <?= $state ?>"
+              data-key="<?= h($col) ?>"
+              data-label="<?= h($label) ?>"
+              data-file="<?= h($file) ?>"
+              data-state="<?= h($state) ?>">
               <span class="doc-label"><?= h($label) ?></span>
               <div class="icons">
                 <a href="#" class="ico i-pending" title="Mark Pending">🕓</a>
@@ -218,6 +258,7 @@ function h($s)
               </div>
             </div>
           <?php endforeach; ?>
+
         </div>
 
         <div class="ds-sep"></div>
@@ -306,8 +347,9 @@ function h($s)
     window.BOOT_WORK = <?= json_encode($op['work_status'] ?: '') ?>;
 
     // counts + json map for boot painting
+    // counts + normalized map for boot painting (now from operator_documents)
     window.DOC_COUNTS = <?= json_encode($counts, JSON_UNESCAPED_UNICODE) ?>;
-    window.DOC_STATUS_MAP = <?= json_encode($op['doc_status_json'] ?: '{}', JSON_UNESCAPED_UNICODE) ?>;
+    window.DOC_STATUS_MAP = <?= $stateMapJson ?: '{}' ?>;
   </script>
   <script src="document_status.js"></script>
 </body>

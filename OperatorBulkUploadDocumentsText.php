@@ -48,6 +48,36 @@ function ensure_operator_row($mysqli, $opid)
     $stmt->close();
 }
 
+/* ---------- NEW: CSV hardeners (dates + numbers) ---------- */
+function norm_date(string $s): ?string
+{
+    $s = trim($s);
+    if ($s === '' || $s === '0000-00-00') return null;
+
+    // Excel serial (days since 1899-12-30)
+    if (is_numeric($s) && (float)$s > 59) {
+        $base = new DateTime('1899-12-30');
+        $base->modify('+' . (int)$s . ' days');
+        return $base->format('Y-m-d');
+    }
+
+    $fmts = ['Y-m-d', 'd-m-Y', 'd/m/Y', 'd.m.Y', 'j-m-Y', 'j/m/Y', 'd M Y', 'M d, Y'];
+    foreach ($fmts as $f) {
+        $dt = DateTime::createFromFormat($f, $s);
+        if ($dt && $dt->format($f) === $s) return $dt->format('Y-m-d');
+    }
+    $ts = strtotime($s);
+    return $ts ? date('Y-m-d', $ts) : null;
+}
+function digits_only(?string $s): string
+{
+    return preg_replace('/\D+/', '', (string)$s ?? '');
+}
+function upper(?string $s): string
+{
+    return strtoupper(trim((string)$s ?? ''));
+}
+
 // Keyword map (matches filenames)
 function map_filename_to_field($filename)
 {
@@ -136,20 +166,62 @@ function update_operatordoc($mysqli, $operator_id, $mappedFiles)
 // ---------- MAIN LOGIC ----------
 $caseType = $_POST['caseType'] ?? ($_REQUEST['caseType'] ?? '');
 // ---------- TEMPLATE DOWNLOAD (full header version for one operator) ----------
-function serve_download_template_and_exit() {
+function serve_download_template_and_exit()
+{
     $headers = [
-        "id","operator_id","operator_full_name","email","branch_name","joining_date","operator_contact_no","father_name","dob","gender",
-        "aadhar_number","pan_number","voter_id_no","ration_card","nseit_number",
-        "aadhar_file","pan_file","voter_file","ration_file","consent_file",
-        "gps_selfie_file","permanent_address_proof_file","nseit_cert_file","self_declaration_file","non_disclosure_file",
-        "police_verification_file","parent_aadhar_file","alt_contact_relation","alt_contact_number",
-        "edu_10th_file","edu_12th_file","edu_college_file","created_at","nseit_date",
-        "current_hno_street","current_village_town","current_pincode","current_postoffice","current_district","current_state",
-        "permanent_hno_street","permanent_village_town","permanent_pincode","permanent_postoffice","permanent_district","permanent_state",
-        "bank_name","status","work_status","review_notes","rejection_summary","last_modified_at"
+        "id",
+        "operator_id",
+        "operator_full_name",
+        "email",
+        "branch_name",
+        "joining_date",
+        "operator_contact_no",
+        "father_name",
+        "dob",
+        "gender",
+        "aadhar_number",
+        "pan_number",
+        "voter_id_no",
+        "ration_card",
+        "nseit_number",
+        "aadhar_file",
+        "pan_file",
+        "voter_file",
+        "ration_file",
+        "consent_file",
+        "gps_selfie_file",
+        "permanent_address_proof_file",
+        "nseit_cert_file",
+        "self_declaration_file",
+        "non_disclosure_file",
+        "police_verification_file",
+        "parent_aadhar_file",
+        "alt_contact_relation",
+        "alt_contact_number",
+        "edu_10th_file",
+        "edu_12th_file",
+        "edu_college_file",
+        "created_at",
+        "nseit_date",
+        "current_hno_street",
+        "current_village_town",
+        "current_pincode",
+        "current_postoffice",
+        "current_district",
+        "current_state",
+        "permanent_hno_street",
+        "permanent_village_town",
+        "permanent_pincode",
+        "permanent_postoffice",
+        "permanent_district",
+        "permanent_state",
+        "bank_name",
+        "status",
+        "work_status",
+        "review_notes",
+        "rejection_summary",
+        "last_modified_at"
     ];
-
-   
 
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="operator_full_template.csv"');
@@ -165,7 +237,6 @@ function serve_download_template_and_exit() {
 if (isset($_GET['download_template']) && ($_GET['download_template'] == '1' || $_GET['download_template'] === 'true')) {
     serve_download_template_and_exit();
 }
-
 
 switch ($caseType) {
 
@@ -212,110 +283,173 @@ switch ($caseType) {
             }
         }
 
-
         if (update_operatordoc($mysqli, $operator_id, $mappedFiles)) {
             json_response(true, "Uploaded $count docs for $operator_id", ['mapped' => $mappedFiles]);
         } else {
             json_response(true, "Files saved but DB update failed", ['mapped' => $mappedFiles]);
         }
         break;
+        
 
     // --- BULK TEXT (CSV) ---
-   // --- BULK TEXT (CSV) ---
-case 'bulk_text':
-    $file = $_FILES['bulk_excel'] ?? null;
-    if (!$file || $file['error'] !== UPLOAD_ERR_OK) json_response(false, 'Missing bulk_excel');
+    case 'bulk_text':
+        $file = $_FILES['bulk_excel'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) json_response(false, 'Missing bulk_excel');
 
-    ensure_dir($BULK_DIR);
-    $dest = "$BULK_DIR/" . time() . "_" . basename($file['name']);
-    move_uploaded_file($file['tmp_name'], $dest);
+        ensure_dir($BULK_DIR);
+        $dest = "$BULK_DIR/" . time() . "_" . basename($file['name']);
+        move_uploaded_file($file['tmp_name'], $dest);
 
-    $rows = 0;
-    $updated = 0;
-    $skipped_no_id = 0;
+        $rows = 0;
+        $updated = 0;
+        $skipped_no_id = 0;
 
-    if (($handle = fopen($dest, 'r')) !== false) {
-        // read header row (non-empty)
-        $header = fgetcsv($handle);
-        if ($header === false) {
-            fclose($handle);
-            json_response(false, 'CSV header missing or empty');
-        }
-
-        // normalize headers: trim + lowercase + keep original names for mapping keys
-        $cols = array_map(function($h){ return strtolower(trim($h)); }, $header);
-
-        // Allowed non-file DB columns to update
-        $updatable = [
-            'operator_full_name','email','branch_name','joining_date','operator_contact_no','father_name','dob','gender',
-            'aadhar_number','pan_number','voter_id_no','ration_card','nseit_number',
-            'alt_contact_relation','alt_contact_number','created_at','nseit_date',
-            'current_hno_street','current_village_town','current_pincode','current_postoffice','current_district','current_state',
-            'permanent_hno_street','permanent_village_town','permanent_pincode','permanent_postoffice','permanent_district','permanent_state',
-            'bank_name','status','work_status','review_notes','rejection_summary','last_modified_at'
-        ];
-
-        while (($row = fgetcsv($handle)) !== false) {
-            $rows++;
-            // build assoc: normalized header => value
-            $assoc = [];
-            foreach ($cols as $i => $col) {
-                $assoc[$col] = isset($row[$i]) ? trim($row[$i]) : '';
+        if (($handle = fopen($dest, 'r')) !== false) {
+            // read header row (non-empty)
+            $header = fgetcsv($handle);
+            if ($header === false) {
+                fclose($handle);
+                json_response(false, 'CSV header missing or empty');
             }
 
-            // Friendly header mapping (accept user-friendly template variants)
-            // operator_name -> operator_full_name ; phone -> operator_contact_no
-            if (isset($assoc['operator_name']) && !isset($assoc['operator_full_name'])) {
-                $assoc['operator_full_name'] = $assoc['operator_name'];
-            }
-            if (isset($assoc['phone']) && !isset($assoc['operator_contact_no'])) {
-                $assoc['operator_contact_no'] = $assoc['phone'];
-            }
-            // If header contains "id" column and a separate operator_id, don't use numeric id column.
-            // Primary source for operator_id should be 'operator_id' column.
-            $operator_id_raw = $assoc['operator_id'] ?? '';
-            $operator_id = safe_name($operator_id_raw);
+            // normalize headers: trim + lowercase + keep original names for mapping keys
+            $cols = array_map(function ($h) {
+                return strtolower(trim($h));
+            }, $header);
 
-            if (!$operator_id) {
-                $skipped_no_id++;
-                continue;
-            }
+            // Allowed non-file DB columns to update
+            $updatable = [
+                'operator_full_name',
+                'email',
+                'branch_name',
+                'joining_date',
+                'operator_contact_no',
+                'father_name',
+                'dob',
+                'gender',
+                'aadhar_number',
+                'pan_number',
+                'voter_id_no',
+                'ration_card',
+                'nseit_number',
+                'alt_contact_relation',
+                'alt_contact_number',
+                'created_at',
+                'nseit_date',
+                'current_hno_street',
+                'current_village_town',
+                'current_pincode',
+                'current_postoffice',
+                'current_district',
+                'current_state',
+                'permanent_hno_street',
+                'permanent_village_town',
+                'permanent_pincode',
+                'permanent_postoffice',
+                'permanent_district',
+                'permanent_state',
+                'bank_name',
+                'status',
+                'work_status',
+                'review_notes',
+                'rejection_summary',
+                'last_modified_at'
+            ];
 
-            // ensure row exists
-            ensure_operator_row($mysqli, $operator_id);
+            while (($row = fgetcsv($handle)) !== false) {
+                $rows++;
+                // build assoc: normalized header => value
+                $assoc = [];
+                foreach ($cols as $i => $col) {
+                    $assoc[$col] = isset($row[$i]) ? trim($row[$i]) : '';
+                }
 
-            // Build dynamic update from $updatable fields present in CSV
-            $sets = [];
-            $params = [];
-            $types = '';
-            foreach ($updatable as $col) {
-                if (array_key_exists($col, $assoc) && $assoc[$col] !== '') {
-                    $sets[] = "`$col` = ?";
-                    $params[] = $assoc[$col];
+                // Friendly header mapping (accept user-friendly template variants)
+                // operator_name -> operator_full_name ; phone -> operator_contact_no
+                if (isset($assoc['operator_name']) && !isset($assoc['operator_full_name'])) {
+                    $assoc['operator_full_name'] = $assoc['operator_name'];
+                }
+                if (isset($assoc['phone']) && !isset($assoc['operator_contact_no'])) {
+                    $assoc['operator_contact_no'] = $assoc['phone'];
+                }
+
+                // Primary key for this update
+                $operator_id_raw = $assoc['operator_id'] ?? '';
+                $operator_id = safe_name($operator_id_raw);
+
+                if (!$operator_id) {
+                    $skipped_no_id++;
+                    continue;
+                }
+
+                // ensure row exists
+                ensure_operator_row($mysqli, $operator_id);
+
+                /* ---------- NEW: sanitize problematic fields before building SETs ---------- */
+
+                // Dates → ISO or NULL
+                if (array_key_exists('joining_date', $assoc))   $assoc['joining_date']   = norm_date($assoc['joining_date']) ?? null;
+                if (array_key_exists('dob', $assoc))             $assoc['dob']            = norm_date($assoc['dob']) ?? null;
+                if (array_key_exists('nseit_date', $assoc))      $assoc['nseit_date']     = norm_date($assoc['nseit_date']) ?? null;
+                if (array_key_exists('created_at', $assoc))      $assoc['created_at']     = norm_date($assoc['created_at']) ?? null;
+                if (array_key_exists('last_modified_at', $assoc)) $assoc['last_modified_at'] = norm_date($assoc['last_modified_at']) ?? null;
+
+                // Numbers → digits only (Excel E+ kill)
+                if (array_key_exists('operator_contact_no', $assoc)) $assoc['operator_contact_no'] = digits_only($assoc['operator_contact_no']);
+                if (array_key_exists('alt_contact_number', $assoc))   $assoc['alt_contact_number']  = digits_only($assoc['alt_contact_number']);
+                if (array_key_exists('aadhar_number', $assoc)) {
+                    $aad = preg_replace('/[^0-9]/', '', (string)$assoc['aadhar_number']);
+                    // restore lost leading zeros if Aadhaar looks too short (Excel-trimmed)
+                    if (strlen($aad) !== 12) {
+                        $aad = str_pad(substr($aad, 0, 12), 12, '0', STR_PAD_LEFT);
+                    }
+
+                    $assoc['aadhar_number'] = $aad;
+                }
+
+                if (array_key_exists('current_pincode', $assoc))      $assoc['current_pincode']     = digits_only($assoc['current_pincode']);
+                if (array_key_exists('permanent_pincode', $assoc))    $assoc['permanent_pincode']   = digits_only($assoc['permanent_pincode']);
+
+                // IDs/Text normalization
+                if (array_key_exists('pan_number', $assoc))     $assoc['pan_number']     = upper($assoc['pan_number']);
+                if (array_key_exists('voter_id_no', $assoc))    $assoc['voter_id_no']    = upper($assoc['voter_id_no']);
+                if (array_key_exists('ration_card', $assoc))    $assoc['ration_card']    = upper($assoc['ration_card']);
+                if (array_key_exists('bank_name', $assoc))      $assoc['bank_name']      = trim($assoc['bank_name']);
+
+                // Build dynamic update from $updatable fields present in CSV
+                $sets = [];
+                $params = [];
+                $types = '';
+                foreach ($updatable as $col) {
+                    if (array_key_exists($col, $assoc)) {
+                        // skip only real empty strings; allow NULL (for dates) and non-empty values
+                        if ($assoc[$col] === '') continue;
+                        $sets[]   = "`$col` = ?";
+                        $params[] = $assoc[$col];   // may be string or NULL
+                        $types   .= 's';
+                    }
+                }
+
+                if (!empty($sets)) {
+                    $params[] = $operator_id;
                     $types .= 's';
+                    $sql = "UPDATE operatordoc SET " . implode(', ', $sets) . " WHERE operator_id = ?";
+                    $stmt = $mysqli->prepare($sql);
+                    if ($stmt) {
+                        // PHP mysqli will pass actual NULL if param is null (type 's' is okay)
+                        $stmt->bind_param($types, ...$params);
+                        $stmt->execute();
+                        $stmt->close();
+                        $updated++;
+                    }
                 }
             }
 
-            if (!empty($sets)) {
-                $params[] = $operator_id;
-                $types .= 's';
-                $sql = "UPDATE operatordoc SET " . implode(', ', $sets) . " WHERE operator_id = ?";
-                $stmt = $mysqli->prepare($sql);
-                if ($stmt) {
-                    $stmt->bind_param($types, ...$params);
-                    $stmt->execute();
-                    $stmt->close();
-                    $updated++;
-                }
-            }
+            fclose($handle);
         }
 
-        fclose($handle);
-    }
-
-    json_response(true, "Processed rows: $rows, updated: $updated, skipped(no operator_id): $skipped_no_id", ['file' => $dest]);
-    break;
-
+        json_response(true, "Processed rows: $rows, updated: $updated, skipped(no operator_id): $skipped_no_id", ['file' => $dest]);
+        break;
 
     // --- BULK DOCS (ZIP of operator folders) ---
     case 'bulk_docs':

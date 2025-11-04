@@ -223,7 +223,7 @@
                       echo "<td data-col='branch_name'>" . htmlspecialchars($row['branch_name'] ?? '') . "</td>";
                       echo "<td data-col='aadhar_number'>" . htmlspecialchars($row['aadhar_number'] ?? '') . "</td>";
                       echo "<td data-col='bank_name'>" . htmlspecialchars($row['bank_name'] ?? '') . "</td>";
-                     
+
                       // hidden text fields for the panel
                       foreach ($HIDDEN_COLS as $col) {
                         $val = $row[$col] ?? '';
@@ -467,6 +467,15 @@
                     </form>
 
                     <hr class="qb-hr">
+                    <!-- progress: single operator -->
+                    <div id="progress-single" class="upload-progress" hidden>
+                      <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                        <div class="progress-text">0% • preparing…</div>
+                      </div>
+                      <div class="progress-eta" aria-live="polite"></div>
+                    </div>
+
 
                     <!-- BULK OPERATORS Excel (header-only) -->
                     <form id="bulkExcelForm" class="qb-form" enctype="multipart/form-data" method="post" data-action="bulk_text">
@@ -484,6 +493,15 @@
                     </form>
 
                     <hr class="qb-hr">
+                    <!-- progress: bulk text -->
+                    <div id="progress-bulktext" class="upload-progress" hidden>
+                      <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                        <div class="progress-text">0% • preparing…</div>
+                      </div>
+                      <div class="progress-eta" aria-live="polite"></div>
+                    </div>
+
 
                     <!-- BULK DOCS ZIP -->
                     <form id="bulkDocsForm" class="qb-form" enctype="multipart/form-data" method="post" data-action="bulk_docs">
@@ -496,6 +514,14 @@
                     </form>
 
                     <div id="uploadResultBottom" style="margin-top:10px;"></div>
+                  </div>
+                  <!-- progress: bulk docs -->
+                  <div id="progress-bulkdocs" class="upload-progress" hidden>
+                    <div class="progress-bar">
+                      <div class="progress-fill"></div>
+                      <div class="progress-text">0% • preparing…</div>
+                    </div>
+                    <div class="progress-eta" aria-live="polite"></div>
                   </div>
 
                   <!-- RIGHT: Rule Book -->

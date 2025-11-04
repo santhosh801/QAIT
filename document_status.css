@@ -49,40 +49,42 @@ body{margin:0;background:#f7f8fb;color:var(--ink);font-family:Montserrat,system-
 
 /* preview + chart */
 .chart-preview{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:14px}
-.preview-box{border:1px dashed var(--line);border-radius:12px;padding:10px; min-height:480px;background:#fff;animation:fadeIn .7s ease}
-.prev-body{min-height:280px;display:flex;align-items:center;justify-content:center}
+.preview-box{border:1px dashed var(--line);border-radius:12px;padding:10px; min-height:580px;background:#fff;animation:fadeIn .7s ease}
+.prev-body{min-height:580px;display:flex;align-items:center;justify-content:center}
 @keyframes fadeIn{from{opacity:.0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .chart-area canvas{width:100%;height:280px}
 
-/* doc list */
-.doc-list h3{font-size:28px;margin:6px 0 8px ; font-weight:300;font-weight:400;color:#b78a3e;font-family:Vidaloka,serif; }
-.ds-sep{height:1px;background:var(--line);margin:10px 0}
-.doc-item{display:flex;align-items:center;justify-content:space-between;border:0px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0;transition:.85s;background:#fff}
-.doc-item.received{background:rgba(54, 163, 235, 0.496) !important;           /* soft green */
-  border:1px solid #000000 !important;
-  color: white;
-  box-shadow:0 1px 4px rgba(34,197,94,.12);}
-.doc-item.not-received{background:rgba(255, 200, 70, 0.477)}
+/* ===== DOC ITEMS: animated state via data-state ===== */
+/* ===== DOC ITEMS: unified colors (chart-aligned) ===== */
+.doc-item {
+  display:flex;align-items:center;justify-content:space-between;
+  border-radius:10px;padding:10px 12px;margin:6px 0;
+  background:rgba(47,128,237,0.1); /* default fallback (Accepted blue) */
+  color:#0f172a;border:1px solid rgba(0,0,0,0.1);
+  transition: background .4s ease, color .3s ease, box-shadow .3s ease, transform .25s ease;
+  cursor:pointer; will-change:background,transform,box-shadow;
+}
+.doc-item:hover{ transform:scale(1.02); }
+.doc-item[data-state="accepted"]     { background:#21C20C !important; color:#fff !important; }
+.doc-item[data-state="pending"]      { background:#FF6385 !important; color:#fff !important; }
+.doc-item[data-state="received"]     { background:#5A8DAF !important; color:#fff !important; }
+.doc-item[data-state="replacement"]  { background:#FFA726 !important; color:#fff !important; }
+.doc-item[data-state="not-received"] { background:#E5E7EB !important; color:#111 !important; }
+.doc-item.status-change{ animation:pulseStatus .6s ease; }
+@keyframes pulseStatus{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+
+/* Labels + icons */
 .doc-label{font-weight:600}
 .icons{display:flex;gap:10px}
-.ico{text-decoration:none;user-select:none}
-.ico:hover{transform:scale(1.05)}
+.ico{ text-decoration:none; user-select:none; transition:transform .2s ease, filter .2s ease; }
+.ico:hover{ transform:scale(1.05); }
 
-/* reveal animations */
-.reveal-ltr>*{opacity:0;transform:translateX(-12px);animation:reveal .6s ease forwards}
-.reveal-ltr.slow>*{animation-duration:1s}
-.reveal-ltr>*:nth-child(2){animation-delay:.15s}
-.reveal-ltr>*:nth-child(3){animation-delay:.10s}
-.reveal-ltr>*:nth-child(4){animation-delay:.15s}
-@keyframes reveal{to{opacity:1;transform:translateX(0)}}
-.fade-in{animation:fadeIn .8s ease both}
-
-/* responsive */
-@media (max-width: 980px){
-  .ds-grid.swapped{grid-template-columns:1fr}
-  .ds-left{border-right:none;border-bottom:2px solid var(--line)}
-  .chart-preview{grid-template-columns:1fr}
+/* Accessibility */
+@media (prefers-reduced-motion: reduce){
+  .doc-item, .ico:hover{ transition:none !important; transform:none !important; }
+  .doc-item.status-change{ animation:none !important; }
 }
+
 
 /* loader (3s animated) */
 .loading-container{
@@ -99,24 +101,8 @@ body{margin:0;background:#f7f8fb;color:var(--ink);font-family:Montserrat,system-
 .reveal-ltr.slow>*:nth-child(4){animation-delay:.45s}
 /* etc. */
 /* --- Permanent per-document colors (no layout changes) --- */
-.doc-item.accepted{
-  background:rgb(54,162,235) !important;           /* soft green */
-  border:1px solid #04ff25 !important;
-  box-shadow:0 1px 4px rgba(34,197,94,.12);
-}
-.doc-item.accepted {
-  background-color: #d4edda; /* green */
-}
-.doc-item.received {
-  background-color: #fdf6e3; /* neutral/light */
-}
 
-.doc-item.pending{
-  background:rgba(255, 99, 133, 0.487) !important;        
-  color: rgb(0, 0, 0);   /* soft yellow */
-  border:1px solid #000000 !important;
-  box-shadow:0 1px 4px rgba(250,204,21,.12);
-}
+
 /* tiny helper for “Saved/Failed” message near icons */
 .doc-save-status{ font-size:12px; opacity:.8; margin-left:6px; }
 /* Animate.css global tempo (slower, smoother) */
@@ -141,3 +127,48 @@ body{margin:0;background:#f7f8fb;color:var(--ink);font-family:Montserrat,system-
 
 /* Your gold button entrance */
 .gold-btn{background:var(--gold-soft); border-color:#e7d2ac}
+/* ===== PREVIEW: full width & tall ===== */
+.chart-preview { grid-template-columns: 1fr !important; }   /* single column */
+.preview-box { min-height: 152vh !important; }               /* tall container */
+.prev-body { min-height: 152vh !important; padding: 0 !important; }
+#previewContent {
+  height: 100% !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  overflow: auto !important;
+}
+
+/* PDFs in iframe/embed/object: fill the space */
+#previewContent iframe,
+#previewContent embed,
+#previewContent object {
+  width: 100% !important;
+  height: 152vh !important;
+  border: 0 !important;
+  display: block !important;
+}
+
+/* Images: big, contained, no overflow */
+#previewContent img {
+  max-width: 100% !important;
+  max-height: 152vh !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Optional: make the preview box breathe edge-to-edge a bit more */
+.ds-right .preview-box { padding: 12px !important; }
+
+/* Tiny zoom toolbar styling */
+.preview-toolbar {
+  display: flex; gap: 8px; align-items: center;
+  justify-content: flex-end; margin-bottom: 8px;
+}
+.preview-toolbar button {
+  border: 1px solid var(--line); background: #fff; cursor: pointer;
+  padding: 6px 10px; border-radius: 8px; font-weight: 600;
+}
+.preview-toolbar button:hover { background: var(--gold-soft); }

@@ -3656,3 +3656,92 @@ panel.querySelectorAll(".action-btn").forEach((btn) => {
     { passive: true }
   );
 });
+(function () {
+  function wireUpload(formId, btnId, progressWrapId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const btn = document.getElementById(btnId);
+    const wrap = document.getElementById(progressWrapId);
+    const bar  = wrap?.querySelector('.progress-fill');
+    const text = wrap?.querySelector('.progress-text');
+    const eta  = wrap?.querySelector('.progress-eta');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // UI: lock
+      if (btn) { btn.disabled = true; btn.dataset.original = btn.textContent; btn.textContent = 'Uploading…'; }
+      if (wrap) wrap.hidden = false;
+      if (bar)  bar.style.width = '0%';
+      if (text) text.textContent = '0% • starting…';
+      if (eta)  eta.textContent = '';
+
+      const xhr = new XMLHttpRequest();
+      const start = Date.now();
+
+      // progress %
+      xhr.upload.addEventListener('progress', function (ev) {
+        if (!ev.lengthComputable) return;
+
+        const pct = (ev.loaded / ev.total) * 100;
+        if (bar)  bar.style.width = pct.toFixed(1) + '%';
+        if (text) text.textContent = pct.toFixed(1) + '% • uploading';
+
+        // ETA: simple moving estimate
+        const elapsed = (Date.now() - start) / 1000; // s
+        const speed = ev.loaded / Math.max(elapsed, 0.1); // bytes/s
+        const remaining = ev.total - ev.loaded;
+        const secs = Math.max(0, Math.round(remaining / Math.max(speed, 1)));
+        if (eta) eta.textContent = `ETA: ${secs}s`;
+      });
+
+      xhr.upload.addEventListener('loadstart', function () {
+        if (text) text.textContent = '0% • initializing…';
+      });
+
+      xhr.addEventListener('load', function () {
+        if (bar)  bar.style.width = '100%';
+        if (text) text.textContent = '100% • processing…';
+        if (eta)  eta.textContent = 'Finalizing on server…';
+
+        // Parse JSON from PHP to surface success/failure
+        let ok = false, msg = 'Done';
+        try {
+          const res = JSON.parse(xhr.responseText || '{}');
+          ok = !!res.success;
+          msg = res.message || msg;
+        } catch (_) {}
+
+        setTimeout(() => {
+          if (ok) {
+            if (text) text.textContent = 'Complete ✅';
+            if (eta)  eta.textContent = msg;
+          } else {
+            if (text) text.textContent = 'Upload finished, but server returned an error ❌';
+            if (eta)  eta.textContent = msg;
+          }
+          if (btn) { btn.disabled = false; btn.textContent = btn.dataset.original || 'Upload'; }
+        }, 400);
+      });
+
+      xhr.addEventListener('error', function () {
+        if (text) text.textContent = 'Network error ❌';
+        if (eta)  eta.textContent = 'Please try again.';
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.original || 'Upload'; }
+      });
+
+      xhr.open('POST', form.action, true);
+      xhr.send(new FormData(form));
+    });
+  }
+
+  // Wire the three forms (IDs must exist as shown in the HTML block above)
+  wireUpload('form-single',   'btn-single',   'progress-single');
+  wireUpload('form-bulktext', 'btn-bulktext', 'progress-bulktext');
+  wireUpload('form-bulkdocs', 'btn-bulkdocs', 'progress-bulkdocs');
+})();
+
+
+
+
